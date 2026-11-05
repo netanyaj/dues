@@ -241,7 +241,7 @@ describe("UPI", () => {
   });
   it("builds the deep link with amount and note", () => {
     expect(upiUri({ upiId: "dues.demo@okicici", payeeName: "Asha Studio", amountPaise: 3540000, note: "INV/2026-27/0007" })).toBe(
-      "upi://pay?pa=dues.demo%40okicici&pn=Asha%20Studio&am=35400.00&tn=INV%2F2026-27%2F0007&cu=INR",
+      "upi://pay?pa=dues.demo@okicici&pn=Asha%20Studio&am=35400.00&tn=INV%2F2026-27%2F0007&cu=INR",
     );
   });
   it("hides the QR above ₹1 lakh", () => {

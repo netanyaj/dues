@@ -1,6 +1,6 @@
 # Dues: product requirements (v1)
 
-*This file shows what we're building now. [DECISIONS.md](DECISIONS.md) records why (D-numbers). Updated 5 Nov 2026, 19:20 IST.*
+*This file shows what we're building now. [DECISIONS.md](DECISIONS.md) records why (D-numbers). Updated 5 Nov 2026, 20:00 IST.*
 
 ## 1. Problem and evidence
 Indian freelancers and small agencies invoice from Word or Excel templates and chase payments on WhatsApp. They lose:
@@ -77,12 +77,12 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 |---|---|---|---|
 | M1 | Schema and domain logic | Thu 17:45 | ✅ 17:47 |
 | M2 | Auth, onboarding, settings, dashboard | Thu 19:00 | ✅ 18:48 |
-| M3 | Invoices, client page, payments | Thu 21:30 | ⏳ |
+| M3 | Invoices, client page, payments (+ client pages, history, D16–D18) | Thu 21:30 | ✅ 20:00 |
 | M4 | MCP tools and integration script | Thu 23:00 | ⬜ |
 | M5 | Deploy and production test (checkpoint) | Fri ~01:00 | ⬜ |
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ⬜ |
 
-**If ahead, in order:** chase list (✅ built in M2), reminders, client pages, event timeline, cron, Google sign-in.
+**If ahead, in order:** chase list (✅ M2), reminders (✅ list and links in M3; saved via MCP in M4), client pages (✅ M3), event timeline (✅ M3), cron (M5), Google sign-in (not planned: D12 keeps one login flow).
 **If behind, cut in order:** reminders → timeline UI (keep the events table) → partial payments. Never cut the number checks, locking or the client page.
 
 ## 9. Risks and open questions

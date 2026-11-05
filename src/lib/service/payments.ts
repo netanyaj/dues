@@ -30,7 +30,9 @@ function parseUtr(raw: string | null | undefined, required: boolean): string | n
     if (required) throw new DuesError("invalid_input", "Enter the transaction reference (UTR). Your banking app shows it on the payment receipt.", "utr");
     return null;
   }
-  if (!/^[A-Z0-9]{6,22}$/.test(v)) throw new DuesError("invalid_input", "The UTR should be 6 to 22 letters or digits, e.g. 412345678901 for UPI.", "utr");
+  // D16: accept anything plausible (6–35 letters/digits) and flag unusual formats to the freelancer
+  // instead of blocking the client: PhonePe's "T…" transaction ID is 23 characters, for example.
+  if (!/^[A-Z0-9]{6,35}$/.test(v)) throw new DuesError("invalid_input", "The reference should be 6 to 35 letters or digits, with no symbols. It's on your payment receipt.", "utr");
   return v;
 }
 

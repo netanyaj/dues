@@ -17,7 +17,8 @@ export function upiEligible(upiId: string | null | undefined, amountPaise: numbe
 
 export function upiUri(args: { upiId: string; payeeName: string; amountPaise: number; note: string }): string {
   const q = [
-    `pa=${encodeURIComponent(args.upiId)}`,
+    // Keep "@" literal: some UPI apps fail to parse pa=name%40bank.
+    `pa=${encodeURIComponent(args.upiId).replace(/%40/g, "@")}`,
     `pn=${encodeURIComponent(args.payeeName)}`,
     `am=${paiseToDecimalString(args.amountPaise)}`,
     `tn=${encodeURIComponent(args.note)}`,

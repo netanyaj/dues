@@ -44,7 +44,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       <div>
         <p className="text-sm text-muted-foreground"><Link href="/dashboard" className="hover:underline">Dashboard</Link> / <Link href={`/clients/${inv.client_id}`} className="hover:underline">{inv.client_name}</Link></p>
         <h1 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-semibold">
-          <span className="font-mono">{title}</span>
+          <span className={inv.number ? "font-mono" : ""}>{title}</span>
           <StatusBadge status={inv.status} pendingReports={inv.pending_reports} />
           {inv.source === "claude" && <ClaudeBadge />}
         </h1>
