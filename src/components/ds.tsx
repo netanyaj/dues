@@ -58,7 +58,7 @@ export function Banner({ tone = "info", title, children, action, className, role
         {title && <p className="title-4 font-semibold">{title}</p>}
         {children && <div className={cn(title && "mt-0.5", "text-foreground/80")}>{children}</div>}
       </div>
-      {action && <div className="flex flex-wrap gap-2">{action}</div>}
+      {action && <div className="flex w-full flex-wrap gap-2 pl-8 sm:w-auto sm:pl-0">{action}</div>}
     </div>
   );
 }

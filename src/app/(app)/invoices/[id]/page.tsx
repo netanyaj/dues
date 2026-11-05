@@ -17,12 +17,13 @@ import { ClaudeBadge, StatusBadge } from "@/components/status-badge";
 import { ReportDecision } from "@/components/report-decision";
 import { docFromInvoice, describeEvent } from "@/lib/view";
 import { pendingReports } from "@/lib/service/payments";
+import { Amount, Banner, Panel } from "@/components/ds";
 import { InvoiceForm } from "../invoice-form";
 import {
   CancelInvoice, ConfirmTotals, DeleteDraft, EditNotes, ExtendDueDate, PreviewLink, RecordPayment, ReminderButtons, SendButton, ShareButtons,
 } from "../invoice-actions";
 
-export const metadata: Metadata = { title: "Invoice · Dues" };
+export const metadata: Metadata = { title: "Invoice" };
 
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const ctx = await requireCtx();
@@ -40,21 +41,26 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   const title = inv.number ?? `Draft · ${formatDate(inv.created_at.slice(0, 10))}`;
 
   const header = (
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <p className="text-sm text-muted-foreground"><Link href="/dashboard" className="hover:underline">Dashboard</Link> / <Link href={`/clients/${inv.client_id}`} className="hover:underline">{inv.client_name}</Link></p>
-        <h1 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-semibold">
-          <span className={inv.number ? "font-mono" : ""}>{title}</span>
-          <StatusBadge status={inv.status} pendingReports={inv.pending_reports} />
-          {inv.source === "claude" && <ClaudeBadge />}
-        </h1>
-        {inv.stage === "issued" && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Total {formatINR(inv.total_paise)} · Balance <b className="text-foreground">{formatINR(inv.balance_paise)}</b> · Due {formatDate(inv.due_date)}
-            {inv.days_overdue > 0 ? <span className="text-red-700"> · {inv.days_overdue} days overdue</span> : null}
-          </p>
-        )}
+    <div className="flex flex-col gap-2">
+      <nav aria-label="Breadcrumb" className="caption-4 text-muted-foreground">
+        <Link href="/dashboard" className="hover:text-foreground hover:underline">Dashboard</Link>
+        <span aria-hidden className="mx-1.5">/</span>
+        <Link href={`/clients/${inv.client_id}`} className="hover:text-foreground hover:underline">{inv.client_name}</Link>
+      </nav>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h1 className="amount heading-6 sm:heading-5">{title}</h1>
+        <StatusBadge status={inv.status} pendingReports={inv.pending_reports} />
+        {inv.source === "claude" && <ClaudeBadge />}
       </div>
+      {inv.stage === "issued" ? (
+        <p className="body-6 text-muted-foreground">
+          {inv.status === "paid" ? <>Paid in full · <Amount paise={inv.total_paise} /></> : <>Still owed <Amount paise={inv.balance_paise} className="font-semibold text-foreground" /> of <Amount paise={inv.total_paise} /></>}
+          {" · "}Due {formatDate(inv.due_date)}
+          {inv.days_overdue > 0 && inv.status !== "paid" ? <span className="font-medium text-late"> · {inv.days_overdue} day{inv.days_overdue === 1 ? "" : "s"} late</span> : null}
+        </p>
+      ) : inv.stage === "draft" ? (
+        <p className="body-6 text-muted-foreground">{inv.client_name} · <Amount paise={inv.total_paise} /> · gets its number when you send it</p>
+      ) : null}
     </div>
   );
 
@@ -68,14 +74,16 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         {header}
         {inv.needs_review && <ConfirmTotals id={inv.id} reason={inv.review_reason} />}
         {inv.ready_to_send_at && !inv.needs_review && (
-          <p className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-950">Claude marked this ready to send. Check it, then press Send. Only you can send it.</p>
+          <Banner title="Claude marked this ready to send">Check it, then press Send. Only you can send it.</Banner>
         )}
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-3">
+        <Panel className="flex flex-wrap items-center gap-2 p-3">
           <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} />
           <PreviewLink id={inv.id} />
-          <DeleteDraft id={inv.id} />
-          {blocked ? <p className="text-sm text-muted-foreground">{blocked} {gaps.length ? <Link href="/settings" className="underline">Settings</Link> : null}</p> : <p className="text-sm text-muted-foreground">Save your edits first. Send uses the saved version.</p>}
-        </div>
+          <div className="ml-auto"><DeleteDraft id={inv.id} /></div>
+          <p className="w-full caption-5 text-muted-foreground">
+            {blocked ? <>{blocked} {gaps.length ? <Link href="/settings" className="font-medium text-foreground underline underline-offset-2">Open settings</Link> : null}</> : "Save your edits first. Send uses the saved version."}
+          </p>
+        </Panel>
         <InvoiceForm
           key={inv.updated_at}
           invoiceId={inv.id}
@@ -104,69 +112,73 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
     <div className="flex flex-col gap-6">
       <AutoRefresh seconds={15} />
       {header}
-      {reports.length > 0 && (
-        <section className="rounded-lg border border-amber-300 bg-amber-50/60 p-4">
-          <h2 className="font-medium">Needs your confirmation</h2>
-          <ul className="mt-2 divide-y divide-amber-200">
-            {reports.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
-                <div>
-                  <p>{r.reported_by === "claude" ? "Claude noted a payment of" : "Client says they paid"} <b>{formatINR(r.amount_paise)}</b>{r.tds_paise ? ` + ${formatINR(r.tds_paise)} TDS` : ""} · UTR {r.utr ?? "—"} · {formatDate(r.paid_on)}</p>
-                  {r.flags.map((f) => <p key={f} className="text-sm font-medium text-amber-900">⚠ {f}</p>)}
-                </div>
-                <ReportDecision report={r} />
-              </li>
-            ))}
-          </ul>
-        </section>
+      {inv.stage === "cancelled" && (
+        <Banner tone="error" title="Cancelled">Its number stays used, so your series has no gaps. Create a new invoice if you need to bill again.</Banner>
+      )}
+      {inv.stage === "issued" && inv.status === "paid" && (
+        <Banner tone="success" title="Paid in full">Nothing left to do. It stays in your export for your CA.</Banner>
+      )}
+      {reports.map((r) => (
+        <Banner
+          key={r.id}
+          tone="warning"
+          title={<>{r.reported_by === "claude" ? "You told Claude it was paid" : "Your client says they paid"}: <Amount paise={r.amount_paise} />{r.tds_paise ? <> + <Amount paise={r.tds_paise} /> TDS</> : null}</>}
+          action={<ReportDecision report={r} />}
+        >
+          UTR <span className="amount">{r.utr ?? "not given"}</span> · {formatDate(r.paid_on)}. Check your bank or UPI app before confirming.
+          {r.flags.map((f) => <span key={f} className="mt-1 block font-medium text-attention">{f}</span>)}
+        </Banner>
+      ))}
+      {inv.stage === "issued" && inv.status !== "paid" && (
+        <Panel className="p-4">
+          <p className="title-4">{inv.days_overdue > 0 ? "Send your client a reminder with the link" : "Send your client the link"}</p>
+          <p className="mt-0.5 caption-5 text-muted-foreground">They can see the invoice, pay by bank transfer or UPI, and tell you once they&apos;ve paid.</p>
+          <div className="mt-3 flex flex-wrap gap-2"><ShareButtons link={link} whatsapp={whatsappLink(client?.phone, shareText)} /></div>
+        </Panel>
       )}
       {inv.stage === "issued" && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-3">
-          <ShareButtons link={link} whatsapp={whatsappLink(client?.phone, shareText)} />
-          <span className="mx-1 hidden h-6 w-px bg-border sm:block" />
+        <div className="flex flex-wrap items-center gap-2">
           {actions.has("record_payment") && <RecordPayment id={inv.id} balance={formatINR(inv.balance_paise)} today={istToday()} />}
           {actions.has("edit_notes_due") && inv.status !== "paid" && <ExtendDueDate id={inv.id} current={inv.due_date} />}
           {actions.has("edit_notes_due") && <EditNotes id={inv.id} notes={inv.notes} />}
-          {actions.has("cancel") && <CancelInvoice id={inv.id} number={inv.number!} />}
+          {actions.has("cancel") && <div className="sm:ml-auto"><CancelInvoice id={inv.id} number={inv.number!} /></div>}
+          <p className="w-full caption-5 text-muted-foreground">Amounts, client and line items are locked once sent. To change them, cancel this invoice and create a new one.</p>
         </div>
       )}
-      {inv.stage === "issued" && (
-        <p className="text-sm text-muted-foreground">Line items, client and amounts are locked now it&apos;s sent. To change the amounts, cancel this invoice and create a new one.</p>
-      )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <InvoiceDocument d={docFromInvoice(inv, items)} />
         <div className="flex flex-col gap-6">
           <section>
-            <h2 className="font-medium">Payments</h2>
+            <h2 className="title-4 font-semibold">Payments</h2>
             {payments.length === 0 ? (
-              <p className="mt-1 text-sm text-muted-foreground">None yet. When the client taps &ldquo;I&apos;ve paid&rdquo;, it shows up here and on your dashboard.</p>
+              <p className="mt-1 body-6 text-muted-foreground">None yet. When your client taps &ldquo;I&apos;ve paid&rdquo;, it shows up here and on your dashboard.</p>
             ) : (
-              <ul className="mt-2 divide-y rounded-lg border text-sm">
+              <ul className="mt-2 divide-y rounded-xl border bg-card body-6">
                 {payments.map((p) => (
                   <li key={p.id} className="px-3 py-2">
                     <p className="flex justify-between gap-2">
-                      <span>{formatINR(p.amount_paise)}{p.tds_paise > 0 ? ` + ${formatINR(p.tds_paise)} TDS` : ""}</span>
-                      <span className={p.status === "confirmed" ? "text-emerald-700" : p.status === "rejected" ? "text-muted-foreground line-through" : "text-amber-800"}>
+                      <span className="amount font-medium">{formatINR(p.amount_paise)}{p.tds_paise > 0 ? ` + ${formatINR(p.tds_paise)} TDS` : ""}</span>
+                      <span className={p.status === "confirmed" ? "text-paid font-medium" : p.status === "rejected" ? "text-muted-foreground line-through" : "text-attention font-medium"}>
                         {p.status === "reported" ? "Waiting for you" : p.status === "confirmed" ? "Confirmed" : "Rejected"}
                       </span>
                     </p>
-                    <p className="text-muted-foreground">{formatDate(p.paid_on)} · {p.method.replace("_", " ")}{p.utr ? ` · ${p.utr}` : ""} · by {p.reported_by === "user" ? "you" : p.reported_by}</p>
+                    <p className="caption-5 text-muted-foreground">{formatDate(p.paid_on)} · {p.method.replace("_", " ")}{p.utr ? ` · ${p.utr}` : ""} · by {p.reported_by === "user" ? "you" : p.reported_by}</p>
                   </li>
                 ))}
               </ul>
             )}
           </section>
           <section>
-            <h2 className="font-medium">Reminders</h2>
+            <h2 className="title-4 font-semibold">Reminders</h2>
             {reminders.length === 0 ? (
-              <p className="mt-1 text-sm text-muted-foreground">No reminders yet. Ask Claude: &ldquo;Write a polite reminder for {inv.number} and save it for WhatsApp.&rdquo;</p>
+              <p className="mt-1 body-6 text-muted-foreground">No reminders yet. Ask Claude: &ldquo;Write a polite reminder for {inv.number} and save it for WhatsApp.&rdquo;</p>
             ) : (
               <ul className="mt-2 flex flex-col gap-3">
                 {reminders.map((r) => (
-                  <li key={r.id} className="rounded-lg border p-3 text-sm">
+                  <li key={r.id} className="rounded-xl border bg-card p-3 body-6">
                     <p className="whitespace-pre-line">{r.message}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-2 caption-5 text-muted-foreground">
                       {r.stage ? `${STAGE_LABEL[r.stage as ReminderStage]} · ` : ""}{r.channel === "whatsapp" ? "WhatsApp" : "Email"} · written by {r.created_by === "claude" ? "Claude" : "you"} · {formatDateTime(r.created_at)}
                       {r.sent_marked_at ? ` · opened to send ${formatDateTime(r.sent_marked_at)}` : ""}
                     </p>
@@ -186,14 +198,17 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
 function Timeline({ events }: { events: { id: number; actor: string; type: string; payload: Record<string, unknown>; created_at: string }[] }) {
   return (
     <section>
-      <h2 className="font-medium">History</h2>
-      <ol className="mt-2 flex flex-col gap-2 border-l pl-4 text-sm">
+      <h2 className="title-4 font-semibold">History</h2>
+      <ol className="mt-2 flex flex-col gap-3 body-6">
         {events.slice().reverse().map((e) => {
           const d = describeEvent(e);
           return (
-            <li key={e.id}>
-              <p><b>{d.who}</b> {d.what}</p>
-              <p className="text-xs text-muted-foreground">{formatDateTime(e.created_at)}</p>
+            <li key={e.id} className="flex gap-3">
+              <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-[#a3a3a3]" />
+              <div className="min-w-0 break-words">
+                <p><span className="font-medium">{d.who}</span> {d.what}</p>
+                <p className="caption-5 text-muted-foreground">{formatDateTime(e.created_at)}</p>
+              </div>
             </li>
           );
         })}

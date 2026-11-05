@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CopyButton } from "@/components/bits";
+import { Banner } from "@/components/ds";
 import { cancelAction, confirmTotalsAction, deleteDraftAction, markReminderSentAction, recordPaymentAction, sendAction, updateIssuedAction, type Result } from "./actions";
 
 function useRun() {
@@ -30,15 +31,13 @@ function useRun() {
 export function ConfirmTotals({ id, reason }: { id: string; reason: string | null }) {
   const { pending, run } = useRun();
   return (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-      <div className="text-sm text-amber-950">
-        <p className="font-medium">Check the totals before sending</p>
-        <p>{reason}. Dues&apos; figure is the one that will be used. Fix the line items if something&apos;s wrong, or confirm.</p>
-      </div>
-      <Button onClick={() => run(() => confirmTotalsAction(id))} disabled={pending} className="bg-amber-900 text-white hover:bg-amber-900/90">
-        {pending ? "Confirming…" : "Confirm totals"}
-      </Button>
-    </div>
+    <Banner
+      tone="warning"
+      title="Check the totals before sending"
+      action={<Button onClick={() => run(() => confirmTotalsAction(id))} disabled={pending}>{pending ? "Confirming…" : "Totals are right"}</Button>}
+    >
+      {reason}. Dues uses its own figure. If something is off, fix the line items below; otherwise confirm.
+    </Banner>
   );
 }
 
@@ -70,7 +69,7 @@ export function DeleteDraft({ id }: { id: string }) {
   const { pending, run } = useRun();
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild><Button variant="ghost" disabled={pending}>Delete draft</Button></AlertDialogTrigger>
+      <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Delete draft</Button></AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
@@ -90,7 +89,7 @@ export function ShareButtons({ link, whatsapp }: { link: string; whatsapp: strin
     <div className="flex flex-wrap gap-2">
       <CopyButton value={link} label="Copy link" variant="default" size="default" />
       <Button asChild variant="outline"><a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a></Button>
-      <Button asChild variant="ghost"><a href={link} target="_blank" rel="noopener noreferrer">Open client page</a></Button>
+      <Button asChild variant="ghost"><a href={link} target="_blank" rel="noopener noreferrer">View as client</a></Button>
     </div>
   );
 }
@@ -145,7 +144,7 @@ export function ExtendDueDate({ id, current }: { id: string; current: string }) 
   const [err, setErr] = useState<string | null>(null);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="ghost">Extend due date</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline">Extend due date</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Extend the due date</DialogTitle>
@@ -171,7 +170,7 @@ export function EditNotes({ id, notes }: { id: string; notes: string | null }) {
   const [v, setV] = useState(notes ?? "");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="ghost">Edit notes</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline">Edit notes</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Notes on the invoice</DialogTitle><DialogDescription>Amounts are locked after sending, but notes can change.</DialogDescription></DialogHeader>
         <Label htmlFor="en" className="sr-only">Notes</Label>
@@ -190,7 +189,7 @@ export function CancelInvoice({ id, number }: { id: string; number: string }) {
   const [reason, setReason] = useState("");
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild><Button variant="ghost" className="text-destructive hover:text-destructive" disabled={pending}>Cancel invoice</Button></AlertDialogTrigger>
+      <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Cancel invoice</Button></AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Cancel {number}?</AlertDialogTitle>
