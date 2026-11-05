@@ -85,7 +85,7 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M3 | Invoices, client page, payments (+ client pages, history, D16–D18) | Thu 21:30 | ✅ 20:00 |
 | M3b | Research and safety changes: inline client, duplicate check, Claude-safe actions, token hash, reminder stages, MSME, CSV (D19–D25) | Thu 22:30 | ✅ 20:16 |
 | M4 | MCP tools, cron, integration script, seed, no-AI check | Fri 00:30 | ✅ 20:16 |
-| M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ⬜ |
+| M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ◐ deployed to usedues.vercel.app 20:59; 20 MCP checks pass on production; real-Claude run pending |
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ⬜ |
 
 **Must-ship:** everything in §4–§5, including the chase list, reminders with stages (D19), CSV export (D22) and the cron.
