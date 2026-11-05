@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Refreshes the Supabase session cookie and sends logged-out visitors to /login.
 // This is an optimistic check only; every page and action re-checks the user on the server.
 
-const PUBLIC_PREFIXES = ["/login", "/signup", "/i/", "/api/"];
+const PUBLIC_PREFIXES = ["/login", "/signup", "/i/", "/api/", "/terms", "/privacy"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

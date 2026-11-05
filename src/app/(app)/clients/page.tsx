@@ -9,7 +9,7 @@ import { AutoRefresh } from "@/components/bits";
 import { EmptyState } from "@/components/empty-state";
 import { ClientForm } from "./client-form";
 
-export const metadata: Metadata = { title: "Clients · Dues" };
+export const metadata: Metadata = { title: "Clients" };
 
 export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
   const ctx = await requireCtx();

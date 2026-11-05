@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ClaudeBadge, StatusBadge } from "@/components/status-badge";
 import { ClientForm } from "../client-form";
 
-export const metadata: Metadata = { title: "Client · Dues" };
+export const metadata: Metadata = { title: "Client" };
 
 export default async function ClientPage({ params }: PageProps<"/clients/[id]">) {
   const ctx = await requireCtx();

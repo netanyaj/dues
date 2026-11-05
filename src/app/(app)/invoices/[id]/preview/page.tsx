@@ -10,7 +10,7 @@ import { InvoiceDocument } from "@/components/invoice-document";
 import { Button } from "@/components/ui/button";
 import { docFromInvoice } from "@/lib/view";
 
-export const metadata: Metadata = { title: "Preview · Dues" };
+export const metadata: Metadata = { title: "Preview" };
 
 // Private preview for the logged-in freelancer only (D7). Drafts have no public link.
 export default async function Preview({ params }: PageProps<"/invoices/[id]/preview">) {
