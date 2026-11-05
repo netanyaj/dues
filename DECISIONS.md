@@ -55,6 +55,8 @@ A Postgres view (`invoice_view`) works out the label, so the app, the filters an
 
 **Gave up:** a simple status column you can update by hand. Filtering by status goes through a view instead of an indexed column, which is fine at freelancer scale.
 
+> **Partly replaced by D16:** "Payment reported" is no longer a status that outranks Overdue. It's a separate flag.
+
 ## D5. TDS: the freelancer decides; code only suggests
 
 **Question:** a corporate client pays ₹32,400 against a ₹35,400 invoice. Is that a partial payment, or 10% TDS on the ₹30,000 subtotal?
@@ -154,3 +156,52 @@ New users land on a short setup page first, but nothing else is locked: they can
 ## D15. Browser roles can only read; every write goes through the server
 
 The browser's publishable key can read the user's own rows (RLS) but can't write any table. This blocks a user from setting `is_demo = false` on their own profile or writing a token. All writes go through server actions or MCP into the service layer (D8). The Supabase keys are the new-style ones: the publishable key (browser) and the secret key (server only, never `NEXT_PUBLIC_`).
+
+## D16. A client's "I've paid" pauses chasing briefly; it never hides the invoice
+
+**Question:** a slow payer taps "I've paid" with a made-up reference. Under D4, the invoice dropped off "To chase today" and looked handled.
+
+**Decision**
+- **Two separate facts.** Status is decided by confirmed money only: Cancelled → Paid → Overdue → Partially paid → Sent → Draft. "Payment reported" is a separate flag (`pending_reports > 0`) shown next to the status, e.g. "Overdue · payment reported". A client's claim never changes whether an invoice is overdue. (Replaces D4's order.)
+- **A 2-working-day pause.** After a client report, the invoice leaves "To chase today" for 2 working days (Saturday and Sunday skipped; bank holidays not modelled in v1). During the pause it sits at the top under "Needs your confirmation", so it never looks handled. After the pause it goes back on the chase list with "Reported N days ago, not confirmed. Check your bank."
+- **Cheap reference checks: flag, don't block.**
+  - The client form accepts any 6–22 letters or digits.
+  - The freelancer sees warnings: "Unusual reference format" (anything other than 12 digits for UPI/IMPS, or 16 or 22 characters for NEFT/RTGS) and "Reference already used on {number}".
+  - We don't block on format because PhonePe and GPay show a "Transaction ID" next to the UTR, and real payers paste the wrong one.
+
+**Gave up:** a single status word for every situation.
+
+## D17. Trust and fraud: say nothing we can't back up; verification is v2
+
+**Question:** what stops someone using Dues to send a fake invoice in a real business's name with their own bank details (invoice-redirection fraud)?
+
+**Decision: the client's page claims nothing it can't back up.**
+
+It doesn't show:
+- that the business is real;
+- that the bank account belongs to them;
+- anything "verified". No badges, no ticks.
+
+It shows:
+- "Invoice issued by {business} using Dues. Dues does not verify businesses or bank details." For accounts less than 30 days old, it adds: "This is a new Dues account. Confirm the details with {business} by phone before paying."
+- the GSTIN marked as "structurally valid" (format, checksum, state), with a link to the government's public GST search so the client can check it themselves;
+- the bank details exactly as they were when the invoice was sent (the snapshot, D7). If they changed in the 7 days before the invoice was sent, it shows "Bank details updated on {date}", because redirection scams usually involve a last-minute bank change;
+- "Not verified" wherever a verification badge would later go;
+- a "Report this invoice" link. It logs an event and writes to `abuse_reports`. Nothing happens automatically, because an automatic action could be used to take down a legitimate freelancer. v1 has no admin screen; reports are reviewed by hand in Supabase.
+
+**Verification is deliberately v2.** Real bank checks ("penny drop": send ₹1 and match the account holder's name) and GSTIN active-status checks need a provider (e.g. Cashfree, Setu, Decentro, or a GST data provider). Live keys need the provider's business verification, which takes days. Test-mode APIs return made-up results, so a "Verified" badge in the demo would be false, which is worse than no badge. v1 builds only the slot: a `verifications` table (type `bank` or `gstin`; status `not_verified`, `verified` or `failed`; provider; checked_at; result). Turning verification on later means signing up with a provider, not rewriting code.
+
+**v2 economics:** about ₹1–5 per check. It can be sold as a paid "Verified business" badge; unverified pages keep the warning.
+
+## D18. Due-date extensions: store the original, measure against it, and tell the client
+
+**Question:** pushing out the due date after sending makes "% paid by due date" look better without anything improving.
+
+**Decision**
+- `original_due_date` is set on Send and never changes. `due_date` is the currently agreed date.
+- **Metrics use `original_due_date`.** Overdue status and the chase list use `due_date`, because that's what was agreed.
+- After sending, the due date can only move **later**. Bringing it forward would make the client overdue sooner than agreed. Every change needs a short reason (e.g. "Client asked for 30 days"), which is logged as an event.
+- The client's page says "Due date extended from 12 Nov to 12 Dec."
+- METRICS adds "% of invoices extended", so a freelancer who extends a lot shows up too.
+- MCP has no tool for editing sent invoices, so extensions happen in the app only.
+
