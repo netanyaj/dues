@@ -20,15 +20,15 @@ export default async function Image({ params }: { params: Promise<{ publicId: st
   const line = !inv ? "Invoice not found" : cancelled ? "Cancelled" : paid ? "Paid in full" : `${formatINR(Number(inv.balance_paise))} due ${formatDate(String(inv.due_date))}`;
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "#f4f4f4", color: "#171717", fontFamily: "sans-serif" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "#fbf8f6", color: "#17151c", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <svg width="56" height="56" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#3a4fd6" /><path d="M8 7v14M12 7v14M16 7v14M20 7v14" stroke="#fff" strokeWidth="2" strokeLinecap="round" /><path d="M5.5 19 22.5 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
+          <svg width="56" height="56" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#e0306e" /><path d="M8 7v14M12 7v14M16 7v14M20 7v14" stroke="#fff" strokeWidth="2" strokeLinecap="round" /><path d="M5.5 19 22.5 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
           <span style={{ fontSize: 36, fontWeight: 600 }}>Dues</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <span style={{ fontSize: 36, color: "#5e5e5e" }}>Invoice {String(inv?.number ?? "")} from</span>
+          <span style={{ fontSize: 36, color: "#5e5a63" }}>Invoice {String(inv?.number ?? "")} from</span>
           <span style={{ fontSize: 64, fontWeight: 600 }}>{business.slice(0, 40)}</span>
-          <span style={{ fontSize: 56, fontWeight: 600, color: inv?.status === "overdue" ? "#b42318" : "#171717" }}>{line}</span>
+          <span style={{ fontSize: 56, fontWeight: 600, color: inv?.status === "overdue" ? "#b54708" : "#17151c" }}>{line}</span>
         </div>
       </div>
     ),

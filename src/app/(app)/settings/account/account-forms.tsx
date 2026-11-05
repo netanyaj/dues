@@ -39,7 +39,7 @@ export function DeleteAccount({ disabled }: { disabled: boolean }) {
   const [typed, setTyped] = useState("");
   return (
     <div className="flex flex-col gap-3 rounded-xl border bg-card p-5 sm:p-6">
-      <p className="title-4 font-semibold text-late">Delete account</p>
+      <p className="title-4 font-semibold text-danger">Delete account</p>
       <p className="body-6 text-muted-foreground">Deletes your profile, clients, invoices, payments and reminders for good. Client links stop working. Download your CSV first if you need it for tax.</p>
       <div>
         <AlertDialog>

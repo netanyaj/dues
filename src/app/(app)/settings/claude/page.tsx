@@ -38,7 +38,7 @@ export default async function ClaudeSettings({ searchParams }: PageProps<"/setti
         description="Connect your own Claude so you can say who to invoice in plain words. Claude drafts; Dues checks the numbers; you send."
       />
       <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 body-5">
-        <span aria-hidden className={`size-2 rounded-full ${profile.mcp_last_used_at ? "bg-paid" : "bg-[#a3a3a3]"}`} />
+        <span aria-hidden className={`size-2 rounded-full ${profile.mcp_last_used_at ? "bg-paid" : "bg-[#a8a3ad]"}`} />
         {status}
       </div>
       <McpCard serverUrl={serverUrl} hasToken={!!profile.mcp_token_hash} last4={profile.mcp_token_last4} isDemo={profile.is_demo} />

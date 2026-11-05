@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function LogoMark({ size = 24, className, inverted = false }: { size?: number; className?: string; inverted?: boolean }) {
   // Same brand tile on light and dark surfaces; `inverted` only changes the wordmark colour.
   void inverted;
-  const bg = "#3a4fd6";
+  const bg = "#e0306e";
   const fg = "#ffffff";
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true" className={cn("shrink-0", className)}>

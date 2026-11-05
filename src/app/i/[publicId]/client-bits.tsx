@@ -12,7 +12,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
   const [state, action, pending] = useActionState<PaidState, FormData>(reportPaidAction.bind(null, publicId), {});
   if (state.ok) {
     return (
-      <p role="status" className="rounded-xl border border-[#abefc6] bg-paid-soft px-4 py-3 body-6">
+      <p role="status" className="rounded-xl border border-paid-border bg-paid-soft px-4 py-3 body-6">
         Marked as paid. {business} will confirm once it arrives.
       </p>
     );

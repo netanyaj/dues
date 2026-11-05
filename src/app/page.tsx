@@ -64,7 +64,7 @@ export default async function Home() {
           <div className="max-w-[680px]">
             <p className="inline-flex rounded-full bg-brand-soft px-3 py-1 caption-3 text-brand">For Indian freelancers and small studios</p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-none">
-              Invoice from Claude.<br />Check and send in Dues.<br /><span className="text-brand">Get paid on time.</span>
+              Invoice from Claude.<br />Check and send in Dues.<br /><span className="text-brand-vivid">Get paid on time.</span>
             </h1>
             <p className="mt-6 max-w-[560px] body-3 text-muted-foreground">
               Tell Claude who to bill. Dues works out the GST, numbers the invoice in order and gives your client a page to pay by bank transfer or UPI. Then it shows you who still owes you, and when to chase.
@@ -99,7 +99,7 @@ export default async function Home() {
                 <figcaption className="mt-3 caption-5 text-muted-foreground">r/notioncreations, an Indian freelancer</figcaption>
               </figure>
             </div>
-            <div className="mt-6 rounded-xl border border-[#d6dbf8] bg-brand-soft p-5 md:flex md:items-start md:gap-6">
+            <div className="mt-6 rounded-xl border border-[#f6c6d7] bg-brand-soft p-5 md:flex md:items-start md:gap-6">
               <p className="title-3 font-semibold text-brand md:w-64 md:shrink-0">The 45-day rule most clients forget</p>
               <p className="mt-2 body-6 text-foreground md:mt-0">
                 If you&apos;re registered on Udyam as a micro or small enterprise, buyers must pay within 45 days under the MSMED Act, or owe compound interest at three times the RBI bank rate. Under Section 43B(h), a late buyer can&apos;t deduct the expense until they pay. Dues prints this on your invoice, in plain words, and warns you if your terms go past 45 days.
@@ -222,7 +222,7 @@ export default async function Home() {
         <section className="mx-auto max-w-5xl px-4 py-20">
           <div className="rounded-2xl bg-brand px-6 py-16 text-center text-white">
             <h2 className="mx-auto max-w-[680px] heading-5 sm:heading-4">Send your next invoice from Claude, and know when it&apos;s paid.</h2>
-            <div className="mt-8 flex justify-center"><Button asChild size="lg" variant="secondary" className="bg-white hover:bg-[#e8eafb]"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
+            <div className="mt-8 flex justify-center"><Button asChild size="lg" variant="secondary" className="bg-white hover:bg-brand-soft"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
             <p className="mt-4 caption-5 text-white/80">Free for up to 50 invoices · No card needed</p>
           </div>
         </section>

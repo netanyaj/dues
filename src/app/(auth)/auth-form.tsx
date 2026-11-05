@@ -58,7 +58,7 @@ export function AuthForm({
           {!isLogin && <p id="pw-hint" className="caption-5 text-muted-foreground">At least 8 characters.</p>}
         </div>
         {state.error && (
-          <p role="alert" className="rounded-lg border border-[#fecdca] bg-late-soft px-3 py-2 body-6 text-late">{state.error}</p>
+          <p role="alert" className="rounded-lg border border-danger-border bg-danger-soft px-3 py-2 body-6 text-danger">{state.error}</p>
         )}
         <Button type="submit" size="lg" disabled={pending}>
           {pending ? (isLogin ? "Logging in…" : "Creating account…") : isLogin ? "Log in" : "Create account"}

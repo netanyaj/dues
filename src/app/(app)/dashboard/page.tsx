@@ -71,7 +71,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
             <ul className="flex flex-col gap-3">
               {reports.map((r) => (
                 <li key={r.id} className="flex gap-3 rounded-xl border bg-card p-4">
-                    <BankIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-attention" />
+                    <BankIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-review" />
                     <div className="min-w-0 flex-1">
                       <p className="title-4">
                         {r.reported_by === "claude" ? "You told Claude " : `${r.client_name} says `}
@@ -190,7 +190,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={i.status} pendingReports={i.pending_reports} />
-                          {i.needs_review && <span className="mt-0.5 flex items-center gap-1 caption-4 text-attention"><WarningIcon aria-hidden className="size-3.5" />Check totals</span>}
+                          {i.needs_review && <span className="mt-0.5 flex items-center gap-1 caption-4 text-review"><WarningIcon aria-hidden className="size-3.5" />Check totals</span>}
                         </td>
                       </tr>
                     ))}
@@ -208,7 +208,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                         <div className="shrink-0 text-right">
                           <Amount paise={i.stage === "issued" ? i.balance_paise : i.total_paise} className="title-4" decimals="auto" />
                           <div><StatusBadge status={i.status} pendingReports={i.pending_reports} className="caption-4 justify-end" /></div>
-                          {i.needs_review && <p className="caption-4 text-attention">Check totals</p>}
+                          {i.needs_review && <p className="caption-4 text-review">Check totals</p>}
                         </div>
                       </Link>
                     </li>

@@ -159,7 +159,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
                   <li key={p.id} className="px-3 py-2">
                     <p className="flex justify-between gap-2">
                       <span className="amount font-medium">{formatINR(p.amount_paise)}{p.tds_paise > 0 ? ` + ${formatINR(p.tds_paise)} TDS` : ""}</span>
-                      <span className={p.status === "confirmed" ? "text-paid font-medium" : p.status === "rejected" ? "text-muted-foreground line-through" : "text-attention font-medium"}>
+                      <span className={p.status === "confirmed" ? "text-paid font-medium" : p.status === "rejected" ? "text-muted-foreground line-through" : "text-review font-medium"}>
                         {p.status === "reported" ? "Waiting for you" : p.status === "confirmed" ? "Confirmed" : "Rejected"}
                       </span>
                     </p>

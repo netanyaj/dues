@@ -61,12 +61,12 @@ export function InvoiceDocument({ d }: { d: DocData }) {
   return (
     <article className="relative min-w-0 rounded-xl border bg-card p-4 sm:p-8 print:border-0 print:p-0" aria-label="Invoice">
       {d.draft && (
-        <p className="mb-4 rounded-lg border border-dashed border-[#a3a3a3] px-3 py-2 text-center caption-4 text-muted-foreground">
+        <p className="mb-4 rounded-lg border border-dashed border-input px-3 py-2 text-center caption-4 text-muted-foreground">
           Draft preview. Not a valid tax invoice until you send it and it gets a number.
         </p>
       )}
       {d.cancelled && (
-        <p className="mb-4 rounded-lg border border-[#fecdca] bg-late-soft px-3 py-2 text-center caption-3 text-late">
+        <p className="mb-4 rounded-lg border border-danger-border bg-danger-soft px-3 py-2 text-center caption-3 text-danger">
           Cancelled. This invoice is void and should not be paid.
         </p>
       )}

@@ -2,15 +2,15 @@ import { RobotIcon } from "@phosphor-icons/react/dist/ssr";
 import { STATUS_LABEL, type InvoiceStatus } from "@/lib/domain/status";
 import { cn } from "@/lib/utils";
 
-// Status is a dot plus a word, never colour alone. Colour is reserved: red = late,
-// amber = needs your attention, green = paid. Everything else is ink or grey.
+// Status is a dot plus a word, never colour alone (D33): amber = overdue, green = paid,
+// neutral = payment reported / needs review. Red is for errors only; pink is brand only.
 const TONE: Record<InvoiceStatus, { text: string; dot: string }> = {
-  draft: { text: "text-muted-foreground", dot: "bg-[#a3a3a3]" },
+  draft: { text: "text-muted-foreground", dot: "bg-[#a8a3ad]" },
   sent: { text: "text-foreground", dot: "bg-foreground" },
   partially_paid: { text: "text-foreground", dot: "bg-foreground" },
   overdue: { text: "text-late", dot: "bg-late" },
   paid: { text: "text-paid", dot: "bg-paid" },
-  cancelled: { text: "text-muted-foreground line-through", dot: "bg-[#d4d4d4]" },
+  cancelled: { text: "text-muted-foreground line-through", dot: "bg-[#d9d2cc]" },
 };
 
 export function StatusBadge({ status, pendingReports = 0, className }: { status: InvoiceStatus; pendingReports?: number; className?: string }) {
@@ -23,8 +23,8 @@ export function StatusBadge({ status, pendingReports = 0, className }: { status:
         {STATUS_LABEL[status]}
       </span>
       {reported && (
-        <span className="inline-flex items-center gap-1.5 text-attention">
-          <span aria-hidden className="size-1.5 rounded-full bg-[#dc6803]" />
+        <span className="inline-flex items-center gap-1.5 text-review">
+          <span aria-hidden className="size-1.5 rounded-full bg-review ring-2 ring-review/20" />
           <span className="sr-only">and </span>Payment reported
         </span>
       )}

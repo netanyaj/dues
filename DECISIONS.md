@@ -424,3 +424,47 @@ The founder rejected the first two mock directions as still generic. They picked
 - **CORS on `/api/mcp`:** OPTIONS returns 204. It allows the Authorization, Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version and Last-Event-ID headers. The origin is `*`, which is safe because the token is a header, never a cookie.
 - **Server icon:** `serverInfo` sends `title`, `websiteUrl` and `icons` (`/icon.png` at 512px, `/icon.svg`). There are also `favicon.ico` and `apple-icon.png`, all public.
 - **Tests:** `tests/mcp/integration.mts` now covers all of this, 23 checks in total.
+
+## D33. Hot-pink brand; calm, separate status colours (updates D31)
+
+**Context:** the indigo `#3a4fd6` read as default SaaS blue. The user asked for a deliberate hot-pink direction, with electric coral as the alternative.
+
+**Decision: hot pink.**
+
+| Token | Value | Used for |
+|---|---|---|
+| `--brand` / `--primary` | `#C2185B` | Main buttons, links, brand text |
+| `--brand-vivid` | `#E0306E` | Logo, fills, 24px+ type only |
+| `--brand-strong` | `#A3134C` | Button hover |
+| `--brand-soft` | `#FCE8EF` | Tinted surfaces |
+| `--brand-on-dark` | `#FF8FB3` | Brand text on the dark sidebar or band |
+| `--background` | `#FBF8F6` | Warm white canvas |
+| `--foreground` / `--sidebar` | `#17151C` | Near-black ink |
+
+**Contrast:**
+
+| Pairing | Ratio |
+|---|---|
+| White on `#C2185B` | 5.87:1 |
+| `#C2185B` on warm white | 5.55:1 |
+| `#C2185B` on brand-soft | 5.01:1 |
+| White on `#E0306E` | 4.36:1 (fails AA for normal text, so it's never used behind small text) |
+| `#E0306E` on warm white | 4.12:1 (passes for large type) |
+| `#FF8FB3` on ink | 8.47:1 |
+| Ink on warm white | 17.1:1 |
+| Muted `#5E5A63` on warm white | 6.37:1 |
+
+**Status stays separate from the brand:**
+
+| Status | Colour | Contrast | Note |
+|---|---|---|---|
+| Overdue, and caution warnings | Amber `#B54708` | 5.13:1 | Not red, so it doesn't clash with pink |
+| Errors and danger | Red `#B42318` | 6.22:1 | New `--danger` tokens, used only for errors and destructive actions |
+| Paid | Green `#067647` | 5.38:1 | |
+| Needs review, payment reported | Neutral `#4A4550` | — | |
+
+**Electric coral `#FF5B37`: not chosen.** White on it is 3.09:1 and it sits on warm white at 2.92:1, so buttons would need a darker `#B93A1E` (5.7:1). That loses most of its character. It's also too close to the overdue amber.
+
+**Rules:**
+- Pink is only for brand, main actions and highlights. It never signals a status.
+- All colours live in tokens in `globals.css`. The few remaining hex values are border tints and the OG image, which can't read CSS variables.

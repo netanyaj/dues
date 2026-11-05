@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
         )}
         {gaps.length > 0 && (
-          <div className="border-b border-[#fedf89] bg-attention-soft px-4 py-2 body-6 text-attention md:px-8 print:hidden">
+          <div className="border-b border-attention-border bg-attention-soft px-4 py-2 body-6 text-attention md:px-8 print:hidden">
             Finish setup before you can send invoices: add your {gaps.join(", ")}.{" "}
             <Link href="/settings" className="font-semibold underline underline-offset-4">Open settings</Link>
           </div>

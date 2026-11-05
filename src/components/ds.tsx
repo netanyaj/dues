@@ -43,9 +43,9 @@ export function Amount({ paise, className, decimals = "always", muted = false }:
 
 const BANNER = {
   info: { box: "bg-card border-border", icon: InfoIcon, iconClass: "text-foreground" },
-  warning: { box: "bg-attention-soft border-[#fedf89]", icon: WarningIcon, iconClass: "text-attention" },
-  error: { box: "bg-late-soft border-[#fecdca]", icon: WarningOctagonIcon, iconClass: "text-late" },
-  success: { box: "bg-paid-soft border-[#abefc6]", icon: CheckCircleIcon, iconClass: "text-paid" },
+  warning: { box: "bg-attention-soft border-attention-border", icon: WarningIcon, iconClass: "text-attention" },
+  error: { box: "bg-danger-soft border-danger-border", icon: WarningOctagonIcon, iconClass: "text-danger" },
+  success: { box: "bg-paid-soft border-paid-border", icon: CheckCircleIcon, iconClass: "text-paid" },
 } as const;
 
 export function Banner({ tone = "info", title, children, action, className, role }: { tone?: keyof typeof BANNER; title?: ReactNode; children?: ReactNode; action?: ReactNode; className?: string; role?: "alert" | "status" }) {

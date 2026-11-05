@@ -61,9 +61,9 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 - **Limits:** 50 invoices per account (D12). Demo accounts can't regenerate their link (D13).
 
 ## 6. UX requirements
-- **Design direction (D27, accent updated by D31):**
+- **Design direction (D27; accent D33):**
   - Calm money tool: a dark sidebar, a grey canvas, white panels.
-  - One accent, indigo `#3a4fd6`, for primary actions, the logo and landing highlights. Ink for text. Red, amber and green only for late, needs-you and paid.
+  - One brand accent, hot pink (`#C2185B` for text and buttons, `#E0306E` for the logo and large type), on warm white `#FBF8F6` with ink `#17151C` (D33). Status: amber = overdue or caution, red = errors only, green = paid, neutral = needs review.
   - Copy buttons are icon-only, with a label for screen readers and a hover tooltip. Button and banner text stays short ("I've paid", "Notify as paid", "Payment reported").
   - Geist with tabular numerals on every amount. Phosphor icons. The tally-mark logo.
 - **Each screen answers one question first:**
