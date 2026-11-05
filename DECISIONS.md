@@ -410,3 +410,17 @@ The founder rejected the first two mock directions as still generic. They picked
 - **Client page wording:** "I've paid" as the form title, "Notify as paid" to submit, "Payment reported" after, "Pay with UPI".
 - **Client page on desktop (lg and up):** invoice document on the left, amount, how to pay and the trust note in a 400px column on the right. Phones keep the order summary, pay, trust, then document.
 - No business logic, schema or MCP change.
+
+## D32. MCP discovery must never hit the login page
+
+**Context:** found on the live site by the user's reviewer. `/api/mcp` itself answered correctly, but the auth proxy sent every unknown path to `/login`, including `/.well-known/oauth-protected-resource`. Our 401 carried `WWW-Authenticate: Bearer`, which tells MCP clients to start OAuth discovery. They got a login page instead of JSON, and the connection failed.
+
+**Decision:**
+- The proxy only guards app pages (`/dashboard`, `/invoices`, `/clients`, `/settings`). Every other path is left alone, so unknown pages get the real 404.
+- `/.well-known/*` always returns a JSON 404.
+- The proxy skips all of `/api/*`, `/i/*`, icons and static files.
+- **No `WWW-Authenticate` on our 401.** Dues has no OAuth server (v2), so we shouldn't invite discovery.
+- **Two different 401 messages:** "No Dues token sent…" vs "Token not recognised. Copy a fresh token… or Regenerate".
+- **CORS on `/api/mcp`:** OPTIONS returns 204. It allows the Authorization, Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version and Last-Event-ID headers. The origin is `*`, which is safe because the token is a header, never a cookie.
+- **Server icon:** `serverInfo` sends `title`, `websiteUrl` and `icons` (`/icon.png` at 512px, `/icon.svg`). There are also `favicon.ico` and `apple-icon.png`, all public.
+- **Tests:** `tests/mcp/integration.mts` now covers all of this, 23 checks in total.

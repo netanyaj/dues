@@ -85,7 +85,7 @@ flowchart LR
   - Each user has one random 192-bit token. **Only its SHA-256 hash is stored**, so a database leak doesn't expose working tokens.
   - The token is shown once on creation or regenerate; after that, only the last 4 characters.
   - **Header only:** Claude sends `Authorization: Bearer <token>` to `https://usedues.vercel.app/api/mcp`. The token never appears in a URL, browser history, referrer or Vercel's request logs.
-  - A missing or invalid header gets 401 with the fix. The retired `/api/mcp/<token>` format returns 410 with reconnect instructions, and never reads the path.
+  - A missing header and an unrecognised token each get their own 401 message, with no `WWW-Authenticate` header (no OAuth yet). `/.well-known/*` returns a JSON 404, and the auth proxy only guards app pages (D32). CORS preflight is answered. The retired `/api/mcp/<token>` format returns 410 with reconnect instructions, and never reads the path.
   - **Kill switch:** Regenerate invalidates the old token immediately. It's disabled on shared demo accounts.
   - **Never logged:** no `src` file logs request headers or `authorization` (a guard test), and verbose MCP logging is off.
   - **v2: OAuth** for sign-in, explicit consent screens, scopes and token expiry. A bearer token has none of these: anyone holding it is the user until it's regenerated.

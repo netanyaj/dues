@@ -24,13 +24,13 @@ function step(name: string) {
 }
 
 // D28: one URL, token in the Authorization header only.
-async function rpc(token: string | null, method: string, params: unknown = {}, id = 1, url = `${BASE}/api/mcp`): Promise<{ result?: any; error?: any; status: number }> {
+async function rpc(token: string | null, method: string, params: unknown = {}, id = 1, url = `${BASE}/api/mcp`): Promise<{ result?: any; error?: any; status: number; headers?: Headers }> {
   const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": "2025-06-18" };
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(url, { method: "POST", headers, body: JSON.stringify({ jsonrpc: "2.0", id, method, params }) });
   const text = await res.text();
   const json = text.startsWith("{") ? JSON.parse(text) : JSON.parse(text.split("\n").find((l) => l.startsWith("data: "))!.slice(6));
-  return { ...json, status: res.status };
+  return { ...json, status: res.status, headers: res.headers };
 }
 
 async function call(token: string, tool: string, args: Record<string, unknown> = {}) {
@@ -208,26 +208,48 @@ async function main() {
   // D28: header-only auth
   const none = await rpc(null, "tools/list");
   assert.equal(none.status, 401);
-  assert.match(none.error.message, /Authorization header/);
+  assert.match(none.error.message, /No Dues token sent/);
+  assert.equal(none.headers?.get("www-authenticate") ?? null, null);
   const wrong = await rpc("f".repeat(48), "tools/list");
   assert.equal(wrong.status, 401);
-  assert.match(wrong.error.message, /isn't valid/);
+  assert.match(wrong.error.message, /Token not recognised/);
   const retired = await rpc(null, "tools/list", {}, 1, `${BASE}/api/mcp/${a.token}`);
   assert.equal(retired.status, 410);
   assert.match(retired.error.message, /retired/);
-  step("auth: no header → 401, wrong token → 401, old token-in-URL format → 410 with instructions");
+  step("auth: no header → 401, wrong token → 401 (different messages, no WWW-Authenticate), old token-in-URL format → 410");
+
+  // D32: OAuth discovery probes get a JSON 404, never the login page; CORS preflight is answered
+  for (const p of ["/.well-known/oauth-protected-resource", "/.well-known/oauth-authorization-server", "/.well-known/openid-configuration", "/.well-known/oauth-protected-resource/api/mcp"]) {
+    const r = await fetch(`${BASE}${p}`, { redirect: "manual" });
+    assert.equal(r.status, 404, p);
+    assert.match(r.headers.get("content-type") ?? "", /application\/json/, p);
+  }
+  const pre = await fetch(`${BASE}/api/mcp`, { method: "OPTIONS", headers: { Origin: "https://claude.ai", "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "authorization, content-type, mcp-protocol-version" } });
+  assert.ok(pre.status === 204 || pre.status === 200);
+  assert.match(pre.headers.get("access-control-allow-headers") ?? "", /Authorization/);
+  assert.match(pre.headers.get("access-control-allow-headers") ?? "", /Mcp-Session-Id/);
+  const junk = await fetch(`${BASE}/no-such-page-${Date.now()}`, { redirect: "manual" });
+  assert.equal(junk.status, 404);
+  for (const p of ["/icon.png", "/icon.svg", "/favicon.ico", "/apple-icon.png"]) assert.equal((await fetch(`${BASE}${p}`, { redirect: "manual" })).status, 200, p);
+  step("/.well-known/* → JSON 404, OPTIONS preflight answered, unknown page → 404, icons public");
 
   // Regenerate cuts off the old token (D25)
   const fresh = await regenerateMcpToken({ userId: a.userId, actor: "user" });
   const old = await rpc(a.token, "tools/list");
   assert.equal(old.status, 401);
-  assert.match(old.error.message, /isn't valid/);
+  assert.match(old.error.message, /Token not recognised/);
   const neu = await rpc(fresh, "tools/list");
   assert.equal(neu.result.tools.length, 9);
   const { data: stored } = await admin.from("profiles").select("mcp_token_hash, mcp_token_last4").eq("user_id", a.userId).single();
   assert.notEqual(stored!.mcp_token_hash, fresh);
   assert.equal(stored!.mcp_token_last4, fresh.slice(-4));
   step("regenerate: old token gets a clear 401, new token works, only the hash is stored");
+
+  const hello = await rpc(fresh, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "0" } });
+  assert.equal(hello.status, 200);
+  assert.equal(hello.result.serverInfo.name, "Dues");
+  assert.match(hello.result.serverInfo.icons?.[0]?.src ?? "", /\/icon\.png$/);
+  step("initialize: 200 with serverInfo name Dues and an icon");
 
   console.log(`\n${passed} checks passed.`);
 }
