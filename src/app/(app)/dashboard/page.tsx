@@ -85,6 +85,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                       <p className="mt-0.5 caption-5 text-muted-foreground">
                         {r.tds_suggestion ? `${formatINR(r.balance_paise - r.amount_paise, { decimals: "auto" })} short, which matches ${r.tds_suggestion.rate}% TDS.` : r.amount_paise < r.balance_paise ? `${formatINR(r.balance_paise - r.amount_paise, { decimals: "auto" })} less than the balance.` : "Covers the full balance."}
                       </p>
+                      {r.proof_url && <p className="mt-1 caption-4"><a href={r.proof_url} target="_blank" rel="noopener noreferrer" className="font-medium text-brand underline underline-offset-2">View proof of payment</a></p>}
                       {r.flags.map((f) => <p key={f} className="mt-1 flex gap-1 caption-4 text-attention"><WarningIcon aria-hidden className="mt-px size-3.5 shrink-0" />{f}</p>)}
                       <p className="mt-2 caption-5 text-muted-foreground">Check your bank or UPI app, then:</p>
                       <div className="mt-2"><ReportDecision report={r} /></div>

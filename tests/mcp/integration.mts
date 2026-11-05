@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { gstinCheckChar } from "../../src/lib/domain/gst";
 import { regenerateMcpToken } from "../../src/lib/service/profile";
 import { sendInvoice } from "../../src/lib/service/invoices";
+import { pendingReports, reportPaymentPublic } from "../../src/lib/service/payments";
 
 const BASE = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false } });
@@ -269,6 +270,20 @@ async function main() {
   assert.equal(mine.client_views.count, 1);
   assert.ok(mine.client_views.last_viewed_at);
   step("client views: a phone browser counts, a WhatsApp preview doesn't; list_invoices shows it");
+
+  // D40: proof of payment, private bucket, signed link for the owner only
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+  const bad = await reportPaymentPublic(pid, { amount_rupees: "1", utr: "123456789012", method: "upi" }, new File([new TextEncoder().encode("<script>alert(1)</script>")], "x.png", { type: "image/png" }));
+  assert.equal(bad.ok, false);
+  const good = await reportPaymentPublic(pid, { amount_rupees: "1", utr: "123456789013", method: "upi" }, new File([png], "receipt.png", { type: "image/png" }));
+  assert.deepEqual(good, { ok: true, proofSaved: true });
+  const pr = (await pendingReports({ userId: a.userId, actor: "user" })).find((r) => r.utr === "123456789013")!;
+  assert.ok(pr.proof_url);
+  assert.equal((await fetch(pr.proof_url!)).status, 200);
+  const publicTry = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/payment-proofs/${pr.proof_path}`);
+  assert.notEqual(publicTry.status, 200);
+  await admin.storage.from("payment-proofs").remove([pr.proof_path!]);
+  step("proof upload: fake image refused; real one stored privately, owner gets a signed link, public URL refused");
 
   console.log(`\n${passed} checks passed.`);
 }

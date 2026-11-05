@@ -1,4 +1,5 @@
 import { isLikelyBot } from "@/lib/domain/bots";
+import { checkProof } from "@/lib/domain/proof";
 import { formatINR, rupeesToPaise } from "@/lib/domain/money";
 import { CLAIM_TOLERANCE_PAISE, suggestTds } from "@/lib/domain/tax";
 import { formatDate, istToday, isValidDate } from "@/lib/domain/dates";
@@ -120,8 +121,16 @@ export async function recordPublicView(found: { invoice: Record<string, unknown>
   if (error) console.error("view log failed", error.code);
 }
 
-export async function reportPaymentPublic(publicId: string, input: PaymentInput): Promise<{ ok: true } | { ok: false; field?: string; error: string }> {
+export async function reportPaymentPublic(publicId: string, input: PaymentInput, proof?: File | null): Promise<{ ok: true; proofSaved?: boolean } | { ok: false; field?: string; error: string }> {
   try {
+    let proofBytes: Uint8Array | null = null;
+    let proofType: { mime: string; ext: string } | null = null;
+    if (proof && proof.size > 0) {
+      proofBytes = new Uint8Array(await proof.arrayBuffer());
+      const c = checkProof(proof.size, proofBytes);
+      if (!c.ok) return { ok: false, field: "proof", error: c.error };
+      proofType = c;
+    }
     const found = await getPublicInvoice(publicId);
     if (!found) return { ok: false, error: "This invoice link isn't valid." };
     const inv = found.invoice as Record<string, unknown>;
@@ -137,13 +146,21 @@ export async function reportPaymentPublic(publicId: string, input: PaymentInput)
     }
     const utr = parseUtr(input.utr, true);
     const ctx: Ctx = { userId: String(inv.user_id), actor: "client" };
-    const { error } = await db().from("payments").insert({
+    const { data: row, error } = await db().from("payments").insert({
       invoice_id: inv.id, user_id: ctx.userId, amount_paise: amount, tds_paise: 0,
       method: parseMethod(input.method), utr, paid_on: parsePaidOn(input.paid_on), reported_by: "client", status: "reported",
-    });
+    }).select("id").single();
     if (error) throw error;
-    await logEvent(ctx, String(inv.id), "payment_reported", { amount_paise: amount, utr });
-    return { ok: true };
+    // D40: the report stands even if the upload fails; proof is optional evidence, not a gate.
+    let proofSaved = false;
+    if (proofBytes && proofType) {
+      const path = `${ctx.userId}/${row.id}.${proofType.ext}`;
+      const up = await db().storage.from("payment-proofs").upload(path, proofBytes, { contentType: proofType.mime, upsert: false });
+      if (!up.error) { await db().from("payments").update({ proof_path: path }).eq("id", row.id); proofSaved = true; }
+      else console.error("proof upload failed", up.error.message);
+    }
+    await logEvent(ctx, String(inv.id), "payment_reported", { amount_paise: amount, utr, proof: proofSaved });
+    return { ok: true, proofSaved };
   } catch (e) {
     if (e instanceof DuesError) return { ok: false, field: e.field, error: e.message };
     if (e instanceof Error && e.name === "InputError") return { ok: false, field: "amount_rupees", error: e.message };
@@ -155,8 +172,8 @@ export async function reportPaymentPublic(publicId: string, input: PaymentInput)
 /** Reported payments across all invoices: the dashboard's "Needs your confirmation". */
 export async function pendingReports(ctx: Ctx) {
   const rows = check(
-    await db().from("payments").select("id, invoice_id, amount_paise, tds_paise, utr, paid_on, method, reported_by, created_at").eq("user_id", ctx.userId).eq("status", "reported").order("created_at", { ascending: false }),
-  ) as PaymentRow[];
+    await db().from("payments").select("id, invoice_id, amount_paise, tds_paise, utr, paid_on, method, reported_by, created_at, proof_path").eq("user_id", ctx.userId).eq("status", "reported").order("created_at", { ascending: false }),
+  ) as unknown as PaymentRow[];
   if (!rows.length) return [];
   const invs = check(
     await db().from("invoice_view").select("id, number, client_name, total_paise, subtotal_paise, balance_paise").in("id", [...new Set(rows.map((r) => r.invoice_id))]),
@@ -171,7 +188,15 @@ export async function pendingReports(ctx: Ctx) {
   const numbers = otherInvoiceIds.length
     ? new Map((check(await db().from("invoices").select("id, number").in("id", otherInvoiceIds)) as { id: string; number: string }[]).map((x) => [x.id, x.number]))
     : new Map<string, string>();
+  // D40: signed, 10-minute links to any proof the client attached. Only the owner's session reaches here.
+  const withProof = rows.filter((r) => r.proof_path);
+  const signed = new Map<string, string>();
+  if (withProof.length) {
+    const { data } = await db().storage.from("payment-proofs").createSignedUrls(withProof.map((r) => r.proof_path!), 600);
+    for (const d of data ?? []) if (d.signedUrl && d.path) signed.set(d.path, d.signedUrl);
+  }
   return rows.map((p) => {
+    const proof_url = signed.get(p.proof_path ?? "") ?? null;
     const reused = dupes.find((d) => d.utr === p.utr && d.id !== p.id);
     const flags: string[] = [];
     if (!utrLooksUsual(p.utr)) flags.push("Unusual reference format. UPI/IMPS references are 12 digits; NEFT 16 and RTGS 22 characters.");
@@ -186,6 +211,7 @@ export async function pendingReports(ctx: Ctx) {
       client_name: inv?.client_name,
       total_paise: Number(inv?.total_paise),
       balance_paise: Number(inv?.balance_paise),
+      proof_url,
       tds_suggestion: inv && !Number(p.tds_paise) ? suggestTds(Number(inv.subtotal_paise), Number(inv.balance_paise), amount) : null,
       flags,
     };

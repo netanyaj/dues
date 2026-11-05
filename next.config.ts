@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 // cacheComponents is off on purpose: almost every page is per-user and reads the
 // session cookie, so there is nothing to cache and Suspense-everywhere adds risk.
 const nextConfig: NextConfig = {
+  // D40: proof-of-payment uploads (5 MB max, checked in code) go through a server action.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   turbopack: {
     rules: {
       "*.css": {

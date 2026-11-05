@@ -41,6 +41,12 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
           <option value="other">Other</option>
         </select>
       </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="proof">Screenshot or receipt <span className="font-normal text-muted-foreground">(optional)</span></Label>
+        <input id="proof" name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" aria-invalid={state.field === "proof"} aria-describedby="proof-hint"
+          className="block w-full min-w-0 rounded-lg border border-input bg-card text-sm file:mr-3 file:h-10 file:border-0 file:bg-muted file:px-3 file:font-medium" />
+        <p id="proof-hint" className="caption-5 text-muted-foreground">Image or PDF, up to 5 MB. Only {business} can see it.</p>
+      </div>
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
       <div className="flex gap-2">
         <Button type="submit" size="lg" disabled={pending} className="flex-1">{pending ? "Sending…" : "Notify as paid"}</Button>

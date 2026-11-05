@@ -533,3 +533,14 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **Each bucket filters the invoice list** (`/dashboard?age=…`). The legend tiles are the keyboard-accessible links, and the bar segments are mouse shortcuts.
 - **No other charts.** A new account has no history to plot trends from.
 - **Logic** is in `lib/domain/aging.ts` and unit tested: day 45 falls in 31–45, day 46 in over 45.
+
+## D40. Proof of payment on "I've paid"
+
+**Decision:**
+- **Optional upload** on the client's "I've paid" form: an image (JPG, PNG, WebP) or a PDF, up to 5 MB.
+- **The type is checked from the file's first bytes,** not its name or the browser's claim. Anything else is refused with a plain message. Unit tested.
+- **Storage:** a private Supabase bucket, `payment-proofs` (migration 0009: 5 MB limit and the same MIME list enforced by Storage too). No public URL; only the service role reads or writes it. The path is `{owner_id}/{payment_id}.{ext}`, recorded in `payments.proof_path`.
+- **Who sees it:** only the owner, through 10-minute signed links ("View proof of payment" on the dashboard and the invoice banner when confirming). Claude never gets the file or the link.
+- **The report stands if the upload fails.** Proof is evidence, not a gate. Confirming is still a human step (D24).
+- **Server actions accept bodies up to 6 MB** for this; the 5 MB cap is enforced in code.
+- **The MCP suite covers it** (26 checks): a fake image is refused, a real one gets a signed link, and the public URL is refused.

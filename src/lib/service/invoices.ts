@@ -79,6 +79,7 @@ export type PaymentRow = {
   status: "reported" | "confirmed" | "rejected";
   decided_at: string | null;
   created_at: string;
+  proof_path?: string | null;
 };
 
 export type EventRow = { id: number; actor: string; type: string; payload: Record<string, unknown>; created_at: string };

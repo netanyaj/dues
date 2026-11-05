@@ -155,6 +155,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           action={<ReportDecision report={r} />}
         >
           UTR <span className="amount">{r.utr ?? "not given"}</span> · {formatDate(r.paid_on)}. Check your bank or UPI app before confirming.
+          {r.proof_url && <> <a href={r.proof_url} target="_blank" rel="noopener noreferrer" className="font-medium text-brand underline underline-offset-2">View proof</a></>}
           {r.flags.map((f) => <span key={f} className="mt-1 block font-medium text-attention">{f}</span>)}
         </Banner>
       ))}

@@ -78,3 +78,13 @@ describe("D39: aging buckets", () => {
     expect(b.map((x) => x.paise)).toEqual([100, 0, 0, 300]);
   });
 });
+
+import { checkProof } from "@/lib/domain/proof";
+describe("D40: proof of payment files", () => {
+  it("accepts images and PDFs by their bytes, refuses others and big files", () => {
+    expect(checkProof(10, new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toMatchObject({ ok: true, mime: "image/jpeg" });
+    expect(checkProof(10, new TextEncoder().encode("%PDF-1.7"))).toMatchObject({ ok: true, ext: "pdf" });
+    expect(checkProof(10, new TextEncoder().encode("<script>"))).toMatchObject({ ok: false });
+    expect(checkProof(6 * 1024 * 1024, new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]))).toMatchObject({ ok: false });
+  });
+});

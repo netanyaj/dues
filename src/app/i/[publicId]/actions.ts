@@ -9,7 +9,8 @@ export type PaidState = { ok?: boolean; error?: string; field?: string; values?:
 
 export async function reportPaidAction(publicId: string, _: PaidState, fd: FormData): Promise<PaidState> {
   const values = { amount: String(fd.get("amount") ?? ""), utr: String(fd.get("utr") ?? ""), method: String(fd.get("method") ?? "bank_transfer") };
-  const r = await reportPaymentPublic(publicId, { amount_rupees: values.amount, utr: values.utr, method: values.method });
+  const proof = fd.get("proof");
+  const r = await reportPaymentPublic(publicId, { amount_rupees: values.amount, utr: values.utr, method: values.method }, proof instanceof File ? proof : null);
   if (!r.ok) return { error: r.error, field: r.field, values };
   revalidatePath(`/i/${publicId}`);
   return { ok: true };
