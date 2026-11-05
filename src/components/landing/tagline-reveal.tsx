@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /** Words go from muted to full ink one at a time as they cross the middle of the screen. */
-export function TaglineReveal({ lines }: { lines: string[] }) {
+export function TaglineReveal({ lines, accentLast = false }: { lines: string[]; accentLast?: boolean }) {
   const ref = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -23,7 +23,7 @@ export function TaglineReveal({ lines }: { lines: string[] }) {
   return (
     <p ref={ref} className="mx-auto max-w-[680px] heading-4 sm:text-5xl sm:leading-none" aria-label={lines.join(" ")}>
       {lines.map((line, i) => (
-        <span key={i} className="block" aria-hidden>
+        <span key={i} className={accentLast && i === lines.length - 1 ? "block text-brand-on-dark" : "block"} aria-hidden>
           {line.split(" ").map((w, j) => (
             <span key={j} data-word className="inline-block opacity-30 transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]">{w}&nbsp;</span>
           ))}

@@ -42,6 +42,10 @@
   --color-attention-soft: var(--attention-soft);
   --color-paid: var(--paid);
   --color-paid-soft: var(--paid-soft);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-on-dark: var(--brand-on-dark);
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -58,7 +62,7 @@
   --card-foreground: #171717;
   --popover: #ffffff;
   --popover-foreground: #171717;
-  --primary: #171717;
+  --primary: #3a4fd6;
   --primary-foreground: #ffffff;
   --secondary: #f0f0f0;
   --secondary-foreground: #171717;
@@ -69,7 +73,7 @@
   --destructive: #b42318;
   --border: #e5e5e5;
   --input: #d4d4d4;
-  --ring: #171717;
+  --ring: #3a4fd6;
   --radius: 8px;
   --sidebar: #181818;
   --sidebar-foreground: #f0f0f0;
@@ -81,6 +85,11 @@
   --attention-soft: #fffaeb;
   --paid: #067647;
   --paid-soft: #ecfdf3;
+  /* The one accent (D31): primary actions, the logo, landing highlights. Never status. */
+  --brand: #3a4fd6;
+  --brand-strong: #2f43b8;
+  --brand-soft: #eef0fc;
+  --brand-on-dark: #a9b3f6;
 }
 
 /* Text styles (landing-page-design B1). Use these names, not loose size + weight. */

@@ -398,3 +398,15 @@ The founder rejected the first two mock directions as still generic. They picked
 - If the total changes and still doesn't match the claim, the flag returns.
 - No schema change: a confirmed draft is `needs_review = false` with its `review_reason` kept.
 - Covered by `tests/db/review.test.ts`.
+
+## D31. One indigo accent; icon-only copy; shorter wording
+
+**Context:** the user's review. The landing page read as monotonous in ink alone. Copy buttons repeated "Copy" beside every value, and client-page wording was long. On desktop the client page left wide empty margins.
+
+**Decision:**
+- **One accent, indigo `#3a4fd6`** (6.4:1 on white, so it works as text and with white text on it). It's now `--primary` and `--ring`, so primary buttons, focus rings and the logo tile use it. On landing it also marks the hero's last line, step numbers, check icons, the Free plan and the final call to action.
+- **Not a second accent:** red, amber and green stay reserved for late or danger, needs you, and paid. Check icons on landing moved from green to indigo for that reason.
+- **Copy buttons are icon-only.** Each carries a specific `aria-label` and tooltip ("Copy IFSC", "Copy token"). The invoice share panel shows the link itself beside its copy icon, so the icon has context.
+- **Client page wording:** "I've paid" as the form title, "Notify as paid" to submit, "Payment reported" after, "Pay with UPI".
+- **Client page on desktop (lg and up):** invoice document on the left, amount, how to pay and the trust note in a 400px column on the right. Phones keep the order summary, pay, trust, then document.
+- No business logic, schema or MCP change.

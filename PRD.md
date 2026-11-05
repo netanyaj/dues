@@ -61,14 +61,15 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 - **Limits:** 50 invoices per account (D12). Demo accounts can't regenerate their link (D13).
 
 ## 6. UX requirements
-- **Design direction (D27):**
+- **Design direction (D27, accent updated by D31):**
   - Calm money tool: a dark sidebar, a grey canvas, white panels.
-  - One ink action colour. Red, amber and green only for late, needs-you and paid.
+  - One accent, indigo `#3a4fd6`, for primary actions, the logo and landing highlights. Ink for text. Red, amber and green only for late, needs-you and paid.
+  - Copy buttons are icon-only, with a label for screen readers and a hover tooltip. Button and banner text stays short ("I've paid", "Notify as paid", "Payment reported").
   - Geist with tabular numerals on every amount. Phosphor icons. The tally-mark logo.
 - **Each screen answers one question first:**
   - Dashboard: "who owes me, and what needs me today?"
   - Invoice: "what state is this in, and what's my next action?"
-  - Client page: "how much, by when, and how do I pay?"
+  - Client page: "how much, by when, and how do I pay?" On desktop the invoice sits on the left and the paying column on the right.
 - **Settings (D29):** eight left-nav sections, each saved on its own. First run is a 4-step setup ending at Claude connection.
 - No screen scrolls sideways at 375 px (checked on every screen). The client page is mobile-first.
 - Indian formats: ₹1,00,000; dates like "12 Nov 2026"; FY shown as 2026–27.

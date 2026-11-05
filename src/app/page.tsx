@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRightIcon, CheckIcon, MinusIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRightIcon, CheckIcon, MinusIcon, QuotesIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { sessionUser } from "@/lib/auth";
@@ -62,16 +62,16 @@ export default async function Home() {
         {/* Hero */}
         <section className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-20 pt-16 md:grid-cols-[1fr_auto] md:pt-24">
           <div className="max-w-[680px]">
-            <p className="caption-3 text-muted-foreground">For Indian freelancers and small studios</p>
+            <p className="inline-flex rounded-full bg-brand-soft px-3 py-1 caption-3 text-brand">For Indian freelancers and small studios</p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-none">
-              Invoice from Claude.<br />Check and send in Dues.<br />Get paid on time.
+              Invoice from Claude.<br />Check and send in Dues.<br /><span className="text-brand">Get paid on time.</span>
             </h1>
             <p className="mt-6 max-w-[560px] body-3 text-muted-foreground">
               Tell Claude who to bill. Dues works out the GST, numbers the invoice in order and gives your client a page to pay by bank transfer or UPI. Then it shows you who still owes you, and when to chase.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button>
-              <a href="#how" className="body-5 underline underline-offset-4">See how it works</a>
+              <a href="#how" className="body-5 text-brand underline underline-offset-4 hover:text-brand-strong">See how it works</a>
             </div>
             <p className="mt-4 caption-5 text-muted-foreground">Free for up to 50 invoices · No fees on payments · No card needed</p>
           </div>
@@ -84,21 +84,24 @@ export default async function Home() {
             <h2 className="max-w-[680px] heading-5 sm:heading-4">Making the invoice is the easy part. Getting paid is the second job.</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               <figure className="rounded-xl border bg-card p-5">
+                <QuotesIcon aria-hidden weight="fill" className="mb-3 size-6 text-brand" />
                 <blockquote className="title-3">&ldquo;Send an invoice, wait, forget about it, realise it&apos;s overdue, figure out what to say.&rdquo;</blockquote>
                 <figcaption className="mt-3 caption-5 text-muted-foreground">A freelancer on r/freelancing, describing the loop</figcaption>
               </figure>
               <figure className="rounded-xl border bg-card p-5">
+                <QuotesIcon aria-hidden weight="fill" className="mb-3 size-6 text-brand" />
                 <blockquote className="title-3">The client replies to work messages instantly. A payment reminder gets &ldquo;seen mode on WhatsApp&rdquo;.</blockquote>
                 <figcaption className="mt-3 caption-5 text-muted-foreground">r/indianstartups, on clients paying late</figcaption>
               </figure>
               <figure className="rounded-xl border bg-card p-5">
+                <QuotesIcon aria-hidden weight="fill" className="mb-3 size-6 text-brand" />
                 <blockquote className="title-3">&ldquo;Tracking my income in WhatsApp messages and random notes. Missed payments, forgot GST.&rdquo;</blockquote>
                 <figcaption className="mt-3 caption-5 text-muted-foreground">r/notioncreations, an Indian freelancer</figcaption>
               </figure>
             </div>
-            <div className="mt-6 rounded-xl border bg-card p-5 md:flex md:items-start md:gap-6">
-              <p className="title-3 font-semibold md:w-64 md:shrink-0">The 45-day rule most clients forget</p>
-              <p className="mt-2 body-6 text-muted-foreground md:mt-0">
+            <div className="mt-6 rounded-xl border border-[#d6dbf8] bg-brand-soft p-5 md:flex md:items-start md:gap-6">
+              <p className="title-3 font-semibold text-brand md:w-64 md:shrink-0">The 45-day rule most clients forget</p>
+              <p className="mt-2 body-6 text-foreground md:mt-0">
                 If you&apos;re registered on Udyam as a micro or small enterprise, buyers must pay within 45 days under the MSMED Act, or owe compound interest at three times the RBI bank rate. Under Section 43B(h), a late buyer can&apos;t deduct the expense until they pay. Dues prints this on your invoice, in plain words, and warns you if your terms go past 45 days.
               </p>
             </div>
@@ -115,7 +118,7 @@ export default async function Home() {
               ["Client pays, you confirm", "Your client pays by bank transfer or UPI and taps “I've paid” with the reference. You check your bank and confirm. Late ones show up in your chase list."],
             ].map(([t, d], i) => (
               <li key={t} className="flex flex-col gap-3">
-                <span className="amount grid size-8 place-items-center rounded-lg bg-primary caption-3 text-primary-foreground">{i + 1}</span>
+                <span className="amount grid size-8 place-items-center rounded-lg bg-brand-soft caption-3 text-brand">{i + 1}</span>
                 <p className="title-2 font-semibold">{t}</p>
                 <p className="body-6 text-muted-foreground">{d}</p>
               </li>
@@ -124,8 +127,8 @@ export default async function Home() {
         </section>
 
         {/* Tagline */}
-        <section className="border-y bg-background px-4 py-24 text-center">
-          <TaglineReveal lines={["Claude drafts.", "Code checks every rupee.", "You send, and you confirm."]} />
+        <section className="bg-sidebar px-4 py-24 text-center text-white">
+          <TaglineReveal accentLast lines={["Claude drafts.", "Code checks every rupee.", "You send, and you confirm."]} />
         </section>
 
         {/* Checks */}
@@ -135,7 +138,7 @@ export default async function Home() {
           <dl className="mt-10 grid gap-x-10 gap-y-6 sm:grid-cols-2">
             {CHECKS.map(([t, d]) => (
               <div key={t} className="flex gap-3">
-                <CheckIcon aria-hidden weight="bold" className="mt-0.5 size-5 shrink-0 text-paid" />
+                <CheckIcon aria-hidden weight="bold" className="mt-0.5 size-5 shrink-0 text-brand" />
                 <div><dt className="title-3">{t}</dt><dd className="mt-0.5 body-6 text-muted-foreground">{d}</dd></div>
               </div>
             ))}
@@ -163,7 +166,7 @@ export default async function Home() {
                 ["Ask", "Start a new chat and ask Claude to invoice a client. The draft appears in Dues within seconds."],
               ].map(([t, d], i) => (
                 <li key={t} className="rounded-xl border bg-card p-5">
-                  <p className="amount caption-3 text-muted-foreground">Step {i + 1}</p>
+                  <p className="amount caption-3 text-brand">Step {i + 1}</p>
                   <p className="mt-1 title-3 font-semibold">{t}</p>
                   <p className="mt-1 body-6 text-muted-foreground">{d}</p>
                 </li>
@@ -176,12 +179,12 @@ export default async function Home() {
         <section id="pricing" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
           <h2 className="heading-5 sm:heading-4">Pricing</h2>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col rounded-xl border p-6">
-              <p className="title-2 font-semibold">Free</p>
+            <div className="flex flex-col rounded-xl border-2 border-brand p-6">
+              <p className="title-2 font-semibold">Free <span className="ml-1 rounded-full bg-brand-soft px-2 py-0.5 caption-3 text-brand">Available now</span></p>
               <p className="amount mt-2 heading-4">₹0</p>
               <ul className="mt-6 flex flex-col gap-2 body-6">
                 {["Up to 50 invoices", "Claude connection", "Client payment pages with bank and UPI", "Chase list and reminder drafts", "CSV export for your CA"].map((f) => (
-                  <li key={f} className="flex gap-2"><CheckIcon aria-hidden weight="bold" className="mt-0.5 size-4 shrink-0" />{f}</li>
+                  <li key={f} className="flex gap-2"><CheckIcon aria-hidden weight="bold" className="mt-0.5 size-4 shrink-0 text-brand" />{f}</li>
                 ))}
               </ul>
               <Button asChild size="lg" className="mt-8"><Link href="/signup">Create a free account</Link></Button>
@@ -216,9 +219,12 @@ export default async function Home() {
         </section>
 
         {/* Final CTA */}
-        <section className="mx-auto max-w-5xl px-4 py-20 text-center">
-          <h2 className="mx-auto max-w-[680px] heading-5 sm:heading-4">Send your next invoice from Claude, and know when it&apos;s paid.</h2>
-          <div className="mt-8 flex justify-center"><Button asChild size="lg"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
+        <section className="mx-auto max-w-5xl px-4 py-20">
+          <div className="rounded-2xl bg-brand px-6 py-16 text-center text-white">
+            <h2 className="mx-auto max-w-[680px] heading-5 sm:heading-4">Send your next invoice from Claude, and know when it&apos;s paid.</h2>
+            <div className="mt-8 flex justify-center"><Button asChild size="lg" variant="secondary" className="bg-white hover:bg-[#e8eafb]"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
+            <p className="mt-4 caption-5 text-white/80">Free for up to 50 invoices · No card needed</p>
+          </div>
         </section>
       </main>
 

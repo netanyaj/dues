@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <Link href="/dashboard" className="mb-6 rounded-lg px-2 py-2 focus-visible:outline-white" aria-label="Dues dashboard">
           <Logo inverted />
         </Link>
-        <Button asChild className="mb-4 justify-start bg-white text-[#171717] hover:bg-[#e6e6e6] focus-visible:outline-white">
+        <Button asChild className="mb-4 justify-start focus-visible:outline-white">
           <Link href="/invoices/new"><PlusIcon aria-hidden weight="bold" />New invoice</Link>
         </Button>
         <SideNav />

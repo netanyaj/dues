@@ -27,7 +27,7 @@ function Field({ f, values, errors, hidden }: { f: Exclude<FieldDef, { kind: "gr
   if (f.kind === "toggle") {
     return (
       <div className="flex items-start gap-3">
-        <input id={f.name} name={f.name} type="checkbox" defaultChecked={values[f.name] !== "false"} className="mt-0.5 size-5 shrink-0 accent-[#171717]" aria-describedby={describedBy} />
+        <input id={f.name} name={f.name} type="checkbox" defaultChecked={values[f.name] !== "false"} className="mt-0.5 size-5 shrink-0 accent-brand" aria-describedby={describedBy} />
         <div>
           <Label htmlFor={f.name} className="title-4">{f.label}</Label>
           {f.hint && <p id={`${f.name}-hint`} className="caption-5 text-muted-foreground">{f.hint}</p>}
@@ -92,7 +92,7 @@ export function SettingsForm({ section, fields, initial, next, welcome, gstToggl
     <form key={state.nonce ?? 0} action={action} className="flex flex-col gap-6 rounded-xl border bg-card p-5 sm:p-6" noValidate>
       {gstToggle && (
         <div className="flex items-start gap-3 rounded-lg bg-muted px-4 py-3">
-          <input id="gst_registered" name="gst_registered" type="checkbox" checked={gstOn} onChange={(ev) => setGstOn(ev.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#171717]" />
+          <input id="gst_registered" name="gst_registered" type="checkbox" checked={gstOn} onChange={(ev) => setGstOn(ev.target.checked)} className="mt-0.5 size-5 shrink-0 accent-brand" />
           <div>
             <Label htmlFor="gst_registered" className="title-4">I&apos;m GST registered</Label>
             <p className="caption-5 text-muted-foreground">Turn this off if you&apos;re not registered. Invoices then say &ldquo;GST not applicable&rdquo; and add no tax.</p>

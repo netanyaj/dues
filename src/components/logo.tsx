@@ -2,8 +2,10 @@ import { cn } from "@/lib/utils";
 
 /** Four tally marks struck through: counted and settled. */
 export function LogoMark({ size = 24, className, inverted = false }: { size?: number; className?: string; inverted?: boolean }) {
-  const bg = inverted ? "#ffffff" : "#171717";
-  const fg = inverted ? "#171717" : "#ffffff";
+  // Same brand tile on light and dark surfaces; `inverted` only changes the wordmark colour.
+  void inverted;
+  const bg = "#3a4fd6";
+  const fg = "#ffffff";
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true" className={cn("shrink-0", className)}>
       <rect width="28" height="28" rx="6" fill={bg} />

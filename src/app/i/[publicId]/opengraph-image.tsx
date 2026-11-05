@@ -22,7 +22,7 @@ export default async function Image({ params }: { params: Promise<{ publicId: st
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "#f4f4f4", color: "#171717", fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <svg width="56" height="56" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#171717" /><path d="M8 7v14M12 7v14M16 7v14M20 7v14" stroke="#fff" strokeWidth="2" strokeLinecap="round" /><path d="M5.5 19 22.5 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
+          <svg width="56" height="56" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#3a4fd6" /><path d="M8 7v14M12 7v14M16 7v14M20 7v14" stroke="#fff" strokeWidth="2" strokeLinecap="round" /><path d="M5.5 19 22.5 9" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
           <span style={{ fontSize: 36, fontWeight: 600 }}>Dues</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
