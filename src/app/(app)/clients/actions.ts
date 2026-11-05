@@ -23,3 +23,18 @@ export async function saveClientAction(id: string | null, _: ClientFormState, fd
     return { error: toDuesError(e).message, values, nonce: Date.now() };
   }
 }
+
+/** D36: "+ New client" side panel on the invoice form. Same validation as the Clients page. */
+export async function createClientInlineAction(input: { name: string; state_code: string; gstin?: string; email?: string; phone?: string }):
+  Promise<{ ok: true; client: { id: string; name: string; state_code: string; gstin: string | null } } | { ok: false; errors: Record<string, string>; error?: string }> {
+  const ctx = await requireCtx();
+  if (!input.state_code) return { ok: false, errors: { state_code: "Choose their state. It decides CGST + SGST or IGST." } };
+  try {
+    const r = await saveClient(ctx, null, input);
+    if (!r.ok) return { ok: false, errors: r.errors };
+    revalidatePath("/clients");
+    return { ok: true, client: { id: r.client.id, name: r.client.name, state_code: r.client.state_code, gstin: r.client.gstin } };
+  } catch (e) {
+    return { ok: false, errors: {}, error: toDuesError(e).message };
+  }
+}

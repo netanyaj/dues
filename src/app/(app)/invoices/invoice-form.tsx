@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FormMessage } from "@/components/bits";
-import { GST_RATES, MSME_MAX_TERMS_DAYS, MSME_TERMS_WARNING, STATE_OPTIONS, stateName, type GstRate } from "@/lib/domain/gst";
+import { GST_RATES, MSME_MAX_TERMS_DAYS, MSME_TERMS_WARNING, stateName, type GstRate } from "@/lib/domain/gst";
 import { formatINR, parseQtyMilli, rupeesToPaise } from "@/lib/domain/money";
 import { computeTotals } from "@/lib/domain/tax";
 import { addDays, daysBetween } from "@/lib/domain/dates";
 import { saveDraftAction } from "./actions";
+import { ClientPicker } from "./client-picker";
 
 export type FormClient = { id: string; name: string; state_code: string; gstin: string | null };
 export type FormItem = { description: string; sac: string; qty: string; rate: string };
@@ -40,10 +41,8 @@ export function InvoiceForm({
   supplier: { state_code: string | null; hasGstin: boolean; default_sac: string; msmeCovered?: boolean };
   initial: FormInitial;
 }) {
-  const [clientId, setClientId] = useState(initial.client_id || (clients.length === 0 ? "__new" : ""));
-  const [newName, setNewName] = useState("");
-  const [newState, setNewState] = useState("");
-  const isNew = clientId === "__new";
+  const [clientList, setClientList] = useState(clients);
+  const [clientId, setClientId] = useState(initial.client_id || "");
   const [items, setItems] = useState<FormItem[]>(initial.items.length ? initial.items : [blankItem(supplier.default_sac)]);
   const [gstRate, setGstRate] = useState<number>(initial.gst_rate);
   const [issueDate, setIssueDate] = useState(initial.issue_date);
@@ -52,7 +51,7 @@ export function InvoiceForm({
   const [error, setError] = useState<{ msg: string; field?: string } | null>(null);
   const [pending, start] = useTransition();
 
-  const client = clients.find((c) => c.id === clientId);
+  const client = clientList.find((c) => c.id === clientId);
   const totals = useMemo(() => {
     const lines = items.map((it) => {
       const q = tryParse(() => parseQtyMilli(it.qty || "0"));
@@ -63,10 +62,10 @@ export function InvoiceForm({
       lines,
       gstRate: (supplier.hasGstin ? gstRate : 0) as GstRate,
       supplierState: supplier.state_code ?? "",
-      clientState: (isNew ? newState : client?.state_code) || supplier.state_code || "",
+      clientState: client?.state_code || supplier.state_code || "",
       supplierHasGstin: supplier.hasGstin,
     });
-  }, [items, gstRate, client, supplier, isNew, newState]);
+  }, [items, gstRate, client, supplier]);
 
   const terms = issueDate && dueDate ? daysBetween(issueDate, dueDate) : null;
   const fieldErr = (f: string) => (error?.field === f ? error.msg : undefined);
@@ -77,9 +76,9 @@ export function InvoiceForm({
     setError(null);
     start(async () => {
       const r = await saveDraftAction(invoiceId, {
-        client_id: isNew ? null : clientId || null,
-        client_name: isNew ? newName : null,
-        client_state: isNew ? newState : null,
+        client_id: clientId || null,
+        client_name: null,
+        client_state: null,
         items: items.map((it) => ({ description: it.description, qty: it.qty, rate_rupees: it.rate, sac: it.sac })),
         gst_rate: supplier.hasGstin ? gstRate : 0,
         issue_date: issueDate,
@@ -98,31 +97,10 @@ export function InvoiceForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="client">Client</Label>
-          <select id="client" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-invalid={!!fieldErr("client_id")} className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive">
-            <option value="">Choose a client…</option>
-            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            <option value="__new">Add a new client…</option>
-          </select>
-          {isNew ? (
-            <div className="mt-1 grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="nc-name" className="text-xs">New client&apos;s name</Label>
-                <Input id="nc-name" value={newName} onChange={(e) => setNewName(e.target.value)} aria-invalid={!!fieldErr("name")} className="h-9" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="nc-state" className="text-xs">Their state</Label>
-                <select id="nc-state" value={newState} onChange={(e) => setNewState(e.target.value)} aria-invalid={!!fieldErr("client_state") || !!fieldErr("state_code")} className="h-9 rounded-lg border border-input bg-card px-2 text-sm">
-                  <option value="">Choose…</option>
-                  {STATE_OPTIONS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-                </select>
-              </div>
-              <p className="text-xs text-muted-foreground sm:col-span-2">Saved with this draft. Add email, phone or GSTIN later on the Clients page.</p>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {client ? `${stateName(client.state_code)}${client.gstin ? ` · GSTIN ${client.gstin}` : " · no GSTIN"}` : <Link href="/clients" className="underline">Manage clients</Link>}
-            </p>
-          )}
+          <ClientPicker clients={clientList} value={clientId} invalid={!!fieldErr("client_id")} onChange={(id, added) => { if (added) setClientList((xs) => [...xs, added].sort((x, y) => x.name.localeCompare(y.name))); setClientId(id); }} />
+          <p className="text-xs text-muted-foreground">
+            {client ? `${stateName(client.state_code)}${client.gstin ? ` · GSTIN ${client.gstin}` : " · no GSTIN"}` : <Link href="/clients" className="underline">Manage clients</Link>}
+          </p>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="gst">GST rate</Label>
@@ -212,9 +190,9 @@ export function InvoiceForm({
           )}
           {totals.mode === "none" && <p className="text-muted-foreground">GST not applicable</p>}
           <div className="mt-1 flex justify-between border-t pt-2 text-base font-semibold"><dt>Total</dt><dd className="tabular-nums">{formatINR(totals.total)}</dd></div>
-          {totals.mode !== "none" && (client || (isNew && newState)) && (
+          {totals.mode !== "none" && client && (
             <p className="text-xs text-muted-foreground">
-              {totals.mode === "intra" ? "Same state, so CGST + SGST." : `${stateName(isNew ? newState : client!.state_code)} is another state, so IGST.`} Dues recalculates this on save.
+              {totals.mode === "intra" ? "Same state, so CGST + SGST." : `${stateName(client.state_code)} is another state, so IGST.`} Dues recalculates this on save.
             </p>
           )}
         </dl>

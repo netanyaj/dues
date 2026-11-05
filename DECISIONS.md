@@ -497,3 +497,12 @@ The founder rejected the first two mock directions as still generic. They picked
 - **In the app,** Send opens an "Add your bank account to send" dialog. It saves through the same validation as Settings → Getting paid (so the bank-changed trust note still works), then sends in one confirmed step. UPI stays optional.
 - **The client page drops the "Ask … for payment details" line.** Invoices sent before this rule with no bank details simply show "I've paid".
 - **Claude:** `get_business_profile.missing` says when the bank account is still to be added at first Send.
+
+## D36. Client is a searchable dropdown; "+ New client" opens a side panel
+
+**Context:** choosing "Add a new client…" inlined two extra fields inside the invoice form. It worked, but it looked unfinished.
+
+**Decision:**
+- **The Client field is a searchable dropdown.** Type to filter by name or GSTIN, use the arrow keys and Enter, and "+ New client" sits at the bottom. It pre-fills with whatever was typed.
+- **"+ New client" opens a right-hand side panel.** Name and state are required; GSTIN, email and phone are optional. It saves through the same `saveClient` validation as the Clients page, then returns to the invoice with the new client selected.
+- **No setup order is forced** (the research point stands). The invoice form no longer creates clients itself; Claude's `create_draft_invoice` can still create a client by name.
