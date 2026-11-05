@@ -46,7 +46,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 | Freelancer sends | Toast, link to copy, share panel | Only when F shares the link (WhatsApp / email / copy) | `list_invoices` shows the number | In-app | Dues emails the client |
 | Due date passes | Row turns "Overdue · N days late"; "Needs you" chase item with next reminder stage | Client page says "Was due on …" | `get_receivables_summary` | In-app (cron logs `became_overdue` once) | Daily email to F |
 | Reminder saved by Claude | Reminder card with WhatsApp / email button | When F taps the button and sends | Tool result with the link | In-app | Scheduled sending |
-| Client reports a payment | "Needs you → … says ₹X was paid", with UTR checks and TDS guess | Banner: "You've told them you paid" | `payment_reported_unconfirmed` flag | In-app | Email / push to F |
+| Client reports a payment | "Needs you → … says ₹X was paid", with UTR checks and TDS guess | Banner: "Payment reported" | `payment_reported_unconfirmed` flag | In-app | Email / push to F |
 | Freelancer confirms | Toast; status updates; "Received this month" | Client page shows the new balance or "Paid in full" | Status in tool results | In-app | Receipt email to K |
 | Freelancer rejects | Toast | Banner: "… couldn't find your payment of ₹X" (**Fixed**) | Status in tool results | In-app | Email to K |
 | Due date extended | History entry; document shows original and new date | "Moved the due date from … to …" | — | In-app | Email to K |
@@ -85,7 +85,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 
 - **First time:**
   1. Settings → Claude connection → **Create my Claude token**.
-  2. The token is shown once, with "Copy" and "Copy header".
+  2. The token is shown once, with icon copy buttons for the token and the full header line.
   3. Follow the claude.ai steps: Customize → Connectors → + Add → Add custom connector → URL → No sign in → Request headers `Authorization: Bearer …` → Add. Claude Code users run a one-line command.
   4. Status changes from "Token created · not used yet" to "Connected · last used …" after Claude's first call.
 - **Regenerate:** a confirmation dialog explains that the old token stops working at once. The new token is shown once. The old one gets 401 "This Dues token isn't valid. It may have been regenerated…".
@@ -143,7 +143,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
   1. Press Send.
   2. A dialog names the client and total: "the amounts are then locked".
   3. The invoice gets a number and a link.
-  4. A share panel offers Copy link, WhatsApp (pre-filled text with the client's phone), Email (when the client has an email) and View as client.
+  4. A share panel shows the link with a copy icon, then WhatsApp (pre-filled text with the client's phone), Email (when the client has an email) and View as client.
 - **End states:** the invoice is sent and its link is live. The link preview shows "Invoice {number} from {business} · ₹X due {date}" plus a generated image. The page stays `noindex`.
 - **Errors:**
   - Setup is incomplete, so Send is disabled with the reason.
@@ -160,7 +160,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
   3. The client taps **I've paid**: amount (pre-filled), UTR, method → Send.
   4. The freelancer sees "Needs you" with the UTR checks (unusual format, reused UTR) and a TDS guess, then confirms (amount and TDS editable) or rejects.
 - **End states:**
-  - **Reported:** the client sees "You've told them you paid". Chasing pauses for 2 working days.
+  - **Reported:** the client sees "Payment reported". Chasing pauses for 2 working days.
   - **Confirmed, full:** the client page says "Paid in full".
   - **Confirmed, partial:** the client page shows "Balance due" and the remaining amount.
   - **Rejected:** previously the client saw the plain invoice again with no explanation (an orphan state). **Fixed:** the client page now says "{business} couldn't find your payment of ₹X yet. Check the reference, or contact them."

@@ -65,12 +65,14 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           <dt className="caption-4 text-muted-foreground">{label}</dt>
           <dd className="amount body-5 break-all whitespace-normal">{value}</dd>
         </div>
-        {copy && <CopyButton value={String(value)} label="Copy" size="sm" variant="outline" />}
+        {copy && <CopyButton value={String(value)} label={`Copy ${label.toLowerCase()}`} variant="ghost" />}
       </div>
     ) : null;
 
   return (
-    <main id="main" className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-6 sm:py-10 print:max-w-none print:p-0">
+    <main id="main" className="mx-auto grid w-full max-w-xl grid-cols-1 gap-4 px-4 py-6 sm:py-10 lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-6 print:block print:max-w-none print:p-0">
+      {/* Phones: summary, pay, trust, then the document. Desktop: document left, the paying column right. */}
+      <div className="flex min-w-0 flex-col gap-4 lg:col-start-2 lg:row-start-1 print:hidden">
       {/* Summary: who, how much, by when */}
       <section className="rounded-xl border bg-card p-5 sm:p-6 print:hidden">
         <p className="body-6 text-muted-foreground">{business} has sent you an invoice</p>
@@ -92,8 +94,8 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
         {inv.original_due_date && inv.original_due_date !== inv.due_date && !cancelled ? (
           <p className="mt-2 body-6">{business} moved the due date from {formatDate(inv.original_due_date)} to {formatDate(inv.due_date)}.</p>
         ) : null}
-        {rejected != null && canPay ? <div className="mt-4"><Banner tone="warning" title={`${business} couldn't find your payment of ${formatINR(rejected)} yet`}>Check the reference number, or contact them directly. If you paid, you can tell them again below.</Banner></div> : null}
-        {pendingReport && canPay ? <div className="mt-4"><Banner title="You've told them you paid">{business} will confirm once the money arrives in their account.</Banner></div> : null}
+        {rejected != null && canPay ? <div className="mt-4"><Banner tone="warning" title={`Payment of ${formatINR(rejected)} not found yet`}>Check the reference, or contact {business}.</Banner></div> : null}
+        {pendingReport && canPay ? <div className="mt-4"><Banner title="Payment reported">{business} will confirm once it arrives.</Banner></div> : null}
       </section>
 
       {canPay && (
@@ -114,13 +116,13 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           {showUpi && (
             <div className={hasBank ? "border-t pt-5" : ""}>
               <h3 className="title-4">UPI</h3>
-              <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row sm:items-start lg:flex-col lg:items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qr!} alt={`UPI QR code to pay ${formatINR(due)} to ${s.upi_id}`} width={176} height={176} className="rounded-lg border" />
                 <div className="flex w-full min-w-0 flex-col gap-2">
-                  <Button asChild size="lg"><a href={upiLink!}>Pay {formatINR(due)} with a UPI app</a></Button>
+                  <Button asChild size="lg"><a href={upiLink!}>Pay with UPI</a></Button>
                   <dl className="divide-y border-y">{row("UPI ID", s.upi_id)}</dl>
-                  <p className="caption-5 text-muted-foreground">If your UPI app doesn&apos;t fill in the amount, pay {paiseToDecimalString(due)} to the UPI ID above.</p>
+                  <p className="caption-5 text-muted-foreground">No amount filled in? Pay {paiseToDecimalString(due)} to this UPI ID.</p>
                 </div>
               </div>
             </div>
@@ -158,11 +160,14 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           <ReportInvoice publicId={publicId} />
         </div>
       </section>
+      </div>
 
-      <InvoiceDocument d={docFromInvoice(inv, items)} />
-      <Link href="/" className="mx-auto flex items-center gap-2 caption-5 text-muted-foreground hover:text-foreground print:hidden">
-        <LogoMark size={16} /> Sent with Dues
-      </Link>
+      <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
+        <InvoiceDocument d={docFromInvoice(inv, items)} />
+        <Link href="/" className="mx-auto flex items-center gap-2 caption-5 text-muted-foreground hover:text-foreground print:hidden">
+          <LogoMark size={16} /> Sent with Dues
+        </Link>
+      </div>
     </main>
   );
 }

@@ -86,11 +86,16 @@ export function DeleteDraft({ id }: { id: string }) {
 
 export function ShareButtons({ link, whatsapp, email }: { link: string; whatsapp: string; email?: string | null }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <CopyButton value={link} label="Copy link" variant="default" size="default" />
+    <div className="flex flex-col gap-3">
+      <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/40 py-1 pr-1 pl-3">
+        <span className="min-w-0 flex-1 truncate caption-2 text-muted-foreground">{link.replace(/^https?:\/\//, "")}</span>
+        <CopyButton value={link} label="Copy client link" variant="default" />
+      </div>
+      <div className="flex flex-wrap gap-2">
       <Button asChild variant="outline"><a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a></Button>
       {email && <Button asChild variant="outline"><a href={email}>Email</a></Button>}
       <Button asChild variant="ghost"><a href={link} target="_blank" rel="noopener noreferrer">View as client</a></Button>
+      </div>
     </div>
   );
 }
@@ -218,7 +223,7 @@ export function ReminderButtons({ invoiceId, reminderId, link, channel, sent }: 
           {channel === "whatsapp" ? "Open in WhatsApp" : "Open in email"}
         </a>
       </Button>
-      <CopyButton value={decodeURIComponent((link.split(/[?&](?:text|body)=/)[1] ?? "").split("&")[0])} label="Copy text" />
+      <CopyButton value={decodeURIComponent((link.split(/[?&](?:text|body)=/)[1] ?? "").split("&")[0])} label="Copy message" />
     </div>
   );
 }

@@ -37,7 +37,7 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
     <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-1.5">
         <p className="title-4">Server URL</p>
-        <div className="flex items-center gap-2"><Code>{serverUrl}</Code><CopyButton value={serverUrl} label="Copy" /></div>
+        <div className="flex items-center gap-2"><Code>{serverUrl}</Code><CopyButton value={serverUrl} label="Copy server URL" /></div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -45,10 +45,10 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
         {fresh ? (
           <>
             <Banner tone="warning" title="Copy it now. For your security, Dues can't show it again.">Anyone with this token can create drafts and read your invoices, so don&apos;t share it.</Banner>
-            <div className="flex items-center gap-2"><Code testId="mcp-token">{fresh}</Code><CopyButton value={fresh} label="Copy" /></div>
+            <div className="flex items-center gap-2"><Code testId="mcp-token">{fresh}</Code><CopyButton value={fresh} label="Copy token" /></div>
             <p className="mt-2 title-4">Header value</p>
-            <div className="flex items-center gap-2"><Code>{header!}</Code><CopyButton value={`Authorization: ${header}`} label="Copy header" variant="default" /></div>
-            <p className="caption-5 text-muted-foreground">&ldquo;Copy header&rdquo; copies the full line, <span className="font-mono">Authorization: Bearer …</span>, for Claude Code.</p>
+            <div className="flex items-center gap-2"><Code>{header!}</Code><CopyButton value={`Authorization: ${header}`} label="Copy header line" /></div>
+            <p className="caption-5 text-muted-foreground">Copies the full line, <span className="font-mono">Authorization: Bearer …</span>, for Claude Code.</p>
           </>
         ) : hasToken ? (
           <>

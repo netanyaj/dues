@@ -23,8 +23,9 @@ export function AutoRefresh({ seconds = 8 }: { seconds?: number }) {
   return null;
 }
 
-export function CopyButton({ value, label = "Copy", className, variant = "outline", size = "sm" }: {
-  value: string; label?: string; className?: string; variant?: "outline" | "default" | "ghost" | "secondary"; size?: "sm" | "default" | "xs" | "lg";
+/** Icon-only copy button. `label` names it for screen readers and the hover tooltip. */
+export function CopyButton({ value, label = "Copy", className, variant = "outline", size = "icon-sm" }: {
+  value: string; label?: string; className?: string; variant?: "outline" | "default" | "ghost" | "secondary"; size?: "icon" | "icon-sm" | "icon-xs" | "icon-lg";
 }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -32,7 +33,8 @@ export function CopyButton({ value, label = "Copy", className, variant = "outlin
       type="button"
       variant={variant}
       size={size}
-      className={className}
+      className={cn("shrink-0", className)}
+      title={copied ? "Copied" : label}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value);
@@ -47,10 +49,10 @@ export function CopyButton({ value, label = "Copy", className, variant = "outlin
         setCopied(true);
         setTimeout(() => setCopied(false), 1800);
       }}
-      aria-label={`${label}: ${value}`}
+      aria-label={label}
     >
-      {copied ? <CheckIcon /> : <CopyIcon />}
-      <span aria-live="polite">{copied ? "Copied" : label}</span>
+      {copied ? <CheckIcon className="text-paid" /> : <CopyIcon />}
+      <span aria-live="polite" className="sr-only">{copied ? "Copied" : ""}</span>
     </Button>
   );
 }

@@ -17,7 +17,7 @@ export function ClientPagePreview() {
             <div className="flex justify-between py-2"><dt className="text-muted-foreground">Account number</dt><dd className="amount font-medium">50100234567891</dd></div>
             <div className="flex justify-between py-2"><dt className="text-muted-foreground">IFSC</dt><dd className="amount font-medium">HDFC0001234</dd></div>
           </dl>
-          <div className="mt-3 rounded-lg bg-primary py-2 text-center caption-3 text-primary-foreground">Pay ₹47,200 with a UPI app</div>
+          <div className="mt-3 rounded-lg bg-primary py-2 text-center caption-3 text-primary-foreground">Pay with UPI</div>
           <div className="mt-2 rounded-lg border py-2 text-center caption-3">I&apos;ve paid</div>
         </div>
         <div className="rounded-xl border bg-card p-4 caption-5 text-muted-foreground">

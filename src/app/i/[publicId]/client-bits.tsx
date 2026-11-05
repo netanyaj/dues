@@ -13,7 +13,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
   if (state.ok) {
     return (
       <p role="status" className="rounded-xl border border-[#abefc6] bg-paid-soft px-4 py-3 body-6">
-        Thanks. {business} has been told. They&apos;ll confirm once the money shows up in their account.
+        Marked as paid. {business} will confirm once it arrives.
       </p>
     );
   }
@@ -23,7 +23,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
   const v = state.values;
   return (
     <form action={action} className="flex flex-col gap-3 border-t pt-4" noValidate>
-      <h3 className="title-4">Tell {business} you&apos;ve paid</h3>
+      <h3 className="title-4">I&apos;ve paid</h3>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="amount">Amount paid (₹)</Label>
         <Input id="amount" name="amount" inputMode="decimal" defaultValue={v?.amount ?? due} aria-invalid={state.field === "amount_rupees"} />
@@ -31,7 +31,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="utr">Transaction reference (UTR)</Label>
         <Input id="utr" name="utr" defaultValue={v?.utr} autoCapitalize="characters" aria-invalid={state.field === "utr"} aria-describedby="utr-hint" />
-        <p id="utr-hint" className="caption-5 text-muted-foreground">Find it on your payment receipt: 12 digits for UPI or IMPS, 16 or 22 characters for NEFT or RTGS.</p>
+        <p id="utr-hint" className="caption-5 text-muted-foreground">On your receipt: 12 digits for UPI or IMPS, 16 or 22 for NEFT or RTGS.</p>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="method">Paid by</Label>
@@ -43,7 +43,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
       </div>
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
       <div className="flex gap-2">
-        <Button type="submit" size="lg" disabled={pending} className="flex-1">{pending ? "Sending…" : "Send"}</Button>
+        <Button type="submit" size="lg" disabled={pending} className="flex-1">{pending ? "Sending…" : "Notify as paid"}</Button>
         <Button type="button" size="lg" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </form>
@@ -59,7 +59,7 @@ export function ReportInvoice({ publicId }: { publicId: string }) {
   const [done, setDone] = useState(false);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
-  if (done) return <span role="status">Thanks. We&apos;ve logged your report.</span>;
+  if (done) return <span role="status">Report logged.</span>;
   if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-muted-foreground underline underline-offset-4">Report this invoice</button>;
   return (
     <form
@@ -69,7 +69,7 @@ export function ReportInvoice({ publicId }: { publicId: string }) {
       <Label htmlFor="reason">What looks wrong? (optional)</Label>
       <Textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={1000} placeholder="e.g. I don't know this business, or the bank details changed" />
       <div className="flex gap-2">
-        <Button type="submit" size="sm" variant="outline" disabled={pending}>{pending ? "Sending…" : "Send report"}</Button>
+        <Button type="submit" size="sm" variant="outline" disabled={pending}>{pending ? "Sending…" : "Report"}</Button>
         <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </form>
