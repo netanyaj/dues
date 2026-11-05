@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { DropdownMenu } from "radix-ui";
+import { DotsThreeIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
@@ -15,6 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { CopyButton } from "@/components/bits";
 import { Banner } from "@/components/ds";
 import { cancelAction, confirmTotalsAction, deleteDraftAction, markReminderSentAction, recordPaymentAction, sendAction, updateIssuedAction, type Result } from "./actions";
+
+type Controlled = { open?: boolean; onOpenChange?: (open: boolean) => void };
+
+/** Dialogs open from their own button, or from the More menu when `open` is passed in. */
+function useControlled(open: boolean | undefined, onChange: ((o: boolean) => void) | undefined): [boolean, (o: boolean) => void] {
+  const [own, setOwn] = useState(false);
+  return open === undefined ? [own, setOwn] : [open, onChange ?? (() => {})];
+}
 
 function useRun() {
   const [pending, start] = useTransition();
@@ -65,11 +75,12 @@ export function SendButton({ id, total, client, blockedReason }: { id: string; t
   );
 }
 
-export function DeleteDraft({ id }: { id: string }) {
+export function DeleteDraft({ id, open: openProp, onOpenChange }: { id: string } & Controlled) {
   const { pending, run } = useRun();
+  const [open, setOpen] = useControlled(openProp, onOpenChange);
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Delete draft</Button></AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      {openProp === undefined && <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Delete draft</Button></AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
@@ -100,14 +111,14 @@ export function ShareButtons({ link, whatsapp, email }: { link: string; whatsapp
   );
 }
 
-export function RecordPayment({ id, balance, today }: { id: string; balance: string; today: string }) {
+export function RecordPayment({ id, balance, today, open: openProp, onOpenChange }: { id: string; balance: string; today: string } & Controlled) {
   const { pending, run } = useRun();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControlled(openProp, onOpenChange);
   const [f, setF] = useState({ amount: "", tds: "", method: "bank_transfer", utr: "", paid_on: today });
   const [err, setErr] = useState<string | null>(null);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Record payment</Button></DialogTrigger>
+      {openProp === undefined && <DialogTrigger asChild><Button variant="outline">Record payment</Button></DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Record a payment</DialogTitle>
@@ -142,15 +153,15 @@ export function RecordPayment({ id, balance, today }: { id: string; balance: str
   );
 }
 
-export function ExtendDueDate({ id, current }: { id: string; current: string }) {
+export function ExtendDueDate({ id, current, open: openProp, onOpenChange }: { id: string; current: string } & Controlled) {
   const { pending, run } = useRun();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControlled(openProp, onOpenChange);
   const [date, setDate] = useState(current);
   const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Extend due date</Button></DialogTrigger>
+      {openProp === undefined && <DialogTrigger asChild><Button variant="outline">Extend due date</Button></DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Extend the due date</DialogTitle>
@@ -170,13 +181,13 @@ export function ExtendDueDate({ id, current }: { id: string; current: string }) 
   );
 }
 
-export function EditNotes({ id, notes }: { id: string; notes: string | null }) {
+export function EditNotes({ id, notes, open: openProp, onOpenChange }: { id: string; notes: string | null } & Controlled) {
   const { pending, run } = useRun();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useControlled(openProp, onOpenChange);
   const [v, setV] = useState(notes ?? "");
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Edit notes</Button></DialogTrigger>
+      {openProp === undefined && <DialogTrigger asChild><Button variant="outline">Edit notes</Button></DialogTrigger>}
       <DialogContent>
         <DialogHeader><DialogTitle>Notes on the invoice</DialogTitle><DialogDescription>Amounts are locked after sending, but notes can change.</DialogDescription></DialogHeader>
         <Label htmlFor="en" className="sr-only">Notes</Label>
@@ -190,12 +201,13 @@ export function EditNotes({ id, notes }: { id: string; notes: string | null }) {
   );
 }
 
-export function CancelInvoice({ id, number }: { id: string; number: string }) {
+export function CancelInvoice({ id, number, open: openProp, onOpenChange }: { id: string; number: string } & Controlled) {
   const { pending, run } = useRun();
   const [reason, setReason] = useState("");
+  const [open, setOpen] = useControlled(openProp, onOpenChange);
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Cancel invoice</Button></AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      {openProp === undefined && <AlertDialogTrigger asChild><Button variant="destructive-outline" disabled={pending}>Cancel invoice</Button></AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Cancel {number}?</AlertDialogTitle>
@@ -230,4 +242,55 @@ export function ReminderButtons({ invoiceId, reminderId, link, channel, sent }: 
 
 export function PreviewLink({ id }: { id: string }) {
   return <Button asChild variant="outline"><Link href={`/invoices/${id}/preview`}>Preview</Link></Button>;
+}
+
+type MenuDialog = "record" | "extend" | "notes" | "cancel" | "delete";
+
+/** The invoice's secondary actions (D34): one main action stays on the page, the rest live here. */
+export function InvoiceMoreMenu(p: {
+  id: string; number?: string | null; balance?: string; today?: string; due?: string; notes?: string | null;
+  can: Partial<Record<MenuDialog, boolean>>; links?: { label: string; href: string; external?: boolean }[];
+}) {
+  const [which, setWhich] = useState<MenuDialog | null>(null);
+  const set = (d: MenuDialog) => (o: boolean) => setWhich(o ? d : null);
+  const item = "flex w-full cursor-pointer items-center rounded-md px-2.5 py-2 body-6 outline-none data-[highlighted]:bg-muted";
+  const LABEL: Record<MenuDialog, string> = { record: "Record payment", extend: "Extend due date", notes: "Edit notes", cancel: "Cancel invoice", delete: "Delete draft" };
+  const order: MenuDialog[] = ["record", "extend", "notes"];
+  const danger: MenuDialog[] = ["cancel", "delete"];
+  return (
+    <>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <Button variant="outline" size="icon" aria-label="More actions" title="More actions"><DotsThreeIcon weight="bold" /></Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-52 rounded-xl border bg-popover p-1 shadow-lg">
+            {order.filter((d) => p.can[d]).map((d) => <DropdownMenu.Item key={d} className={item} onSelect={() => setWhich(d)}>{LABEL[d]}</DropdownMenu.Item>)}
+            {p.links?.map((l) => (
+              <DropdownMenu.Item key={l.href} asChild className={item}>
+                {l.external ? <a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a> : <Link href={l.href}>{l.label}</Link>}
+              </DropdownMenu.Item>
+            ))}
+            {danger.some((d) => p.can[d]) && <DropdownMenu.Separator className="my-1 h-px bg-border" />}
+            {danger.filter((d) => p.can[d]).map((d) => <DropdownMenu.Item key={d} className={`${item} text-danger`} onSelect={() => setWhich(d)}>{LABEL[d]}</DropdownMenu.Item>)}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+      {p.can.record && <RecordPayment id={p.id} balance={p.balance!} today={p.today!} open={which === "record"} onOpenChange={set("record")} />}
+      {p.can.extend && <ExtendDueDate id={p.id} current={p.due!} open={which === "extend"} onOpenChange={set("extend")} />}
+      {p.can.notes && <EditNotes id={p.id} notes={p.notes ?? null} open={which === "notes"} onOpenChange={set("notes")} />}
+      {p.can.cancel && <CancelInvoice id={p.id} number={p.number!} open={which === "cancel"} onOpenChange={set("cancel")} />}
+      {p.can.delete && <DeleteDraft id={p.id} open={which === "delete"} onOpenChange={set("delete")} />}
+    </>
+  );
+}
+
+/** Issued and unpaid: the main action is getting the link to the client. */
+export function ShareMain({ link, whatsapp }: { link: string; whatsapp: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <CopyButton value={link} label="Copy client link" variant="outline" size="icon" />
+      <Button asChild><a href={whatsapp} target="_blank" rel="noopener noreferrer"><WhatsappLogoIcon weight="fill" aria-hidden />WhatsApp</a></Button>
+    </div>
+  );
 }

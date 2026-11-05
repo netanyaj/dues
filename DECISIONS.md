@@ -468,3 +468,21 @@ The founder rejected the first two mock directions as still generic. They picked
 **Rules:**
 - Pink is only for brand, main actions and highlights. It never signals a status.
 - All colours live in tokens in `globals.css`. The few remaining hex values are border tints and the OG image, which can't read CSS variables.
+
+## D34. Invoice page: one main action per state, the rest under More
+
+**Context:** the invoice header had up to eight buttons side by side.
+
+**Decision:**
+
+| State | Main action | Under More (⋯) |
+|---|---|---|
+| Draft | Send | Preview as client, Delete draft |
+| Issued, unpaid | Copy link (icon) + WhatsApp | Record payment, Extend due date, Edit notes, View as client, Send by email, Cancel invoice |
+| Payment reported | Confirm / Reject, in the banner right under the header | — |
+| Paid | None | Record payment (if allowed), Edit notes, View as client |
+| Cancelled | None | — |
+
+- A summary bar shows Still owed (or Paid), Invoice total, Due (with days late in amber) and Issued. Drafts show Total, Client, Due and "Number: When you send".
+- Menu items open the same dialogs as before, now as controlled dialogs. Every confirmation and server rule is unchanged.
+- Destructive items sit below a separator, in red.

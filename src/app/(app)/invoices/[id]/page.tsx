@@ -1,3 +1,4 @@
+import type React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,9 +20,7 @@ import { docFromInvoice, describeEvent } from "@/lib/view";
 import { pendingReports } from "@/lib/service/payments";
 import { Amount, Banner, Panel } from "@/components/ds";
 import { InvoiceForm } from "../invoice-form";
-import {
-  CancelInvoice, ConfirmTotals, DeleteDraft, EditNotes, ExtendDueDate, PreviewLink, RecordPayment, ReminderButtons, SendButton, ShareButtons,
-} from "../invoice-actions";
+import { ConfirmTotals, InvoiceMoreMenu, ReminderButtons, SendButton, ShareMain } from "../invoice-actions";
 
 export const metadata: Metadata = { title: "Invoice" };
 
@@ -40,7 +39,33 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   const actions = allowedActions({ stage: inv.stage, status: inv.status, needsReview: inv.needs_review, pendingReports: inv.pending_reports });
   const title = inv.number ?? `Draft · ${formatDate(inv.created_at.slice(0, 10))}`;
 
-  const header = (
+  const stat = (label: string, value: React.ReactNode, tone = "") => (
+    <div className="min-w-0"><dt className="caption-4 text-muted-foreground">{label}</dt><dd className={`amount mt-0.5 title-3 ${tone}`}>{value}</dd></div>
+  );
+  // D34: one summary bar instead of a sentence, so amount, status and due date read at a glance.
+  const summary = inv.stage === "cancelled" ? null : (
+    <Panel className="p-4">
+      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {inv.stage === "draft" ? (
+          <>
+            {stat("Total", <Amount paise={inv.total_paise} />, "heading-6")}
+            {stat("Client", inv.client_name)}
+            {stat("Due", formatDate(inv.due_date))}
+            {stat("Number", "When you send")}
+          </>
+        ) : (
+          <>
+            {stat(inv.status === "paid" ? "Paid" : "Still owed", <Amount paise={inv.status === "paid" ? inv.total_paise : inv.balance_paise} />, `heading-6 ${inv.status === "paid" ? "text-paid" : ""}`)}
+            {stat("Invoice total", <Amount paise={inv.total_paise} />)}
+            {stat("Due", <>{formatDate(inv.due_date)}{inv.days_overdue > 0 && inv.status !== "paid" ? <span className="block caption-3 text-late">{inv.days_overdue} day{inv.days_overdue === 1 ? "" : "s"} late</span> : null}</>)}
+            {stat("Issued", inv.issued_at ? formatDate(inv.issued_at.slice(0, 10)) : formatDate(inv.issue_date))}
+          </>
+        )}
+      </dl>
+    </Panel>
+  );
+
+  const header = (main: React.ReactNode, more: React.ReactNode) => (
     <div className="flex flex-col gap-2">
       <nav aria-label="Breadcrumb" className="caption-4 text-muted-foreground">
         <Link href="/dashboard" className="hover:text-foreground hover:underline">Dashboard</Link>
@@ -51,16 +76,8 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <h1 className="amount heading-6 sm:heading-5">{title}</h1>
         <StatusBadge status={inv.status} pendingReports={inv.pending_reports} />
         {inv.source === "claude" && <ClaudeBadge />}
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">{main}{more}</div>
       </div>
-      {inv.stage === "issued" ? (
-        <p className="body-6 text-muted-foreground">
-          {inv.status === "paid" ? <>Paid in full · <Amount paise={inv.total_paise} /></> : <>Still owed <Amount paise={inv.balance_paise} className="font-semibold text-foreground" /> of <Amount paise={inv.total_paise} /></>}
-          {" · "}Due {formatDate(inv.due_date)}
-          {inv.days_overdue > 0 && inv.status !== "paid" ? <span className="font-medium text-late"> · {inv.days_overdue} day{inv.days_overdue === 1 ? "" : "s"} late</span> : null}
-        </p>
-      ) : inv.stage === "draft" ? (
-        <p className="body-6 text-muted-foreground">{inv.client_name} · <Amount paise={inv.total_paise} /> · gets its number when you send it</p>
-      ) : null}
     </div>
   );
 
@@ -71,19 +88,18 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
     return (
       <div className="flex flex-col gap-6">
         <AutoRefresh seconds={15} />
-        {header}
+        {header(
+          <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} />,
+          <InvoiceMoreMenu id={inv.id} can={{ delete: true }} links={[{ label: "Preview as client", href: `/invoices/${inv.id}/preview` }]} />,
+        )}
+        <p className="-mt-4 caption-5 text-muted-foreground">
+          {blocked ? <>{blocked} {gaps.length ? <Link href="/settings" className="font-medium text-foreground underline underline-offset-2">Open settings</Link> : null}</> : "Save your edits first. Send uses the saved version."}
+        </p>
+        {summary}
         {inv.needs_review && <ConfirmTotals id={inv.id} reason={inv.review_reason} />}
         {inv.ready_to_send_at && !inv.needs_review && (
           <Banner title="Claude marked this ready to send">Check it, then press Send. Only you can send it.</Banner>
         )}
-        <Panel className="flex flex-wrap items-center gap-2 p-3">
-          <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} />
-          <PreviewLink id={inv.id} />
-          <div className="ml-auto"><DeleteDraft id={inv.id} /></div>
-          <p className="w-full caption-5 text-muted-foreground">
-            {blocked ? <>{blocked} {gaps.length ? <Link href="/settings" className="font-medium text-foreground underline underline-offset-2">Open settings</Link> : null}</> : "Save your edits first. Send uses the saved version."}
-          </p>
-        </Panel>
         <InvoiceForm
           key={inv.updated_at}
           invoiceId={inv.id}
@@ -111,7 +127,20 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh seconds={15} />
-      {header}
+      {header(
+        inv.stage === "issued" && inv.status !== "paid" && reports.length === 0 ? <ShareMain link={link} whatsapp={whatsappLink(client?.phone, shareText)} /> : null,
+        inv.stage === "issued" ? (
+          <InvoiceMoreMenu
+            id={inv.id} number={inv.number} balance={formatINR(inv.balance_paise)} today={istToday()} due={inv.due_date} notes={inv.notes}
+            can={{ record: actions.has("record_payment"), extend: actions.has("edit_notes_due") && inv.status !== "paid", notes: actions.has("edit_notes_due"), cancel: actions.has("cancel") }}
+            links={[
+              { label: "View as client", href: link, external: true },
+              ...(client?.email ? [{ label: "Send by email", href: mailtoLink(client.email, `Invoice ${inv.number} from ${profile.business_name}`, shareText), external: true }] : []),
+            ]}
+          />
+        ) : null,
+      )}
+      {summary}
       {inv.stage === "cancelled" && (
         <Banner tone="error" title="Cancelled">Its number stays used, so your series has no gaps. Create a new invoice if you need to bill again.</Banner>
       )}
@@ -129,22 +158,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           {r.flags.map((f) => <span key={f} className="mt-1 block font-medium text-attention">{f}</span>)}
         </Banner>
       ))}
-      {inv.stage === "issued" && inv.status !== "paid" && (
-        <Panel className="p-4">
-          <p className="title-4">{inv.days_overdue > 0 ? "Send your client a reminder with the link" : "Send your client the link"}</p>
-          <p className="mt-0.5 caption-5 text-muted-foreground">They can see the invoice, pay by bank transfer or UPI, and tell you once they&apos;ve paid.</p>
-          <div className="mt-3 flex flex-wrap gap-2"><ShareButtons link={link} whatsapp={whatsappLink(client?.phone, shareText)} email={client?.email ? mailtoLink(client.email, `Invoice ${inv.number} from ${profile.business_name}`, shareText) : null} /></div>
-        </Panel>
-      )}
-      {inv.stage === "issued" && (
-        <div className="flex flex-wrap items-center gap-2">
-          {actions.has("record_payment") && <RecordPayment id={inv.id} balance={formatINR(inv.balance_paise)} today={istToday()} />}
-          {actions.has("edit_notes_due") && inv.status !== "paid" && <ExtendDueDate id={inv.id} current={inv.due_date} />}
-          {actions.has("edit_notes_due") && <EditNotes id={inv.id} notes={inv.notes} />}
-          {actions.has("cancel") && <div className="sm:ml-auto"><CancelInvoice id={inv.id} number={inv.number!} /></div>}
-          <p className="w-full caption-5 text-muted-foreground">Amounts, client and line items are locked once sent. To change them, cancel this invoice and create a new one.</p>
-        </div>
-      )}
+      {inv.stage === "issued" && <p className="-mt-3 caption-5 text-muted-foreground">Amounts, client and line items are locked once sent. To change them, cancel this invoice from More and create a new one.</p>}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <InvoiceDocument d={docFromInvoice(inv, items)} />
