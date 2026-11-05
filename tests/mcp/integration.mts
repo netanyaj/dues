@@ -251,6 +251,25 @@ async function main() {
   assert.match(hello.result.serverInfo.icons?.[0]?.src ?? "", /\/icon\.png$/);
   step("initialize: 200 with serverInfo name Dues and an icon");
 
+  // D38: prompts
+  const pl = await rpc(fresh, "prompts/list");
+  assert.deepEqual(pl.result.prompts.map((p: { name: string }) => p.name).sort(), ["chase_overdue", "invoice_client", "what_am_i_owed"]);
+  const pg = await rpc(fresh, "prompts/get", { name: "invoice_client", arguments: { client: "Acme", work: "2 logos at ₹5,000" } });
+  assert.match(pg.result.messages[0].content.text, /Invoice Acme for: 2 logos/);
+  assert.match(pg.result.messages[0].content.text, /create_invoice/);
+  step("prompts: chase_overdue, what_am_i_owed, invoice_client listed and filled in");
+
+  // D37: client views are counted (bots and the owner aren't) and exposed to Claude
+  const pid = (await admin.from("invoices").select("public_id").eq("id", sent.id).single()).data!.public_id as string;
+  await fetch(`${BASE}/i/${pid}`, { headers: { "User-Agent": "WhatsApp/2.23.20.0 A" } });
+  await fetch(`${BASE}/i/${pid}`, { headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1" } });
+  await new Promise((r) => setTimeout(r, 1500));
+  const lv = await call(fresh, "list_invoices", { limit: 5 });
+  const mine = lv.data.invoices.find((i: { id: string }) => i.id === sent.id);
+  assert.equal(mine.client_views.count, 1);
+  assert.ok(mine.client_views.last_viewed_at);
+  step("client views: a phone browser counts, a WhatsApp preview doesn't; list_invoices shows it");
+
   console.log(`\n${passed} checks passed.`);
 }
 

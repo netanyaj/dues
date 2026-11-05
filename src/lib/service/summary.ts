@@ -80,6 +80,7 @@ export function describeSummary(s: Summary) {
     to_chase_today: s.to_chase.map((r) => ({
       id: r.id, number: r.number, client: r.client_name, balance_due: formatINR(r.balance_paise), due_date: r.due_date,
       status: r.status, days_overdue: r.days_overdue, note: r.chase_note ?? undefined,
+      client_views: r.view_count ?? 0, last_viewed_at: r.last_viewed_at ?? null,
       suggested_reminder_stage: r.next_stage ?? undefined,
       suggested_reminder: r.next_stage ? STAGE_LABEL[r.next_stage] : undefined,
     })),

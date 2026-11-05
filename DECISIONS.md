@@ -506,3 +506,21 @@ The founder rejected the first two mock directions as still generic. They picked
 - **The Client field is a searchable dropdown.** Type to filter by name or GSTIN, use the arrow keys and Enter, and "+ New client" sits at the bottom. It pre-fills with whatever was typed.
 - **"+ New client" opens a right-hand side panel.** Name and state are required; GSTIN, email and phone are optional. It saves through the same `saveClient` validation as the Clients page, then returns to the invoice with the new client selected.
 - **No setup order is forced** (the research point stands). The invoice form no longer creates clients itself; Claude's `create_draft_invoice` can still create a client by name.
+
+## D37. "Viewed by client"
+
+**Decision:**
+- **What counts:** each open of `/i/[id]` calls `record_invoice_view` after the response is sent. It's skipped when the visitor is the logged-in owner, or when a simple user-agent check flags a bot or link-preview fetcher (WhatsApp, Slack, Telegram, crawlers, curl and similar). This is a signal, not a security control.
+- **Storage (migration 0008, additive):** `invoices.view_count`, `first_viewed_at` and `last_viewed_at`, plus one `viewed` event per open with `actor = client`.
+- **Shown:**
+  - "Viewed N times · last {time}" (or "Not opened yet") in the invoice summary bar and on each chase item;
+  - the history shows the first and the latest open only.
+- **Claude sees it:** `client_views` on each invoice in `list_invoices`, and `client_views` / `last_viewed_at` on each `to_chase_today` item in `get_receivables_summary`.
+- **Privacy:** no IP addresses or user agents are stored. Vercel Analytics masks `/i/<id>` as `/i/[id]`.
+
+## D38. MCP prompts
+
+Three prompts appear in Claude's "+" menu. Each one is a template that names the Dues tools, with no logic:
+- **"Chase my overdue invoices"** (`chase_overdue`): `get_business_profile` for tone, `get_receivables_summary`, a reminder per item at its stage, `save_reminder`. It mentions unopened invoices.
+- **"What am I owed?"** (`what_am_i_owed`): a short summary from `get_receivables_summary`, quoting Dues' figures.
+- **"Invoice a client"** (`invoice_client`, with optional `client` and `work`): `get_business_profile` defaults, `upsert_client` for new clients (ask for their state), `create_invoice` with `expected_total_rupees`. It shows Dues' totals and reminds the freelancer they send it.

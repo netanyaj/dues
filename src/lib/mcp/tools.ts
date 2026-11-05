@@ -250,7 +250,52 @@ export function registerDuesTools(server: McpServer, ctx: Ctx) {
       };
     }),
   );
+
+  registerDuesPrompts(server);
 }
+
+// D38: prompts show up in Claude's "+" menu. Each is a short template that names the Dues tools
+// to use, so the user gets the right flow without remembering tool names. No logic lives here.
+const PROMPTS: { name: string; title: string; description: string; args?: Record<string, string>; text: (a: Record<string, string | undefined>) => string }[] = [
+  {
+    name: "chase_overdue",
+    title: "Chase my overdue invoices",
+    description: "Find who to chase today and draft reminders in my tone.",
+    text: () =>
+      "Chase my overdue invoices. Call get_business_profile for my reminder tone and channel, then get_receivables_summary. " +
+      "For each invoice in to_chase_today, write a reminder at its suggested_reminder_stage (1 friendly, 2 firm, 3 final) that quotes the balance and due date exactly as Dues gives them and includes the invoice's public_url. " +
+      "Mention if the client hasn't opened the invoice yet (client_views is 0). Save each with save_reminder and show me the one-tap links. Don't send anything yourself.",
+  },
+  {
+    name: "what_am_i_owed",
+    title: "What am I owed?",
+    description: "A short summary of what's outstanding, what's late and what was paid this month.",
+    text: () =>
+      "What am I owed? Call get_receivables_summary and tell me, in a few lines: total outstanding, total overdue, overdue by client, and what was paid this month (with TDS). " +
+      "Then list who to chase today with days overdue and whether they've opened the invoice. Quote every amount exactly as Dues returns it; never add them up yourself.",
+  },
+  {
+    name: "invoice_client",
+    title: "Invoice a client",
+    description: "Create a GST-correct draft invoice for a client.",
+    args: { client: "Who to bill", work: "What you did, with quantities and rates" },
+    text: (a) =>
+      `Invoice ${a.client || "a client"}${a.work ? ` for: ${a.work}` : ""}. Call get_business_profile first for my defaults (GST rate, due days, SAC). ` +
+      "If the client is new, ask me for their state (it decides CGST + SGST or IGST) and use upsert_client. Then call create_invoice with the line items and pass expected_total_rupees with your own estimate. " +
+      "Show me the totals Dues computed, not yours, plus the draft link. If Dues flags the totals, tell me why. Remind me that I send it from Dues; you can mark_ready_to_send if I ask.",
+  },
+];
+
+function registerDuesPrompts(server: McpServer) {
+  for (const p of PROMPTS) {
+    const argsSchema = p.args ? z.object(Object.fromEntries(Object.entries(p.args).map(([k, d]) => [k, z.string().optional().describe(d)]))) : undefined;
+    server.registerPrompt(p.name, { title: p.title, description: p.description, ...(argsSchema ? { argsSchema } : {}) }, (a: Record<string, string | undefined> = {}) => ({
+      messages: [{ role: "user" as const, content: { type: "text" as const, text: p.text(a ?? {}) } }],
+    }));
+  }
+}
+
+export const PROMPT_NAMES = PROMPTS.map((p) => p.name);
 
 export const TOOL_NAMES = [
   "get_business_profile", "upsert_client", "create_invoice", "update_draft_invoice", "list_invoices",

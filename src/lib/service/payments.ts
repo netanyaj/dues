@@ -1,3 +1,4 @@
+import { isLikelyBot } from "@/lib/domain/bots";
 import { formatINR, rupeesToPaise } from "@/lib/domain/money";
 import { CLAIM_TOLERANCE_PAISE, suggestTds } from "@/lib/domain/tax";
 import { formatDate, istToday, isValidDate } from "@/lib/domain/dates";
@@ -108,6 +109,15 @@ export async function getPublicInvoice(publicId: string) {
   ]);
   // D29: the freelancer can hide the UPI QR; the ₹1 lakh cap still applies when shown.
   return { invoice: data, items: items ?? [], reports: reports ?? [], showUpiQr: prefs?.show_upi_qr !== false };
+}
+
+/** D37: count a client opening the page. Skips bots and the freelancer viewing their own invoice. */
+export async function recordPublicView(found: { invoice: Record<string, unknown> }, userAgent: string | null, viewerUserId: string | null): Promise<void> {
+  const inv = found.invoice;
+  if (isLikelyBot(userAgent)) return;
+  if (viewerUserId && viewerUserId === inv.user_id) return;
+  const { error } = await db().rpc("record_invoice_view", { p_invoice: inv.id, p_user: inv.user_id });
+  if (error) console.error("view log failed", error.code);
 }
 
 export async function reportPaymentPublic(publicId: string, input: PaymentInput): Promise<{ ok: true } | { ok: false; field?: string; error: string }> {

@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { getPublicInvoice } from "@/lib/service/payments";
+import { headers } from "next/headers";
+import { after } from "next/server";
+import { sessionUser } from "@/lib/auth";
+import { getPublicInvoice, recordPublicView } from "@/lib/service/payments";
 import type { InvoiceRow, ItemRow } from "@/lib/service/invoices";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { CopyButton } from "@/components/bits";
@@ -33,6 +36,9 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
   const { publicId } = await params;
   const found = await getPublicInvoice(publicId);
   if (!found) notFound();
+  const ua = (await headers()).get("user-agent");
+  const viewer = await sessionUser().catch(() => null);
+  after(() => recordPublicView(found, ua, viewer?.id ?? null));
   const inv = found.invoice as unknown as InvoiceRow;
   const items = (found.items as ItemRow[]).map((i) => ({ ...i, rate_paise: Number(i.rate_paise), amount_paise: Number(i.amount_paise) }));
   for (const k of ["total_paise", "balance_paise", "subtotal_paise", "cgst_paise", "sgst_paise", "igst_paise", "pending_reports"] as const) {

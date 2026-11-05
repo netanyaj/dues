@@ -49,3 +49,15 @@ describe("D28: header-only MCP auth", () => {
     expect(read("src/app/api/mcp/route.ts")).toMatch(/req\.headers\.get\("authorization"\)/);
   });
 });
+
+import { isLikelyBot } from "@/lib/domain/bots";
+describe("D37: client views skip bots and link previews", () => {
+  it("treats preview fetchers and scripts as bots", () => {
+    for (const ua of ["WhatsApp/2.23.20.0 A", "facebookexternalhit/1.1", "Slackbot-LinkExpanding 1.0", "TelegramBot (like TwitterBot)", "curl/8.4.0", "Mozilla/5.0 (compatible; Googlebot/2.1)", "", null, "Mozilla/5.0 HeadlessChrome/120"]) expect(isLikelyBot(ua), String(ua)).toBe(true);
+  });
+  it("counts real phone and desktop browsers", () => {
+    expect(isLikelyBot("Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36")).toBe(false);
+    expect(isLikelyBot("Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1")).toBe(false);
+    expect(isLikelyBot("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36")).toBe(false);
+  });
+});

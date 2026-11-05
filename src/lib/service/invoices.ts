@@ -43,6 +43,9 @@ export type InvoiceRow = {
   days_overdue: number;
   original_due_date: string | null;
   ready_to_send_at: string | null;
+  view_count: number;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
   public_id: string | null;
   notes: string | null;
   source: "claude" | "app";
@@ -533,6 +536,8 @@ export function describeInvoice(inv: InvoiceRow, items?: ItemRow[]) {
     needs_review: inv.needs_review,
     review_reason: inv.needs_review ? inv.review_reason : null,
     ready_to_send: inv.stage === "draft" ? !!inv.ready_to_send_at : undefined,
+    // D37: opens of the client page, excluding the freelancer and link-preview bots.
+    client_views: inv.stage === "draft" ? undefined : { count: inv.view_count ?? 0, first_viewed_at: inv.first_viewed_at ?? null, last_viewed_at: inv.last_viewed_at ?? null },
     created_by: inv.source,
     notes: inv.notes,
     items: items?.map((i) => ({ description: i.description, sac: i.sac, qty: String(i.qty), rate: r(i.rate_paise), amount: r(i.amount_paise) })),

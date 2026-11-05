@@ -1,6 +1,7 @@
+import { viewedText } from "@/lib/view";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BankIcon, ClockCountdownIcon, DownloadSimpleIcon, PaperPlaneTiltIcon, PlusIcon, WarningIcon } from "@phosphor-icons/react/dist/ssr";
+import { BankIcon, ClockCountdownIcon, DownloadSimpleIcon, PaperPlaneTiltIcon, PlusIcon, WarningIcon, EyeIcon } from "@phosphor-icons/react/dist/ssr";
 import { requireCtx } from "@/lib/auth";
 import { listInvoices } from "@/lib/service/invoices";
 import { receivablesSummary } from "@/lib/service/summary";
@@ -91,7 +92,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
               ))}
               {ready.map((r) => (
                 <li key={r.id}>
-                  <Link href={`/invoices/${r.id}`} className="flex gap-3 rounded-xl border bg-card p-4 hover:bg-[#fafafa]">
+                  <Link href={`/invoices/${r.id}`} className="flex gap-3 rounded-xl border bg-card p-4 hover:bg-muted/50">
                     <PaperPlaneTiltIcon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
                     <div className="min-w-0">
                       <p className="title-4">Send {r.client_name}&apos;s invoice · <Amount paise={r.total_paise} decimals="auto" /></p>
@@ -111,6 +112,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                           {r.days_overdue > 0 ? `${r.days_overdue} day${r.days_overdue === 1 ? "" : "s"} late` : `due ${formatDate(r.due_date)}`}
                         </span>
                       </p>
+                      <p className="mt-0.5 flex items-center gap-1 caption-5 text-muted-foreground"><EyeIcon aria-hidden className="size-3.5" />{viewedText(r.view_count, r.last_viewed_at)}</p>
                       {r.chase_note && <p className="mt-0.5 caption-5 text-attention">{r.chase_note}</p>}
                       {r.next_stage && <p className="mt-0.5 caption-5 text-muted-foreground">Next: {STAGE_LABEL[r.next_stage].toLowerCase()} reminder. Ask Claude to write it.</p>}
                     </div>

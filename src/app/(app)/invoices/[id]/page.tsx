@@ -16,7 +16,7 @@ import { AutoRefresh } from "@/components/bits";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { ClaudeBadge, StatusBadge } from "@/components/status-badge";
 import { ReportDecision } from "@/components/report-decision";
-import { docFromInvoice, describeEvent } from "@/lib/view";
+import { docFromInvoice, describeEvent, viewedText } from "@/lib/view";
 import { pendingReports } from "@/lib/service/payments";
 import { Amount, Banner, Panel } from "@/components/ds";
 import { InvoiceForm } from "../invoice-form";
@@ -58,7 +58,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             {stat(inv.status === "paid" ? "Paid" : "Still owed", <Amount paise={inv.status === "paid" ? inv.total_paise : inv.balance_paise} />, `heading-6 ${inv.status === "paid" ? "text-paid" : ""}`)}
             {stat("Invoice total", <Amount paise={inv.total_paise} />)}
             {stat("Due", <>{formatDate(inv.due_date)}{inv.days_overdue > 0 && inv.status !== "paid" ? <span className="block caption-3 text-late">{inv.days_overdue} day{inv.days_overdue === 1 ? "" : "s"} late</span> : null}</>)}
-            {stat("Issued", inv.issued_at ? formatDate(inv.issued_at.slice(0, 10)) : formatDate(inv.issue_date))}
+            {stat("Client opened", <span className="body-5">{viewedText(inv.view_count, inv.last_viewed_at)}</span>)}
           </>
         )}
       </dl>
@@ -214,7 +214,7 @@ function Timeline({ events }: { events: { id: number; actor: string; type: strin
     <section>
       <h2 className="title-4 font-semibold">History</h2>
       <ol className="mt-2 flex flex-col gap-3 body-6">
-        {events.slice().reverse().map((e) => {
+        {events.filter((e, i, all) => e.type !== "viewed" || e.payload?.n === 1 || i === all.findLastIndex((x) => x.type === "viewed")).slice().reverse().map((e) => {
           const d = describeEvent(e);
           return (
             <li key={e.id} className="flex gap-3">

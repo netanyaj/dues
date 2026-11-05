@@ -3,7 +3,13 @@ import type { DocData, DocParty } from "@/components/invoice-document";
 import { formatINR } from "@/lib/domain/money";
 import { msmeLine } from "@/lib/domain/gst";
 import { STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
-import { formatDate } from "@/lib/domain/dates";
+import { formatDate, formatDateTime } from "@/lib/domain/dates";
+
+/** D37: "Viewed 3 times · last 6 Nov, 2:14 pm", or "Not opened yet". */
+export function viewedText(count: number | null | undefined, last: string | null | undefined): string {
+  if (!count) return "Not opened yet";
+  return `Viewed ${count} time${count === 1 ? "" : "s"}${last ? ` · last ${formatDateTime(last)}` : ""}`;
+}
 import type { Client } from "@/lib/service/clients";
 import type { EventRow, InvoiceRow, ItemRow } from "@/lib/service/invoices";
 import type { Profile } from "@/lib/service/profile";
@@ -53,6 +59,7 @@ export function describeEvent(e: EventRow): { who: string; what: string } {
     draft_updated: `edited the draft (total now ${money("total_paise")})`,
     flagged_for_review: `flagged the totals: ${p.reason ?? ""}`,
     review_cleared: "cleared the totals flag (they now match)",
+    viewed: p.n === 1 ? "opened the invoice for the first time" : `opened the invoice (view ${p.n ?? ""})`,
     totals_confirmed: "confirmed the totals",
     sent: `sent it as ${p.number ?? ""}`,
     cancelled: `cancelled it${p.reason ? `: ${p.reason}` : ""}`,
