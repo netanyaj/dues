@@ -46,7 +46,8 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 | Freelancer sends | Toast, link to copy, share panel | Only when F shares the link (WhatsApp / email / copy) | `list_invoices` shows the number | In-app | Dues emails the client |
 | Due date passes | Row turns "Overdue · N days late"; "Needs you" chase item with next reminder stage | Client page says "Was due on …" | `get_receivables_summary` | In-app (cron logs `became_overdue` once) | Daily email to F |
 | Reminder saved by Claude | Reminder card with WhatsApp / email button | When F taps the button and sends | Tool result with the link | In-app | Scheduled sending |
-| Client reports a payment | "Needs you → … says ₹X was paid", with UTR checks and TDS guess | Banner: "Payment reported" | `payment_reported_unconfirmed` flag | In-app | Email / push to F |
+| Client opens the link | "Viewed N times · last {time}" on the invoice and chase list (D37) | — | `client_views` in `list_invoices` and the summary | In-app | Email / push to F on first open |
+| Client reports a payment | "Needs you → … says ₹X was paid", with UTR checks, TDS guess and proof link (D40) | Banner: "Payment reported" | `payment_reported_unconfirmed` flag | In-app | Email / push to F |
 | Freelancer confirms | Toast; status updates; "Received this month" | Client page shows the new balance or "Paid in full" | Status in tool results | In-app | Receipt email to K |
 | Freelancer rejects | Toast | Banner: "… couldn't find your payment of ₹X" (**Fixed**) | Status in tool results | In-app | Email to K |
 | Due date extended | History entry; document shows original and new date | "Moved the due date from … to …" | — | In-app | Email to K |
@@ -62,14 +63,14 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
   1. `/signup`: email and password (show-password toggle).
   2. Step 1 of 4, Business profile.
   3. Step 2, Tax and compliance.
-  4. Step 3, Getting paid.
+  4. Step 3, Getting paid (optional now: the bank account is asked for at the first Send, D35).
   5. Step 4, Claude connection: create a token and connect.
   6. Dashboard.
 - **End states:**
   - **Set up:** the dashboard shows "No invoices yet" with "New invoice" and "Connect Claude".
   - **Incomplete profile:** the user skipped a step or closed the tab.
 - **What the user sees:**
-  - With an incomplete profile, an amber bar on every app page says "Finish setup before you can send invoices: add your …" and links to Settings.
+  - With an incomplete profile (business name, address or state missing), an amber bar on every app page says "Finish setup before you can send invoices: add your …" and links to Settings.
   - Drafts can still be created by hand or by Claude. Send is disabled with the reason shown, and Claude's send refusal names the missing fields.
 - **Errors:**
   - An existing email gets "Log in instead".
@@ -122,7 +123,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 
 - **Trigger:** "New invoice" in the sidebar or top bar; "New invoice" on a client page (client preset).
 - **Steps:**
-  1. Pick a client, or add one inline.
+  1. Pick a client from the searchable dropdown, or choose "+ New client" to open a side panel (name and state required). It comes back selected (D36).
   2. Add lines. Totals update live.
   3. The defaults come from Settings → Invoice defaults: GST rate, due days and notes.
   4. Create draft, then edit and save.
@@ -140,13 +141,13 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
   - the draft page; or
   - Claude's link.
 - **Steps:**
-  1. Press Send.
-  2. A dialog names the client and total: "the amounts are then locked".
+  1. Press Send. It's the one main action in the draft header; Preview and Delete are under More (D34).
+  2. A dialog names the client and total: "the amounts are then locked". **First Send with no bank account:** the dialog asks for account name, number and IFSC, saves them to Settings, then sends (D35).
   3. The invoice gets a number and a link.
-  4. A share panel shows the link with a copy icon, then WhatsApp (pre-filled text with the client's phone), Email (when the client has an email) and View as client.
+  4. The header's main action becomes Copy link (icon) + WhatsApp (pre-filled text with the client's phone). Record payment, Extend, Edit notes, View as client, Send by email and Cancel are under More (⋯).
 - **End states:** the invoice is sent and its link is live. The link preview shows "Invoice {number} from {business} · ₹X due {date}" plus a generated image. The page stays `noindex`.
 - **Errors:**
-  - Setup is incomplete, so Send is disabled with the reason.
+  - Setup is incomplete, so Send is disabled with the reason. The service refuses too (`setup_incomplete`, `bank_details_required`), so the UI can't be bypassed.
   - The draft is flagged, so Send is disabled until the totals are confirmed.
 - **How the loop closes:** Dues never sends anything itself in v1, so the share panel stays at the top of the invoice until it's paid.
 - **Dead ends:** no email share. **Fixed:** an Email button (mailto) appears when the client has an email address.
@@ -157,8 +158,9 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 - **Steps:**
   1. The client sees who it's from, the amount, the due date and bank details first (with copy buttons).
   2. If the balance is ₹1,00,000 or less and the freelancer allows it, there's a UPI QR and a pay button.
-  3. The client taps **I've paid**: amount (pre-filled), UTR, method → Send.
-  4. The freelancer sees "Needs you" with the UTR checks (unusual format, reused UTR) and a TDS guess, then confirms (amount and TDS editable) or rejects.
+  3. The client taps **I've paid**: amount (pre-filled), UTR, method, and optionally a screenshot or PDF receipt (5 MB, private, D40) → **Notify as paid**.
+  4. The freelancer sees "Needs you" with the UTR checks (unusual format, reused UTR), a TDS guess and "View proof of payment" if attached, then confirms (amount and TDS editable) or rejects.
+  - Every open of the page by a real browser (not the freelancer, not link-preview bots) counts as a view: "Viewed N times · last {time}" on the invoice and chase list, and `client_views` for Claude (D37).
 - **End states:**
   - **Reported:** the client sees "Payment reported". Chasing pauses for 2 working days.
   - **Confirmed, full:** the client page says "Paid in full".

@@ -70,6 +70,8 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
   - Dashboard: "who owes me, and what needs me today?"
   - Invoice: "what state is this in, and what's my next action?"
   - Client page: "how much, by when, and how do I pay?" On desktop the invoice sits on the left and the paying column on the right.
+- **Dashboard (D39):** one chart, "Who owes you, by age" (0–15, 16–30, 31–45, 45+ days) with a 45-day MSME marker; each bucket filters the list.
+- **Invoice page (D34):** one main action per state; the rest under More (⋯); a summary bar with amount, due date and client views (D37).
 - **Settings (D29):** eight left-nav sections, each saved on its own. First run is a 4-step setup ending at Claude connection.
 - No screen scrolls sideways at 375 px (checked on every screen). The client page is mobile-first.
 - Indian formats: ₹1,00,000; dates like "12 Nov 2026"; FY shown as 2026–27.
@@ -97,6 +99,7 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M4 | MCP tools, cron, integration script, seed, no-AI check | Fri 00:30 | ✅ 20:16 |
 | M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ✅ deployed 20:59; founder's real-Claude walkthrough passed (bugs fixed: D30 confirm-totals, mobile dashboard) |
 | M5b | Redesign, Settings rebuild, header-only MCP auth, FLOWS.md (D27–D30) | Fri 02:30 | ✅ 00:30 |
+| M5c | Live-site fixes: MCP discovery bug (D32), hot-pink brand (D33), invoice header (D34), bank at Send (D35), client dropdown (D36), views (D37), MCP prompts (D38), aging bar (D39), proof upload (D40) | Fri 03:45 | ✅ 02:40 local; production deploy waiting on the founder's go-ahead |
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ◐ README, ARCHITECTURE, METRICS, FLOWS written; final pass pending |
 
 **Must-ship:** everything in §4–§5, including the chase list, reminders with stages (D19), CSV export (D22) and the cron.
