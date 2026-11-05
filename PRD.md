@@ -83,8 +83,8 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M1 | Schema and domain logic | Thu 17:45 | ✅ 17:47 |
 | M2 | Auth, onboarding, settings, dashboard | Thu 19:00 | ✅ 18:48 |
 | M3 | Invoices, client page, payments (+ client pages, history, D16–D18) | Thu 21:30 | ✅ 20:00 |
-| M3b | Research and safety changes: inline client, duplicate check, Claude-safe actions, token hash, reminder stages, MSME, CSV (D19–D25) | Thu 22:30 | ⏳ |
-| M4 | MCP tools, cron, integration script | Fri 00:30 | ⬜ |
+| M3b | Research and safety changes: inline client, duplicate check, Claude-safe actions, token hash, reminder stages, MSME, CSV (D19–D25) | Thu 22:30 | ✅ 20:16 |
+| M4 | MCP tools, cron, integration script, seed, no-AI check | Fri 00:30 | ✅ 20:16 |
 | M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ⬜ |
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ⬜ |
 

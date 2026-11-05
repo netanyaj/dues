@@ -4,14 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-no-ai.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run tests/unit",
     "test:db": "vitest run tests/db",
     "db:push": "node -e \"require('dotenv').config({path:'.env.local'});const u=process.env.SUPABASE_DB_URL;if(!u){console.error('Set SUPABASE_DB_URL in .env.local');process.exit(1)};require('child_process').execFileSync('supabase',['db','push','--db-url',u,'--include-all'],{stdio:'inherit'})\"",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:mcp": "tsx --tsconfig tsconfig.json tests/mcp/integration.mts"
+    "test:mcp": "tsx --tsconfig tsconfig.json tests/mcp/integration.mts",
+    "check:no-ai": "node scripts/check-no-ai.mjs",
+    "seed": "tsx --tsconfig tsconfig.json scripts/seed.mts"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.4.0",

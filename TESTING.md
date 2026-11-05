@@ -4,10 +4,11 @@
 
 | ID | What | How to run | Status |
 |----|------|-----------|--------|
-| A1 | Unit tests: money parsing, rounding, tax split (odd paisa → CGST), Claude's number check, TDS suggestion, GSTIN checksum and state, IST financial year, number format, derived status, locking/allowed actions, UPI link, phone normalising | `npm test` | ✅ 37 passing |
-| A2 | Database tests: 20 concurrent sends → 20 distinct consecutive numbers; a double send is refused and doesn't burn a number; sent invoices are locked; flagged drafts can't be sent; RLS isolates users; browser roles can't call server functions or write tables; sign-up trigger creates the profile and token; the view derives overdue and paid | `npm run test:db` | ✅ 7 passing |
-| A3 | MCP integration script: calls every tool against a local server and checks the results | `npm run test:mcp` | ⬜ Step 4 |
-| A4 | No-AI check: fails if any dependency, file or env var references a model provider | `npm run check:no-ai` | ⬜ Step 6 |
+| A1 | Unit tests: money parsing, rounding, tax split (odd paisa → CGST), Claude's number check, TDS suggestion, GSTIN checksum and state, IST financial year, number format, derived status, locking/allowed actions, UPI link, phone normalising | `npm test` | ✅ 42 passing |
+| A2 | Database tests: 20 concurrent sends → 20 distinct consecutive numbers; a double send is refused and doesn't burn a number; sent invoices are locked; flagged drafts can't be sent; RLS isolates users; browser roles can't call server functions or write tables; sign-up trigger creates the profile and token; the view derives overdue and paid | `npm run test:db` | ✅ 10 passing |
+| A3 | MCP integration script: calls every tool over HTTP and checks results: inline client, ₹35,400 tax split, duplicate retry, wrong total → review, fix clears it, ready-to-send doesn't number, fill-blanks-only client update, Claude payment stays pending, overpayment refused, reminder wa.me link, sent invoice locked, cross-user isolation, no tool can finalise, regenerate kills the old link | `npm run test:mcp` (with `npm run dev`; or `BASE_URL=…`) | ✅ 20 checks (local) |
+| A4 | No-AI check: fails if any dependency (699 incl. transitive), source file or app env var references a model provider. Runs before every `npm run build`, so Vercel can't deploy without it | `npm run check:no-ai` | ✅ passes; verified it fails on `import OpenAI` and `OPENAI_API_KEY` |
+| A5 | Guards: MCP tools can't import send/confirm functions; MCP route/profile code never logs; cron refuses without the secret and is idempotent; `invoice_view` exposes every `invoices` column | `npm test`, `npm run test:db` | ✅ |
 
 ## Manual checklist (run on production with a real Claude)
 
