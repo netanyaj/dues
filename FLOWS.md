@@ -158,7 +158,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 - **Steps:**
   1. The client sees who it's from, the amount, the due date and bank details first (with copy buttons).
   2. If the balance is ₹1,00,000 or less and the freelancer allows it, there's a UPI QR and a pay button.
-  3. The client taps **I've paid**: amount (pre-filled), UTR, method, and optionally a screenshot or PDF receipt (5 MB, private, D40) → **Notify as paid**.
+  3. The client taps **Notify as paid**: amount (pre-filled), UTR, method, and optionally a screenshot or PDF receipt (5 MB, private, D40) → **Send**.
   4. The freelancer sees "Needs you" with the UTR checks (unusual format, reused UTR), a TDS guess and "View proof of payment" if attached, then confirms (amount and TDS editable) or rejects.
   - Every open of the page by a real browser (not the freelancer, not link-preview bots) counts as a view: "Viewed N times · last {time}" on the invoice and chase list, and `client_views` for Claude (D37).
 - **End states:**

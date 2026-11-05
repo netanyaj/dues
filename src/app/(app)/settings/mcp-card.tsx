@@ -94,8 +94,9 @@ export function ConnectSteps({ serverUrl }: { serverUrl: string }) {
           <li>Click <b>+ Add</b>, then <b>Add custom connector</b>.</li>
           <li>Name it <b>Dues</b> and paste the server URL. Click <b>Continue</b>, then <b>Continue</b> again.</li>
           <li>Under <b>Authentication</b>, choose <b>No sign in</b>.</li>
-          <li>Under <b>Request headers</b>, add the name <span className="font-mono">Authorization</span> and the value <span className="font-mono">Bearer</span> followed by a space and your token.</li>
-          <li>Click <b>Add</b>. In a new chat, check Dues is switched on in the tools menu.</li>
+          <li>Under <b>Request headers</b>, pick the name <span className="font-mono">authorization</span>. For the value, paste <span className="font-mono">Bearer</span>, a space, then your token. (Pasting the token alone also works.)</li>
+          <li>Click <b>Add</b>. In a new chat, open the <b>+</b> menu → <b>Connectors</b> and switch Dues on.</li>
+          <li>If it says it can&apos;t connect: regenerate the token here, then edit the connector and paste the new one. An old token stops working the moment you regenerate.</li>
         </ol>
         <p className="mt-2 caption-5 text-muted-foreground">Connectors you add on claude.ai also appear in Claude Desktop. On Team and Enterprise plans an Owner may need to add it under organisation settings. If you don&apos;t see Request headers, your account doesn&apos;t have that option yet; use Claude Code below.</p>
       </div>

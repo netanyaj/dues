@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Dues · Invoice from Claude. Get paid on time.", description },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#17151c" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#171717" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

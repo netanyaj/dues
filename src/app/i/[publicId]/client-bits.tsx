@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { reportAbuseAction, reportPaidAction, type PaidState } from "./actions";
 
-export function PaidForm({ publicId, due, business }: { publicId: string; due: string; business: string }) {
+export function PaidForm({ publicId, due, business, primary = false }: { publicId: string; due: string; business: string; primary?: boolean }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<PaidState, FormData>(reportPaidAction.bind(null, publicId), {});
   if (state.ok) {
@@ -18,12 +18,12 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
     );
   }
   if (!open) {
-    return <Button variant="outline" size="lg" onClick={() => setOpen(true)}>I&apos;ve paid</Button>;
+    return <Button variant={primary ? "default" : "outline"} size="lg" className="w-full" onClick={() => setOpen(true)}>Notify as paid</Button>;
   }
   const v = state.values;
   return (
-    <form action={action} className="flex flex-col gap-3 border-t pt-4" noValidate>
-      <h3 className="title-4">I&apos;ve paid</h3>
+    <form action={action} className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4" noValidate>
+      <h3 className="title-4">Notify as paid</h3>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="amount">Amount paid (₹)</Label>
         <Input id="amount" name="amount" inputMode="decimal" defaultValue={v?.amount ?? due} aria-invalid={state.field === "amount_rupees"} />
@@ -49,7 +49,7 @@ export function PaidForm({ publicId, due, business }: { publicId: string; due: s
       </div>
       {state.error ? <p role="alert" className="text-sm text-destructive">{state.error}</p> : null}
       <div className="flex gap-2">
-        <Button type="submit" size="lg" disabled={pending} className="flex-1">{pending ? "Sending…" : "Notify as paid"}</Button>
+        <Button type="submit" size="lg" disabled={pending} className="flex-1">{pending ? "Sending…" : "Send"}</Button>
         <Button type="button" size="lg" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </form>

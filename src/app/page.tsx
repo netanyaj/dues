@@ -33,7 +33,7 @@ const NOT = [
 
 const FAQ = [
   ["Do I need a paid Claude plan?", "Custom connectors work on Claude's free and paid plans. You can also use Dues without Claude: every invoice can be made by hand in the app."],
-  ["Does my client need an account?", "No. They open a link, see the invoice, pay with their own bank or UPI app, and tap “I've paid” with the reference number."],
+  ["Does my client need an account?", "No. They open a link, see the invoice, pay with their own bank or UPI app, and tap “Notify as paid” with the reference number."],
   ["Does Dues take a cut of payments?", "No. Money goes straight from your client to your account. Dues never touches it."],
   ["Is it a valid GST invoice?", "It has the fields a tax invoice needs: your GSTIN, the client's, place of supply, SAC codes, the tax split and a serial number per financial year."],
   ["What can Claude change?", "Drafts, clients and reminders. Sending an invoice, confirming a payment, cancelling or deleting only happen when you press the button in Dues."],
@@ -99,7 +99,7 @@ export default async function Home() {
                 <figcaption className="mt-3 caption-5 text-muted-foreground">r/notioncreations, an Indian freelancer</figcaption>
               </figure>
             </div>
-            <div className="mt-6 rounded-xl border border-[#f6c6d7] bg-brand-soft p-5 md:flex md:items-start md:gap-6">
+            <div className="mt-6 rounded-xl border border-[#efd0ea] bg-brand-soft p-5 md:flex md:items-start md:gap-6">
               <p className="title-3 font-semibold text-brand md:w-64 md:shrink-0">The 45-day rule most clients forget</p>
               <p className="mt-2 body-6 text-foreground md:mt-0">
                 If you&apos;re registered on Udyam as a micro or small enterprise, buyers must pay within 45 days under the MSMED Act, or owe compound interest at three times the RBI bank rate. Under Section 43B(h), a late buyer can&apos;t deduct the expense until they pay. Dues prints this on your invoice, in plain words, and warns you if your terms go past 45 days.
@@ -115,7 +115,7 @@ export default async function Home() {
             {[
               ["Tell Claude", "“Invoice Acme in Bengaluru for 12 hours of design at ₹2,500 an hour with 18% GST, due in 15 days.” Claude creates a draft in Dues, and Dues computes every number."],
               ["Check and send in Dues", "Open the draft, fix anything, and press Send. Only then does it get its invoice number and a link for your client. Claude can't send for you."],
-              ["Client pays, you confirm", "Your client pays by bank transfer or UPI and taps “I've paid” with the reference. You check your bank and confirm. Late ones show up in your chase list."],
+              ["Client pays, you confirm", "Your client pays by bank transfer or UPI and taps “Notify as paid” with the reference. You check your bank and confirm. Late ones show up in your chase list."],
             ].map(([t, d], i) => (
               <li key={t} className="flex flex-col gap-3">
                 <span className="amount grid size-8 place-items-center rounded-lg bg-brand-soft caption-3 text-brand">{i + 1}</span>

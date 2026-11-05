@@ -16,7 +16,7 @@ export default async function InvoiceSettings({ searchParams }: PageProps<"/sett
     <>
       <SectionHeader title="Invoice defaults" description="Starting values for new invoices, in the app and from Claude. Each invoice can change them." />
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border bg-card px-4 py-3"><p className="caption-4 text-muted-foreground">Next invoice number</p><p className="amount title-3">{nextNumber}</p></div>
+        <div className="rounded-xl border bg-card px-4 py-3"><p className="caption-4 text-muted-foreground">Next invoice number</p><p className="title-3 tabular-nums [overflow-wrap:anywhere]">{nextNumber}</p></div>
         <div className="rounded-xl border bg-card px-4 py-3"><p className="caption-4 text-muted-foreground">Financial year</p><p className="amount title-3">{fyLabel(fy)}</p><p className="caption-5 text-muted-foreground">Numbering restarts on 1 April</p></div>
       </div>
       <SettingsForm

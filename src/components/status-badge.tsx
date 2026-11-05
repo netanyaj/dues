@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 // Status is a dot plus a word, never colour alone (D33): amber = overdue, green = paid,
 // neutral = payment reported / needs review. Red is for errors only; pink is brand only.
 const TONE: Record<InvoiceStatus, { text: string; dot: string }> = {
-  draft: { text: "text-muted-foreground", dot: "bg-[#a8a3ad]" },
+  draft: { text: "text-muted-foreground", dot: "bg-[#a3a3a3]" },
   sent: { text: "text-foreground", dot: "bg-foreground" },
   partially_paid: { text: "text-foreground", dot: "bg-foreground" },
   overdue: { text: "text-late", dot: "bg-late" },
   paid: { text: "text-paid", dot: "bg-paid" },
-  cancelled: { text: "text-muted-foreground line-through", dot: "bg-[#d9d2cc]" },
+  cancelled: { text: "text-muted-foreground line-through", dot: "bg-[#d4d4d4]" },
 };
 
 export function StatusBadge({ status, pendingReports = 0, className }: { status: InvoiceStatus; pendingReports?: number; className?: string }) {

@@ -102,11 +102,19 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
         ) : null}
         {rejected != null && canPay ? <div className="mt-4"><Banner tone="warning" title={`Payment of ${formatINR(rejected)} not found yet`}>Check the reference, or contact {business}.</Banner></div> : null}
         {pendingReport && canPay ? <div className="mt-4"><Banner title="Payment reported">{business} will confirm once it arrives.</Banner></div> : null}
+        {/* D43: the two actions sit with the amount, so nobody has to scroll past bank details to find them. */}
+        {canPay && (
+          <div className="mt-5 flex flex-col gap-2">
+            {showUpi && <Button asChild size="lg" className="w-full"><a href={upiLink!}>Pay with UPI</a></Button>}
+            <PaidForm publicId={publicId} due={paiseToDecimalString(due)} business={business} primary={!showUpi} />
+            {hasBank && <a href="#pay-h" className="mx-auto caption-4 text-muted-foreground underline underline-offset-4 hover:text-foreground">Bank transfer details below</a>}
+          </div>
+        )}
       </section>
 
       {canPay && (
         <section className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6 print:hidden" aria-labelledby="pay-h">
-          <h2 id="pay-h" className="title-3 font-semibold">How to pay</h2>
+          <h2 id="pay-h" className="scroll-mt-6 title-3 font-semibold">How to pay</h2>
           {hasBank && (
             <div>
               <h3 className="title-4">Bank transfer (NEFT, IMPS or RTGS)</h3>
@@ -126,7 +134,6 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qr!} alt={`UPI QR code to pay ${formatINR(due)} to ${s.upi_id}`} width={176} height={176} className="rounded-lg border" />
                 <div className="flex w-full min-w-0 flex-col gap-2">
-                  <Button asChild size="lg"><a href={upiLink!}>Pay with UPI</a></Button>
                   <dl className="divide-y border-y">{row("UPI ID", s.upi_id)}</dl>
                   <p className="caption-5 text-muted-foreground">No amount filled in? Pay {paiseToDecimalString(due)} to this UPI ID.</p>
                 </div>
@@ -136,7 +143,6 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           {!showUpi && found.showUpiQr && s.upi_id && due > UPI_QR_LIMIT_PAISE && (
             <p className="body-6 text-muted-foreground">This is above the UPI limit of ₹1,00,000 per payment, so please pay by bank transfer.</p>
           )}
-          <PaidForm publicId={publicId} due={paiseToDecimalString(due)} business={business} />
         </section>
       )}
 

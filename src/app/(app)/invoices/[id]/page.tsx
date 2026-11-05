@@ -167,7 +167,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           <section>
             <h2 className="title-4 font-semibold">Payments</h2>
             {payments.length === 0 ? (
-              <p className="mt-1 body-6 text-muted-foreground">None yet. When your client taps &ldquo;I&apos;ve paid&rdquo;, it shows up here and on your dashboard.</p>
+              <p className="mt-1 body-6 text-muted-foreground">None yet. When your client taps &ldquo;Notify as paid&rdquo;, it shows up here and on your dashboard.</p>
             ) : (
               <ul className="mt-2 divide-y rounded-xl border bg-card body-6">
                 {payments.map((p) => (
@@ -192,7 +192,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
               <ul className="mt-2 flex flex-col gap-3">
                 {reminders.map((r) => (
                   <li key={r.id} className="rounded-xl border bg-card p-3 body-6">
-                    <p className="whitespace-pre-line">{r.message}</p>
+                    <p className="whitespace-pre-line [overflow-wrap:anywhere]">{r.message}</p>
                     <p className="mt-2 caption-5 text-muted-foreground">
                       {r.stage ? `${STAGE_LABEL[r.stage as ReminderStage]} · ` : ""}{r.channel === "whatsapp" ? "WhatsApp" : "Email"} · written by {r.created_by === "claude" ? "Claude" : "you"} · {formatDateTime(r.created_at)}
                       {r.sent_marked_at ? ` · opened to send ${formatDateTime(r.sent_marked_at)}` : ""}

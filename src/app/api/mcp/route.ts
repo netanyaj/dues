@@ -6,7 +6,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { touchMcpLastUsed, userIdForToken } from "@/lib/service/profile";
 import { registerDuesTools } from "@/lib/mcp/tools";
-import { bearerToken } from "@/lib/mcp/auth";
+import { tokenFromHeaders } from "@/lib/mcp/auth";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -44,9 +44,9 @@ const ICON = (origin: string) => [
 ];
 
 async function handle(req: Request) {
-  const header = req.headers.get("authorization");
-  const token = bearerToken(header);
-  if (!token) return unauthorized(header ? BAD_TOKEN : MISSING_HEADER);
+  // Authorization (or x-api-key / x-auth-token) only; see lib/mcp/auth.ts.
+  const { token, sent } = tokenFromHeaders(req.headers);
+  if (!token) return unauthorized(sent ? BAD_TOKEN : MISSING_HEADER);
   const userId = await userIdForToken(token);
   if (!userId) return unauthorized(BAD_TOKEN);
   await touchMcpLastUsed(userId);
@@ -56,7 +56,15 @@ async function handle(req: Request) {
     serverInfo: { name: "Dues", title: "Dues", version: "1.2.0", websiteUrl: origin, icons: ICON(origin) } as { name: string; version: string },
     instructions: INSTRUCTIONS,
   });
-  const res = await handler(req);
+  // Some clients send only "Accept: application/json"; the transport insists on both, so add the missing one.
+  const accept = req.headers.get("accept") ?? "";
+  let forward = req;
+  if (req.method === "POST" && !(accept.includes("application/json") && accept.includes("text/event-stream"))) {
+    const h = new Headers(req.headers);
+    h.set("accept", "application/json, text/event-stream");
+    forward = new Request(req.url, { method: req.method, headers: h, body: await req.text() });
+  }
+  const res = await handler(forward);
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(CORS)) out.headers.set(k, v);
   return out;

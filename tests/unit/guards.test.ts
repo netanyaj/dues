@@ -45,8 +45,10 @@ describe("D28: header-only MCP auth", () => {
     expect(r).not.toMatch(/params/);
     expect(r).toMatch(/status: 410/);
   });
-  it("the server reads the token only from the Authorization header", () => {
-    expect(read("src/app/api/mcp/route.ts")).toMatch(/req\.headers\.get\("authorization"\)/);
+  it("the server reads the token only from request headers, never the URL (D28, D41)", () => {
+    expect(read("src/app/api/mcp/route.ts")).toMatch(/tokenFromHeaders\(req\.headers\)/);
+    expect(read("src/lib/mcp/auth.ts")).toMatch(/h\.get\("authorization"\)/);
+    expect(read("src/app/api/mcp/route.ts")).not.toMatch(/searchParams|nextUrl/);
   });
 });
 
@@ -86,5 +88,16 @@ describe("D40: proof of payment files", () => {
     expect(checkProof(10, new TextEncoder().encode("%PDF-1.7"))).toMatchObject({ ok: true, ext: "pdf" });
     expect(checkProof(10, new TextEncoder().encode("<script>"))).toMatchObject({ ok: false });
     expect(checkProof(6 * 1024 * 1024, new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]))).toMatchObject({ ok: false });
+  });
+});
+
+import { bearerToken } from "@/lib/mcp/auth";
+describe("D41: token header forms claude.ai users actually type", () => {
+  const t = "a".repeat(48);
+  it("accepts Bearer, bare, pasted full line and quotes", () => {
+    for (const v of [`Bearer ${t}`, `bearer ${t}`, t, `Authorization: Bearer ${t}`, ` Bearer  ${t} `, `"${t}"`]) expect(bearerToken(v), v).toBe(t);
+  });
+  it("refuses junk", () => {
+    for (const v of ["Bearer", "Basic abc", "Bearer xyz", "", null]) expect(bearerToken(v as string | null)).toBeNull();
   });
 });

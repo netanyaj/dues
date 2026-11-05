@@ -208,7 +208,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                       <Link href={`/invoices/${i.id}`} className="flex items-start justify-between gap-4 px-4 py-3 active:bg-muted">
                         <div className="min-w-0">
                           <p className="title-4 truncate">{i.client_name}</p>
-                          <p className="amount caption-5 text-muted-foreground">{i.number ?? "Draft"} · due {formatDate(i.due_date)}</p>
+                          <p className="caption-5 text-muted-foreground tabular-nums">{i.number ?? "Draft"} · due {formatDate(i.due_date)}</p>
                           {i.source === "claude" && <ClaudeBadge className="mt-0.5" />}
                         </div>
                         <div className="shrink-0 text-right">
@@ -231,7 +231,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
 
 /** D39: one chart. Open balances by invoice age, with the MSME 45-day line. Each bucket filters the list. */
 function AgeBar({ buckets, total, active }: { buckets: ReturnType<typeof ageBuckets>; total: number; active: AgeKey | null }) {
-  const TONE: Record<AgeKey, string> = { "0-15": "bg-[#d9d2cc]", "16-30": "bg-[#a8a3ad]", "31-45": "bg-[#5e5a63]", "45+": "bg-late" };
+  const TONE: Record<AgeKey, string> = { "0-15": "bg-[#d4d4d4]", "16-30": "bg-[#a3a3a3]", "31-45": "bg-[#5c5c5c]", "45+": "bg-late" };
   const before45 = buckets.filter((b) => b.key !== "45+").reduce((a, b) => a + b.paise, 0);
   const markerPct = (before45 / total) * 100;
   return (

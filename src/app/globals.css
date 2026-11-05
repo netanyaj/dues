@@ -64,30 +64,30 @@
 }
 
 :root {
-  /* D33 palette: warm white, near-black ink, one hot-pink brand. Contrast checked in DECISIONS.md. */
-  --background: #fbf8f6;
-  --foreground: #17151c;
+  /* D42 palette (after Clueso): neutral white and ink, ink buttons, one orchid accent. Contrast in DECISIONS.md. */
+  --background: #fafafa;
+  --foreground: #171717;
   --card: #ffffff;
-  --card-foreground: #17151c;
+  --card-foreground: #171717;
   --popover: #ffffff;
-  --popover-foreground: #17151c;
-  --primary: #c2185b;
+  --popover-foreground: #171717;
+  --primary: #171717;
   --primary-foreground: #ffffff;
-  --secondary: #f4f0ed;
-  --secondary-foreground: #17151c;
-  --muted: #f4f0ed;
-  --muted-foreground: #5e5a63;
-  --accent: #f4f0ed;
-  --accent-foreground: #17151c;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #5c5c5c;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
   --destructive: #b42318;
-  --border: #ece6e1;
-  --input: #d9d2cc;
-  --ring: #c2185b;
+  --border: #ebebeb;
+  --input: #d9d9d9;
+  --ring: #171717;
   --radius: 8px;
-  --sidebar: #17151c;
-  --sidebar-foreground: #f4f0ed;
-  --sidebar-muted: #a8a3ad;
-  --sidebar-accent: #2a2730;
+  --sidebar: #171717;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-muted: #a3a3a3;
+  --sidebar-accent: #2a2a2a;
   /* Status stays calm and separate from the brand: amber = overdue or caution, red = errors and
      danger only, green = paid, neutral ink = needs review. */
   --late: #b54708;
@@ -102,14 +102,14 @@
   --paid: #067647;
   --paid-soft: #ecfdf3;
   --paid-border: #abefc6;
-  --review: #4a4550;
-  /* Brand: --brand (#C2185B) is safe for text and buttons; --brand-vivid (#E0306E) only for the
-     logo, fills and large type (4.1:1, passes for 24px+). */
-  --brand: #c2185b;
-  --brand-strong: #a3134c;
-  --brand-vivid: #e0306e;
-  --brand-soft: #fce8ef;
-  --brand-on-dark: #ff8fb3;
+  --review: #454545;
+  /* Orchid accent, highlights only (buttons are ink): --brand #A82E92 (6.05:1) for accent text and
+     links; --brand-vivid #DA5CC7 (3.3:1) only for the logo, fills and 24px+ type. */
+  --brand: #a82e92;
+  --brand-strong: #8f2479;
+  --brand-vivid: #da5cc7;
+  --brand-soft: #fbf0f9;
+  --brand-on-dark: #e766d4;
 }
 
 /* Text styles (landing-page-design B1). Use these names, not loose size + weight. */
@@ -134,6 +134,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* D43: long URLs, UTRs, emails and GSTINs break inside their box instead of overflowing it. */
+    overflow-wrap: break-word;
   }
   h1, h2, h3 { text-wrap: balance; }
   p { text-wrap: pretty; }
@@ -148,7 +150,7 @@
     appearance: none;
     max-width: 100%;
     padding-right: 2.25rem !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath fill='%235e5a63' d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath fill='%235c5c5c' d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
   }

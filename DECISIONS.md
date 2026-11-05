@@ -544,3 +544,53 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **The report stands if the upload fails.** Proof is evidence, not a gate. Confirming is still a human step (D24).
 - **Server actions accept bodies up to 6 MB** for this; the 5 MB cap is enforced in code.
 - **The MCP suite covers it** (26 checks): a fake image is refused, a real one gets a signed link, and the public URL is refused.
+
+## D41. MCP auth accepts what people actually type into claude.ai
+
+**Context:** the founder's claude.ai connector (No sign in + Request headers) still failed. claude.ai sends a header value "exactly as you enter it", with no prefix added. So a bare token, or the whole line `Authorization: Bearer …` pasted as the value, never matched our strict `Bearer <hex>` check. Request headers are also a beta, and clients that send only `Accept: application/json` got a 406 from the transport.
+
+**Decision:**
+- The token is read from `Authorization`, `x-api-key` or `x-auth-token` (the names claude.ai allows without approval).
+- The value can be `Bearer <token>`, the bare token, the pasted full line, or quoted.
+- A POST that's missing `text/event-stream` in Accept gets it added before the transport sees it.
+- Still header-only (never the URL), hash-checked, and never logged. Unit and integration tests cover each form.
+
+## D42. Palette after Clueso: neutral white, ink buttons, one orchid accent (replaces D33)
+
+**Context:** the founder found the hot pink jarring and the warm off-white beige. Clueso (clueso.io) reads cleaner:
+- background `#FFFFFF`, secondary surface `#FBFBFB`;
+- text `#171717`, body text `#5C5C5C`;
+- primary buttons ink `#171717`;
+- a pink-orchid (`#E766D4` / `#DA5CC7`) only for brand and highlights.
+
+**Decision:**
+
+| Token | Value | Used for |
+|---|---|---|
+| `--background` | `#FAFAFA` | Neutral canvas; cards stay `#FFFFFF`, borders `#EBEBEB` |
+| `--foreground` / `--primary` / `--sidebar` | `#171717` | Text, main buttons and sidebar. Buttons are ink again, not pink |
+| `--muted-foreground` | `#5C5C5C` | Secondary text |
+| `--brand-vivid` | `#DA5CC7` | Logo, fills and 24px+ type only |
+| `--brand` | `#A82E92` | Accent text and links (after "Text") |
+| `--brand-soft` | `#FBF0F9` | Tinted surfaces |
+| `--brand-on-dark` | `#E766D4` | Accent on the dark tagline band |
+
+**Contrast:**
+
+| Pairing | Ratio |
+|---|---|
+| Ink on white | 17.9:1 |
+| `#5C5C5C` on white | 6.7:1 |
+| `#A82E92` on white | 6.05:1 |
+| `#A82E92` on brand-soft | 5.5:1 |
+| `#DA5CC7` on white | 3.3:1 (large type and graphics only) |
+| `#E766D4` on ink | 6.2:1 |
+
+- **Status colours are unchanged from D33:** amber overdue, red errors, green paid, neutral review.
+
+## D43. Client page: pay actions next to the amount; no overflowing text
+
+**Decision:**
+- **The amount card now holds the actions:** "Pay with UPI" (when allowed) and "Notify as paid" (renamed from "I've paid"), plus a "Bank transfer details below" jump link. With bank details present they used to sit below the bank rows, out of view on a phone.
+- **The "Notify as paid" form opens in place:** amount, UTR, method and an optional receipt, then Send.
+- **Long text breaks instead of overflowing:** `overflow-wrap: break-word` on the body, so URLs, UTRs, emails and GSTINs wrap inside their box. Reminder messages use `overflow-wrap: anywhere`, since a link inside them is one long word.

@@ -252,6 +252,14 @@ async function main() {
   assert.match(hello.result.serverInfo.icons?.[0]?.src ?? "", /\/icon\.png$/);
   step("initialize: 200 with serverInfo name Dues and an icon");
 
+  // D41: header forms people type into claude.ai, and a JSON-only Accept header
+  const initBody = JSON.stringify({ jsonrpc: "2.0", id: 9, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } });
+  for (const [name, value, accept] of [["authorization", fresh, "application/json"], ["authorization", `Authorization: Bearer ${fresh}`, "application/json, text/event-stream"], ["x-api-key", fresh, "application/json, text/event-stream"]]) {
+    const r = await fetch(`${BASE}/api/mcp`, { method: "POST", headers: { [name]: value, "Content-Type": "application/json", Accept: accept }, body: initBody });
+    assert.equal(r.status, 200, `${name} / ${accept}`);
+  }
+  step("auth accepts a bare token, a pasted full header line, x-api-key, and JSON-only Accept");
+
   // D38: prompts
   const pl = await rpc(fresh, "prompts/list");
   assert.deepEqual(pl.result.prompts.map((p: { name: string }) => p.name).sort(), ["chase_overdue", "invoice_client", "what_am_i_owed"]);
