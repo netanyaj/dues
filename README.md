@@ -1,6 +1,6 @@
 # Dues
 
-**Invoice from Claude. Check and send in Dues. Get paid on time.**
+**Get paid on time. Correct GST on every invoice.** Make invoices by asking your Claude; Dues checks every number in code.
 
 Dues is a receivables desk for Indian freelancers.
 - You tell your own Claude who to bill. Dues creates a GST invoice, computing every rupee, the CGST/SGST or IGST split and the invoice number in code.

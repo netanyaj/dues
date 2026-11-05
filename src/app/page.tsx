@@ -9,8 +9,8 @@ import { ClientPagePreview } from "@/components/landing/client-page-preview";
 import { TaglineReveal } from "@/components/landing/tagline-reveal";
 
 export const metadata: Metadata = {
-  title: { absolute: "Dues · Invoice from Claude, get paid on time" },
-  description: "For Indian freelancers. Claude drafts the invoice, Dues checks the GST and numbering in code, and your client pays by bank transfer or UPI. You see who owes you and when to chase.",
+  title: { absolute: "Dues · Get paid on time, with correct GST on every invoice" },
+  description: "For Indian freelancers. Dues tracks who owes you and tells you when to chase. Make GST correct invoices by asking your Claude; your client pays by bank transfer or UPI.",
 };
 
 const CHECKS = [
@@ -35,7 +35,7 @@ const FAQ = [
   ["Do I need a paid Claude plan?", "Custom connectors work on Claude's free and paid plans. You can also use Dues without Claude: every invoice can be made by hand in the app."],
   ["Does my client need an account?", "No. They open a link, see the invoice, pay with their own bank or UPI app, and tap “I've paid” with the reference number."],
   ["Does Dues take a cut of payments?", "No. Money goes straight from your client to your account. Dues never touches it."],
-  ["Is it a valid GST invoice?", "It has the fields a tax invoice needs: your GSTIN, the client's, place of supply, SAC codes, the tax split and a serial number per financial year. Check with your CA for anything unusual."],
+  ["Is it a valid GST invoice?", "It has the fields a tax invoice needs: your GSTIN, the client's, place of supply, SAC codes, the tax split and a serial number per financial year."],
   ["What can Claude change?", "Drafts, clients and reminders. Sending an invoice, confirming a payment, cancelling or deleting only happen when you press the button in Dues."],
   ["What if I'm not GST registered?", "Leave the GSTIN blank. Invoices say “GST not applicable” and add no tax."],
 ];
@@ -64,10 +64,10 @@ export default async function Home() {
           <div className="max-w-[680px]">
             <p className="inline-flex rounded-full bg-brand-soft px-3 py-1 caption-3 text-brand">For Indian freelancers and small studios</p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-none">
-              Invoice from Claude.<br />Check and send in Dues.<br /><span className="text-brand-vivid">Get paid on time.</span>
+              <span className="text-brand-vivid">Get paid on time.</span><br />Correct GST on every invoice.
             </h1>
             <p className="mt-6 max-w-[560px] body-3 text-muted-foreground">
-              Tell Claude who to bill. Dues works out the GST, numbers the invoice in order and gives your client a page to pay by bank transfer or UPI. Then it shows you who still owes you, and when to chase.
+              Dues tracks who owes you and tells you when to chase. Make invoices by asking your Claude: Dues works out the GST, numbers them in order and gives your client a page to pay by bank transfer or UPI.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button>
@@ -158,7 +158,8 @@ export default async function Home() {
         {/* Connect */}
         <section className="border-t bg-background">
           <div className="mx-auto max-w-5xl px-4 py-20">
-            <h2 className="heading-5 sm:heading-4">Connect Claude in three steps</h2>
+            <h2 className="heading-5 sm:heading-4">Works with your Claude</h2>
+            <p className="mt-3 max-w-[560px] body-3 text-muted-foreground">Ask Claude in plain words and the draft appears in Dues. Claude writes; Dues checks every number in code and never runs AI itself. You can also make every invoice by hand.</p>
             <ol className="mt-10 grid gap-6 md:grid-cols-3">
               {[
                 ["Create your token", "Sign up, add your business details, then open Settings → Claude connection and create a token. It's shown once."],
@@ -183,7 +184,7 @@ export default async function Home() {
               <p className="title-2 font-semibold">Free <span className="ml-1 rounded-full bg-brand-soft px-2 py-0.5 caption-3 text-brand">Available now</span></p>
               <p className="amount mt-2 heading-4">₹0</p>
               <ul className="mt-6 flex flex-col gap-2 body-6">
-                {["Up to 50 invoices", "Claude connection", "Client payment pages with bank and UPI", "Chase list and reminder drafts", "CSV export for your CA"].map((f) => (
+                {["Up to 50 invoices", "Claude connection", "Client payment pages with bank and UPI", "Chase list and reminder drafts", "Export CSV"].map((f) => (
                   <li key={f} className="flex gap-2"><CheckIcon aria-hidden weight="bold" className="mt-0.5 size-4 shrink-0 text-brand" />{f}</li>
                 ))}
               </ul>

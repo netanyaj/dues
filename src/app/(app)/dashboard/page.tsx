@@ -129,7 +129,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                   <DownloadSimpleIcon aria-hidden className="size-4" />Export CSV
                 </summary>
                 <form action="/api/export" method="get" className="absolute right-0 z-20 mt-2 flex w-72 flex-col gap-3 rounded-xl border bg-card p-4 shadow-lg">
-                  <p className="body-6 text-muted-foreground">For your CA. Includes GST split, TDS and payments.</p>
+                  <p className="body-6 text-muted-foreground">Includes GST split, TDS and payments.</p>
                   <label className="flex flex-col gap-1 title-4">From<Input type="date" name="from" defaultValue={fyStart} required /></label>
                   <label className="flex flex-col gap-1 title-4">To<Input type="date" name="to" defaultValue={today} max={today} required /></label>
                   <Button type="submit">Download CSV</Button>

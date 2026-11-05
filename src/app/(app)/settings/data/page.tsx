@@ -17,7 +17,7 @@ export default async function DataSettings({ searchParams }: PageProps<"/setting
       <SectionHeader title="Data and export" description="Your invoices are yours. Export them any time." />
       <form action="/api/export" method="get" className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:p-6">
         <div>
-          <p className="title-4 font-semibold">CSV for your CA</p>
+          <p className="title-4 font-semibold">Export CSV</p>
           <p className="mt-0.5 body-6 text-muted-foreground">One row per invoice sent in the range: number, dates, client GSTIN, taxable value, CGST, SGST, IGST, total, TDS, received and balance. Opens in Excel or Google Sheets.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

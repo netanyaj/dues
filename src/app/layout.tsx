@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteAnalytics } from "@/components/analytics";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -28,6 +29,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-3 focus:py-2 focus:shadow">Skip to content</a>
         {children}
         <Toaster position="top-center" closeButton />
+        {/* Page views and Core Web Vitals only. Product metrics come from the events table (METRICS.md). */}
+        <SiteAnalytics />
       </body>
     </html>
   );

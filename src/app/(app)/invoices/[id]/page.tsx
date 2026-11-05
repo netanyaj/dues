@@ -116,7 +116,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <Banner tone="error" title="Cancelled">Its number stays used, so your series has no gaps. Create a new invoice if you need to bill again.</Banner>
       )}
       {inv.stage === "issued" && inv.status === "paid" && (
-        <Banner tone="success" title="Paid in full">Nothing left to do. It stays in your export for your CA.</Banner>
+        <Banner tone="success" title="Paid in full">Nothing left to do.</Banner>
       )}
       {reports.map((r) => (
         <Banner
