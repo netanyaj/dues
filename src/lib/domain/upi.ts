@@ -1,6 +1,6 @@
 import { paiseToDecimalString } from "./money";
 
-const UPI_RE = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9]{1,63}$/;
+const UPI_RE = /^[a-zA-Z0-9._-]{2,200}@[a-zA-Z][a-zA-Z0-9]{1,63}$/;
 
 export function validateUpiId(raw: string): { ok: true; value: string } | { ok: false; error: string } {
   const v = raw.trim();

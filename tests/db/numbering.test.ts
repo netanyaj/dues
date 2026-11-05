@@ -25,7 +25,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     users.push({ id: data.user.id, email, password });
     const gstin = "29ABCDE1234F1Z" + gstinCheckChar("29ABCDE1234F1Z");
     const { error: pe } = await admin.from("profiles").update({
-      business_name: `Test ${tag}`, address: "1 MG Road, Bengaluru", state_code: "29", gstin, invoice_prefix: "TST",
+      business_name: `Test ${tag}`, address: "1 MG Road, Bengaluru", state_code: "29", gstin, invoice_prefix: "TST", upi_id: "test.user@okicici", bank_ifsc: "HDFC0001234", bank_account_number: "50100123456789",
     }).eq("user_id", data.user.id);
     if (pe) throw pe;
     const { data: c, error: ce } = await admin.from("clients").insert({ user_id: data.user.id, name: `Client ${tag}`, state_code: "29" }).select().single();

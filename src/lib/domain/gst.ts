@@ -40,6 +40,9 @@ export const STATES: Record<string, string> = {
   "97": "Other Territory",
 };
 
+/** States sorted by name, for pickers. (Object key order puts "01"–"09" last.) */
+export const STATE_OPTIONS: [code: string, name: string][] = Object.entries(STATES).sort((a, b) => a[1].localeCompare(b[1]));
+
 export function stateName(code: string | null | undefined): string {
   return (code && STATES[code]) || "Unknown state";
 }
