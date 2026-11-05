@@ -38,7 +38,7 @@ export function ClientForm({ id, initial, onDoneHref }: { id: string | null; ini
         {field("name", "Client name", { required: true, autoComplete: "organization" })}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="c-state_code">State</Label>
-          <select id="c-state_code" name="state_code" defaultValue={v.state_code ?? ""} aria-invalid={!!e?.state_code} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm aria-invalid:border-destructive">
+          <select id="c-state_code" name="state_code" defaultValue={v.state_code ?? ""} aria-invalid={!!e?.state_code} className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive">
             <option value="">Choose a state…</option>
             {STATE_OPTIONS.map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}
           </select>

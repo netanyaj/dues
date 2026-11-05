@@ -120,7 +120,7 @@ export function RecordPayment({ id, balance, today }: { id: string; balance: str
           <div className="flex flex-col gap-1.5"><Label htmlFor="pt">TDS deducted (₹)</Label><Input id="pt" inputMode="decimal" value={f.tds} onChange={(e) => setF({ ...f, tds: e.target.value })} placeholder="0" className="h-10" /></div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="pm">Method</Label>
-            <select id="pm" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm">
+            <select id="pm" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} className="h-10 rounded-lg border border-input bg-card px-3 text-sm">
               <option value="bank_transfer">Bank transfer</option><option value="upi">UPI</option><option value="other">Other</option>
             </select>
           </div>

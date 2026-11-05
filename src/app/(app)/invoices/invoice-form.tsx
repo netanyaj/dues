@@ -98,7 +98,7 @@ export function InvoiceForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="client">Client</Label>
-          <select id="client" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-invalid={!!fieldErr("client_id")} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm aria-invalid:border-destructive">
+          <select id="client" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-invalid={!!fieldErr("client_id")} className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive">
             <option value="">Choose a client…</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             <option value="__new">+ New client…</option>
@@ -111,7 +111,7 @@ export function InvoiceForm({
               </div>
               <div className="flex flex-col gap-1">
                 <Label htmlFor="nc-state" className="text-xs">Their state</Label>
-                <select id="nc-state" value={newState} onChange={(e) => setNewState(e.target.value)} aria-invalid={!!fieldErr("client_state") || !!fieldErr("state_code")} className="h-9 rounded-lg border border-input bg-transparent px-2 text-sm">
+                <select id="nc-state" value={newState} onChange={(e) => setNewState(e.target.value)} aria-invalid={!!fieldErr("client_state") || !!fieldErr("state_code")} className="h-9 rounded-lg border border-input bg-card px-2 text-sm">
                   <option value="">Choose…</option>
                   {STATE_OPTIONS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
                 </select>
@@ -127,7 +127,7 @@ export function InvoiceForm({
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="gst">GST rate</Label>
           {supplier.hasGstin ? (
-            <select id="gst" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm">
+            <select id="gst" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-10 rounded-lg border border-input bg-card px-3 text-sm">
               {GST_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
             </select>
           ) : (

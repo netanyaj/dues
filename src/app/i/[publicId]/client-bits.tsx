@@ -35,7 +35,7 @@ export function PaidForm({ publicId, due }: { publicId: string; due: string }) {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="method">Paid by</Label>
-        <select id="method" name="method" defaultValue={v?.method ?? "bank_transfer"} className="h-11 rounded-lg border border-input bg-transparent px-3 text-sm">
+        <select id="method" name="method" defaultValue={v?.method ?? "bank_transfer"} className="h-11 rounded-lg border border-input bg-card px-3 text-sm">
           <option value="bank_transfer">Bank transfer</option>
           <option value="upi">UPI</option>
           <option value="other">Other</option>

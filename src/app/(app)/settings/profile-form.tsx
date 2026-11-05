@@ -58,7 +58,7 @@ export function ProfileForm({ profile, welcome }: { profile: Values; welcome: bo
             name="state_code"
             defaultValue={values.state_code}
             aria-invalid={!!e?.state_code}
-            className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm aria-invalid:border-destructive"
+            className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive"
           >
             <option value="">Choose your state…</option>
             {STATE_OPTIONS.map(([code, name]) => (
@@ -107,7 +107,7 @@ export function ProfileForm({ profile, welcome }: { profile: Values; welcome: bo
           <Field name="udyam_number" label="Udyam registration number" hint="e.g. UDYAM-KR-03-0012345" values={values} errors={e} autoCapitalize="characters" maxLength={22} />
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="msme_category">Enterprise category</Label>
-            <select id="msme_category" name="msme_category" defaultValue={values.msme_category} aria-invalid={!!e?.msme_category} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm aria-invalid:border-destructive">
+            <select id="msme_category" name="msme_category" defaultValue={values.msme_category} aria-invalid={!!e?.msme_category} className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive">
               <option value="">Choose…</option>
               <option value="micro">Micro</option>
               <option value="small">Small</option>
