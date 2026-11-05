@@ -35,7 +35,7 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 ## 4. Main loop: user stories
 | # | Story | Acceptance criteria | Test |
 |---|---|---|---|
-| S1 | As a freelancer, I connect Claude to Dues. | Settings shows my private link and the steps; Claude lists the Dues tools. | T1 |
+| S1 | As a freelancer, I connect Claude to Dues. | Settings → Claude connection shows the server URL, my token once, and the steps; Claude lists the Dues tools. | T1 |
 | S2 | I ask Claude to invoice a client (new or existing). | A draft appears within ~10 s, badged "Created by Claude"; a new client is created in the same step (D21). A retry doesn't create a duplicate (D23). If Claude's total is off by more than ₹1, it's flagged and can't be sent until I confirm. Claude can mark it ready but can't send it (D24). | T2, T3, T18 |
 | S3 | I check and edit the draft. | Live totals and tax split; drafts have no number (D1). | T4 |
 | S4 | I send it. | It gets the next number, and the issue date becomes today (D2); amounts lock; a public link appears (D7). | T5 |
@@ -61,7 +61,16 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 - **Limits:** 50 invoices per account (D12). Demo accounts can't regenerate their link (D13).
 
 ## 6. UX requirements
-- The client page is mobile-first (375 px).
+- **Design direction (D27):**
+  - Calm money tool: a dark sidebar, a grey canvas, white panels.
+  - One ink action colour. Red, amber and green only for late, needs-you and paid.
+  - Geist with tabular numerals on every amount. Phosphor icons. The tally-mark logo.
+- **Each screen answers one question first:**
+  - Dashboard: "who owes me, and what needs me today?"
+  - Invoice: "what state is this in, and what's my next action?"
+  - Client page: "how much, by when, and how do I pay?"
+- **Settings (D29):** eight left-nav sections, each saved on its own. First run is a 4-step setup ending at Claude connection.
+- No screen scrolls sideways at 375 px (checked on every screen). The client page is mobile-first.
 - Indian formats: ₹1,00,000; dates like "12 Nov 2026"; FY shown as 2026–27.
 - One main action per screen.
 - Every list has an empty state that says what to do next.
@@ -85,8 +94,9 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M3 | Invoices, client page, payments (+ client pages, history, D16–D18) | Thu 21:30 | ✅ 20:00 |
 | M3b | Research and safety changes: inline client, duplicate check, Claude-safe actions, token hash, reminder stages, MSME, CSV (D19–D25) | Thu 22:30 | ✅ 20:16 |
 | M4 | MCP tools, cron, integration script, seed, no-AI check | Fri 00:30 | ✅ 20:16 |
-| M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ◐ deployed to usedues.vercel.app 20:59; 20 MCP checks pass on production; real-Claude run pending |
-| M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ⬜ |
+| M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ✅ deployed 20:59; founder's real-Claude walkthrough passed (bugs fixed: D30 confirm-totals, mobile dashboard) |
+| M5b | Redesign, Settings rebuild, header-only MCP auth, FLOWS.md (D27–D30) | Fri 02:30 | ✅ 00:30 |
+| M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ◐ README, ARCHITECTURE, METRICS, FLOWS written; final pass pending |
 
 **Must-ship:** everything in §4–§5, including the chase list, reminders with stages (D19), CSV export (D22) and the cron.
 **If ahead, in order:** `get_recent_items` and line-item autosuggest (D26), "Reset demo data" (D13). Already built: client pages, event timeline. Not planned: Google sign-in (the brief and D12 say one login flow).
@@ -98,7 +108,10 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 - **GSTIN status can't be checked:** without a GSP we can't tell whether a GSTIN is active. We say "structurally valid", never "verified" (D6, D17).
 - **Invoice-redirection fraud:** someone could create a fake account in a real business's name. The page makes no claims, warns about new accounts, flags recent bank changes and has a report link; real verification is v2 (D17).
 - **Fake "I've paid" reports:** handled by the pause-and-return rule and UTR checks; v1 can't prove a payment (D16).
-- **Token in the URL (D25):** anyone with the link can use the account, and the token appears in Vercel request logs because Claude's connectors only take a URL. It's stored hashed, our code never logs it, it can be regenerated instantly, and OAuth in v2 removes it.
+- **Bearer token (D25, D28):**
+  - Anyone holding the token can use the account until it's regenerated. It's stored hashed, sent only in the Authorization header (never in a URL or log), shown once, and Regenerate cuts it off at once.
+  - claude.ai's Request headers field is new and may be missing on some accounts; Settings points those users to Claude Code.
+  - OAuth with consent and expiry is v2.
 - **Prompt injection through Claude (D24):** Claude can't send, confirm payments or overwrite client contact details; those need a person in the app.
 - **MSME wording (D20):** legal text must stay accurate; it only shows for micro and small enterprises, and the Udyam number isn't verified.
 - **Spam sign-ups:** with email confirmation off (D12), handled by Supabase rate limits and the 50-invoice cap; Turnstile is v2.

@@ -289,6 +289,8 @@ It shows:
 
 ## D25. The MCP token is stored only as a hash and shown once
 
+*Updated by D28: the token now travels in the Authorization header, so the log risk below no longer applies.*
+
 **Decision**
 - Profiles store `mcp_token_hash` (SHA-256) and the last 4 characters; never the token itself. MCP looks users up by hashing the token in the URL.
 - The full link is shown once: after onboarding and after Regenerate, with a copy button and "Copy this now — for security we can't show it again." After that, Settings shows only `…abcd` and Regenerate.
@@ -302,3 +304,97 @@ It shows:
 - An escalation guide: MSME Samadhaan, and the GST portal's taxpayer messages.
 - If ahead in v1: `get_recent_items` and line-item autosuggest, so "same as last month" works.
 
+
+## D27. Design direction: "Workbench", one ink accent, status colours only for status
+
+**Context:** the production review said the app looked AI-generated:
+- stock Next.js and shadcn defaults;
+- identical bordered boxes;
+- tinted callouts used as layout;
+- badge soup;
+- a dashboard 670 px wide on a 375 px phone.
+
+The founder rejected the first two mock directions as still generic. They picked G ("Workbench in the Desk layout") with the tally-mark logo from F.
+
+**Decision**
+- **Layout:**
+  - A dark sidebar on desktop (`#181818`) and a bottom tab bar on phones.
+  - A grey canvas (`#f4f4f4`) with white panels, used as the only container style.
+  - Every screen answers one question first:
+    - the dashboard asks "who owes me, and what needs me today?" (owed figure, then "Needs you", then invoices);
+    - the invoice page asks "what state is this in, and what's my next action?".
+- **Colour:** one action colour, ink `#171717`. Red (`#b42318`) only for late, danger and destructive actions. Amber only for "needs your attention". Green only for paid. No second accent, no gradients, no purple.
+- **Type:**
+  - Geist, chosen deliberately. It has true tabular figures for columns of rupees, a ₹ glyph drawn to match, and it stays legible at 12–14 px on low-end Android. Manrope was the alternative.
+  - Every amount uses the `amount` utility (tabular numerals, no wrapping), right-aligned in tables.
+  - Named text styles (`heading-6`, `title-4`, `body-6`, `caption-5`…) on the Tailwind scale, per the landing-page-design skill.
+- **Icons:** Phosphor only. Lucide is removed.
+- **Logo:** four tally marks struck through, meaning counted and settled. It's the favicon and appears on the client page footer and in OG images.
+- **Status:** a dot plus a word, never a filled chip. "Drafted by Claude" is a quiet icon and label, not a coloured badge.
+- **Mobile:** no screen scrolls sideways at 375 px. Tables become stacked rows below `lg`, and the tax invoice document stacks its line items.
+
+**Gave up:** a branded accent colour. The tally mark and the ink carry the brand.
+
+## D28. D-Q12 final: header-only MCP auth, no URL fallback
+
+**Context:** D25 kept the token in the URL because claude.ai custom connectors only took a URL. claude.ai now has a **Request headers** field under Add custom connector (Anthropic's help article for Pro and Max; an Anthropic collaborator called it a beta for some organisations on 18 Oct 2026). The founder confirmed it appears on a personal Free account, and Claude Desktop and Claude Code support headers too.
+
+**Decision**
+- One endpoint, `/api/mcp`, authenticated only by `Authorization: Bearer <token>`.
+  - A missing or malformed header gets 401: "Add your Dues token as an Authorization header…".
+  - A wrong or regenerated token gets 401: "This Dues token isn't valid…".
+- `/api/mcp/<token>` is retired. It returns **410** with "This link format was retired. Reconnect using Settings → Claude connection". It never reads the path segment, so old connections fail with instructions rather than silently.
+- Storage is unchanged from D25: SHA-256 hash and last 4 characters; the token is shown once; Regenerate is the kill switch; it stays disabled on demo accounts.
+- `mcp_last_used_at` (written at most every 5 minutes) gives Settings a "Connected · last used …" status.
+- **No URL fallback, and why:**
+  - A fallback keeps the exact risk we're removing: tokens in request logs and browser history.
+  - It doubles the auth surface we must test.
+  - Every client we need (claude.ai, Desktop, Code) now sends headers.
+  - If a reviewer's account lacks the field, Settings says so and gives the Claude Code command.
+- **Tests:**
+  - The integration script checks 401 with no header, 401 with a wrong token, 410 for the old format, and that Regenerate cuts off the old token.
+  - A guard test fails if any `src` file logs `headers` or `authorization`, or if the retired route reads `params`.
+- **v2:** OAuth for sign-in, consent and token expiry.
+
+## D29. Settings is a left-nav area of eight sections, each saved on its own
+
+**Context:** the old single 2,700 px form blocked a new user from saving their business name until they'd added bank details (one validation pass for everything).
+
+**Decision**
+- **Sections:**
+  1. Business profile
+  2. Tax and compliance
+  3. Getting paid
+  4. Invoice defaults
+  5. Reminders
+  6. Claude connection
+  7. Data and export
+  8. Account
+- **How saving works:** each section is its own form. `updateProfileSection` runs the same validation as before over the merged profile, but only errors in that section block the save, and only that section's columns are written. Changing the state is still blocked when it would orphan a GSTIN from another state.
+- **First run:** sign-up walks steps 1–3 and then Claude connection, with "Save and continue" and a "Go to your dashboard" exit at step 4.
+- **New columns (migration 0007), all optional with defaults so existing accounts don't change:**
+  - `default_gst_rate` (18)
+  - `default_due_days` (15)
+  - `default_notes`
+  - `show_upi_qr` (true; the ₹1 lakh cap still applies)
+  - `reminder_channel` (WhatsApp)
+  - `reminder_tone`
+  - `mcp_last_used_at`
+- **Where the new fields go:** defaults pre-fill the app's new-invoice form. Claude reads them, with the reminder tone, through `get_business_profile`. MCP tool behaviour is otherwise unchanged.
+- **"GST not applicable":** a toggle that clears the GSTIN. That's how Dues already decides "no GST" (D3), so there's no new rule.
+- **Read only:**
+  - the reminder stage timings (+3/+7/+14 days, D19);
+  - the next invoice number and current FY;
+  - the client-facing trust text (D17).
+- **Account:** change password, sign out, and delete account (type DELETE; everything cascades). Delete is disabled on demo accounts.
+- **v2:** logo upload, and "Reset demo data" (re-run `npm run seed` for now).
+
+## D30. Confirming totals sticks until the total changes
+
+**Context:** found in the production walkthrough. After "Confirm totals", the next draft save re-checked Claude's original expected total and raised the flag again.
+
+**Decision:**
+- Once the freelancer confirms, saving keeps the flag off unless the total changes or Claude sends a new expected total.
+- If the total changes and still doesn't match the claim, the flag returns.
+- No schema change: a confirmed draft is `needs_review = false` with its `review_reason` kept.
+- Covered by `tests/db/review.test.ts`.
