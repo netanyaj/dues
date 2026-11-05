@@ -61,3 +61,20 @@ describe("D37: client views skip bots and link previews", () => {
     expect(isLikelyBot("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36")).toBe(false);
   });
 });
+
+import { ageBuckets, bucketOf } from "@/lib/domain/aging";
+describe("D39: aging buckets", () => {
+  it("puts day 45 in 31–45 and day 46 in over 45", () => {
+    expect(bucketOf(0)).toBe("0-15"); expect(bucketOf(15)).toBe("0-15"); expect(bucketOf(16)).toBe("16-30");
+    expect(bucketOf(45)).toBe("31-45"); expect(bucketOf(46)).toBe("45+");
+  });
+  it("sums only open balances", () => {
+    const b = ageBuckets([
+      { issue_date: "2026-11-01", balance_paise: 100, stage: "issued", status: "sent" },
+      { issue_date: "2026-09-01", balance_paise: 300, stage: "issued", status: "overdue" },
+      { issue_date: "2026-09-01", balance_paise: 0, stage: "issued", status: "paid" },
+      { issue_date: "2026-09-01", balance_paise: 500, stage: "draft", status: "draft" },
+    ], "2026-11-06");
+    expect(b.map((x) => x.paise)).toEqual([100, 0, 0, 300]);
+  });
+});

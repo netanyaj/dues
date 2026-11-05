@@ -8,6 +8,7 @@ import { receivablesSummary } from "@/lib/service/summary";
 import { pendingReports } from "@/lib/service/payments";
 import { formatINR } from "@/lib/domain/money";
 import { formatDate, istToday } from "@/lib/domain/dates";
+import { AGE_BUCKETS, ageBuckets, ageOf, bucketOf, type AgeKey } from "@/lib/domain/aging";
 import { ALL_STATUSES, STAGE_LABEL, STATUS_LABEL, type InvoiceStatus } from "@/lib/domain/status";
 import { AutoRefresh } from "@/components/bits";
 import { EmptyState } from "@/components/empty-state";
@@ -25,21 +26,26 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
   const sp = await searchParams;
   const status = typeof sp.status === "string" && (ALL_STATUSES as string[]).concat("outstanding", "payment_reported").includes(sp.status) ? (sp.status as InvoiceStatus | "outstanding" | "payment_reported") : null;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 60) : "";
+  const age = AGE_BUCKETS.find((b) => b.key === sp.age)?.key ?? null;
 
-  const [summary, reports, invoices, anyInvoices, drafts] = await Promise.all([
+  const [summary, reports, listed, anyInvoices, drafts, open] = await Promise.all([
     receivablesSummary(ctx),
     pendingReports(ctx),
-    listInvoices(ctx, { status, q, limit: 200 }),
-    status || q ? listInvoices(ctx, { limit: 1 }) : null,
+    listInvoices(ctx, { status: age ? "outstanding" : status, q, limit: 200 }),
+    status || q || age ? listInvoices(ctx, { limit: 1 }) : null,
     listInvoices(ctx, { status: "draft", limit: 50 }),
+    listInvoices(ctx, { status: "outstanding", limit: 500 }),
   ]);
-  const hasAny = (anyInvoices ?? invoices).length > 0;
+  const hasAny = (anyInvoices ?? listed).length > 0;
   const ready = drafts.filter((i) => i.ready_to_send_at);
+  const todayIst = istToday();
+  const invoices = age ? listed.filter((i) => bucketOf(ageOf(i.issue_date, todayIst)) === age) : listed;
+  const buckets = ageBuckets(open, todayIst);
+  const agedTotal = buckets.reduce((a, b) => a + b.paise, 0);
   const chase = summary.to_chase;
   const today = istToday();
   const fyStart = Number(today.slice(5, 7)) >= 4 ? `${today.slice(0, 4)}-04-01` : `${Number(today.slice(0, 4)) - 1}-04-01`;
   const notDue = summary.outstanding_paise - summary.overdue_paise;
-  const latePct = summary.outstanding_paise > 0 ? Math.round((summary.overdue_paise / summary.outstanding_paise) * 100) : 0;
   const needsCount = reports.length + ready.length + chase.length;
 
   return (
@@ -51,12 +57,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           <Panel className="p-5 sm:p-6 lg:col-start-1 lg:row-start-1">
             <p className="body-6 text-muted-foreground">Owed to you</p>
             <p className="amount mt-1 text-4xl font-semibold tracking-tight">{formatINR(summary.outstanding_paise, { decimals: "auto" })}</p>
-            {summary.outstanding_paise > 0 && (
-              <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-muted" role="img" aria-label={`${latePct}% of what you're owed is late`}>
-                <span className="bg-late" style={{ width: `${latePct}%` }} />
-                <span className="bg-[#bdbdbd]" style={{ width: `${100 - latePct}%` }} />
-              </div>
-            )}
+            {agedTotal > 0 && <AgeBar buckets={buckets} total={agedTotal} active={age} />}
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
               <div><dt className="caption-4 text-muted-foreground">Late</dt><dd className={`amount title-4 ${summary.overdue_paise > 0 ? "text-late" : ""}`}>{formatINR(summary.overdue_paise, { decimals: "auto" })}</dd></div>
               <div><dt className="caption-4 text-muted-foreground">Not yet due</dt><dd className="amount title-4">{formatINR(notDue, { decimals: "auto" })}</dd></div>
@@ -142,7 +143,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
             {hasAny && (
               <form className="mb-3 flex flex-wrap items-center gap-2" role="search">
                 <label htmlFor="status" className="sr-only">Status</label>
-                <select id="status" name="status" defaultValue={status ?? ""} className="h-9 rounded-lg border border-input bg-card px-3 body-6">
+                {age && <span className="inline-flex h-9 items-center rounded-lg bg-muted px-3 body-5">Age: {AGE_BUCKETS.find((b) => b.key === age)!.label}</span>}
+                <select id="status" name="status" defaultValue={status ?? ""} disabled={!!age} className="h-9 rounded-lg border border-input bg-card px-3 body-6">
                   <option value="">All invoices</option>
                   <option value="outstanding">Still owed</option>
                   <option value="payment_reported">Payment reported</option>
@@ -151,7 +153,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                 <label htmlFor="q" className="sr-only">Search</label>
                 <Input id="q" name="q" defaultValue={q} placeholder="Number, client or notes" className="h-9 min-w-0 flex-1 sm:max-w-64" />
                 <Button type="submit" variant="outline">Search</Button>
-                {(status || q) && <Button asChild variant="ghost"><Link href="/dashboard">Clear</Link></Button>}
+                {age && <input type="hidden" name="age" value={age} />}
+                {(status || q || age) && <Button asChild variant="ghost"><Link href="/dashboard">Clear</Link></Button>}
               </form>
             )}
 
@@ -221,6 +224,41 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
           </Section>
 
       </div>
+    </div>
+  );
+}
+
+/** D39: one chart. Open balances by invoice age, with the MSME 45-day line. Each bucket filters the list. */
+function AgeBar({ buckets, total, active }: { buckets: ReturnType<typeof ageBuckets>; total: number; active: AgeKey | null }) {
+  const TONE: Record<AgeKey, string> = { "0-15": "bg-[#d9d2cc]", "16-30": "bg-[#a8a3ad]", "31-45": "bg-[#5e5a63]", "45+": "bg-late" };
+  const before45 = buckets.filter((b) => b.key !== "45+").reduce((a, b) => a + b.paise, 0);
+  const markerPct = (before45 / total) * 100;
+  return (
+    <div className="mt-5">
+      <p className="caption-4 text-muted-foreground">Who owes you, by age</p>
+      <div className="relative mt-2">
+        <div className="flex h-3 overflow-hidden rounded-full bg-muted" role="img" aria-label={buckets.map((b) => `${b.label}: ${formatINR(b.paise, { decimals: "auto" })}`).join(", ")}>
+          {buckets.filter((b) => b.paise > 0).map((b) => (
+            <Link key={b.key} href={active === b.key ? "/dashboard" : `/dashboard?age=${b.key}`} tabIndex={-1} aria-hidden
+              className={`${TONE[b.key]} h-full transition-opacity duration-300 hover:opacity-80 ${active && active !== b.key ? "opacity-30" : ""}`} style={{ width: `${(b.paise / total) * 100}%` }} />
+          ))}
+        </div>
+        {markerPct > 0 && markerPct < 100 && (
+          <div aria-hidden className="pointer-events-none absolute -top-1 -bottom-1 w-0.5 rounded bg-foreground" style={{ left: `calc(${markerPct}% - 1px)` }} />
+        )}
+      </div>
+      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {buckets.map((b) => (
+          <li key={b.key}>
+            <Link href={active === b.key ? "/dashboard" : `/dashboard?age=${b.key}`} aria-current={active === b.key ? "true" : undefined}
+              className={`flex flex-col rounded-lg border px-2.5 py-1.5 hover:bg-muted/60 ${active === b.key ? "border-foreground" : "border-transparent"}`}>
+              <span className="flex items-center gap-1.5 caption-4 text-muted-foreground"><span aria-hidden className={`size-2 rounded-full ${TONE[b.key]}`} />{b.label}</span>
+              <span className={`amount title-4 ${b.key === "45+" && b.paise > 0 ? "text-late" : ""}`}>{formatINR(b.paise, { decimals: "auto" })}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 caption-5 text-muted-foreground">The line marks 45 days, the MSMED Act limit for buyers paying Udyam-registered micro and small businesses.</p>
     </div>
   );
 }

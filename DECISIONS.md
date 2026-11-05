@@ -524,3 +524,12 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **"Chase my overdue invoices"** (`chase_overdue`): `get_business_profile` for tone, `get_receivables_summary`, a reminder per item at its stage, `save_reminder`. It mentions unopened invoices.
 - **"What am I owed?"** (`what_am_i_owed`): a short summary from `get_receivables_summary`, quoting Dues' figures.
 - **"Invoice a client"** (`invoice_client`, with optional `client` and `work`): `get_business_profile` defaults, `upsert_client` for new clients (ask for their state), `create_invoice` with `expected_total_rupees`. It shows Dues' totals and reminds the freelancer they send it.
+
+## D39. One chart: who owes you, by age
+
+**Decision:**
+- **One stacked bar on the dashboard** replaces the late/not-due bar. It shows open balances by invoice age (days since the invoice date) in four buckets: 0–15, 16–30, 31–45 and over 45 days.
+- **A dark marker sits at 45 days,** the MSMED Act limit. Over 45 is amber; the rest are neutral greys, getting darker with age.
+- **Each bucket filters the invoice list** (`/dashboard?age=…`). The legend tiles are the keyboard-accessible links, and the bar segments are mouse shortcuts.
+- **No other charts.** A new account has no history to plot trends from.
+- **Logic** is in `lib/domain/aging.ts` and unit tested: day 45 falls in 31–45, day 46 in over 45.
