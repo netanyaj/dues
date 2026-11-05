@@ -14,6 +14,8 @@ import { ReportDecision } from "@/components/report-decision";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TRY_PROMPT } from "../settings/mcp-card";
+import { STAGE_LABEL } from "@/lib/domain/status";
+import { istToday } from "@/lib/domain/dates";
 
 export const metadata: Metadata = { title: "Dashboard · Dues" };
 
@@ -39,6 +41,9 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
     status || q ? listInvoices(ctx, { limit: 1 }) : null,
   ]);
   const hasAny = (anyInvoices ?? invoices).length > 0;
+  const ready = (await listInvoices(ctx, { status: "draft", limit: 50 })).filter((i) => i.ready_to_send_at);
+  const today = istToday();
+  const fyStart = Number(today.slice(5, 7)) >= 4 ? `${today.slice(0, 4)}-04-01` : `${Number(today.slice(0, 4)) - 1}-04-01`;
 
   return (
     <div className="flex flex-col gap-8">
@@ -52,13 +57,13 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       {reports.length > 0 && (
         <section aria-labelledby="confirm-h" className="rounded-lg border border-amber-300 bg-amber-50/60 p-4">
           <h2 id="confirm-h" className="font-medium">Needs your confirmation</h2>
-          <p className="text-sm text-muted-foreground">Clients say they&apos;ve paid. Check your bank or UPI app, then confirm or reject.</p>
+          <p className="text-sm text-muted-foreground">Clients (or Claude, from what you told it) say these were paid. Check your bank or UPI app, then confirm or reject.</p>
           <ul className="mt-3 divide-y divide-amber-200">
             {reports.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="font-medium">
-                    {r.client_name} paid {formatINR(r.amount_paise)}{" "}
+                    {r.reported_by === "claude" ? `Claude noted ${r.client_name} paid` : `${r.client_name} paid`} {formatINR(r.amount_paise)}{r.tds_paise ? ` + ${formatINR(r.tds_paise)} TDS` : ""}{" "}
                     <Link href={`/invoices/${r.invoice_id}`} className="font-normal text-muted-foreground underline underline-offset-4">{r.number}</Link>
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -76,6 +81,23 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
         </section>
       )}
 
+      {ready.length > 0 && (
+        <section aria-labelledby="ready-h" className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <h2 id="ready-h" className="font-medium">Ready to send</h2>
+          <p className="text-sm text-muted-foreground">Claude prepared these. Check each one and press Send. Claude can&apos;t send for you.</p>
+          <ul className="mt-2 divide-y divide-blue-100">
+            {ready.map((r) => (
+              <li key={r.id}>
+                <Link href={`/invoices/${r.id}`} className="flex flex-wrap items-center justify-between gap-2 py-2.5 hover:underline">
+                  <span><span className="font-medium">{r.client_name}</span> <span className="text-sm text-muted-foreground">Draft · {formatDate(r.created_at.slice(0, 10))}</span></span>
+                  <span className="text-sm tabular-nums">{formatINR(r.total_paise)} · Review and send →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {summary.to_chase.length > 0 && (
         <section aria-labelledby="chase-h">
           <h2 id="chase-h" className="font-medium">To chase today</h2>
@@ -87,6 +109,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                     <span className="font-medium">{r.client_name}</span>{" "}
                     <span className="text-sm text-muted-foreground">{r.number}</span>
                     {r.chase_note && <span className="block text-sm text-amber-900">{r.chase_note}</span>}
+                    {r.next_stage && <span className="mt-0.5 block text-sm text-muted-foreground">Next: {STAGE_LABEL[r.next_stage]} reminder. Ask Claude to write it.</span>}
                   </span>
                   <span className="flex items-center gap-3 text-sm">
                     <span className="tabular-nums">{formatINR(r.balance_paise)}</span>
@@ -102,6 +125,14 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       )}
 
       <section aria-labelledby="inv-h" className="flex flex-col gap-3">
+        {hasAny && (
+          <form action="/api/export" method="get" className="flex flex-wrap items-end gap-2 rounded-lg border bg-muted/20 p-3 text-sm">
+            <span className="mr-auto self-center font-medium">Export for your accountant (CSV)</span>
+            <label className="flex flex-col gap-1">From<Input type="date" name="from" defaultValue={fyStart} className="h-9" required /></label>
+            <label className="flex flex-col gap-1">To<Input type="date" name="to" defaultValue={today} max={today} className="h-9" required /></label>
+            <Button type="submit" variant="outline" size="sm" className="h-9">Export CSV</Button>
+          </form>
+        )}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 id="inv-h" className="font-medium">Invoices</h2>
           {hasAny && (

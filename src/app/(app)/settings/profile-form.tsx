@@ -37,7 +37,7 @@ export function ProfileForm({ profile, welcome }: { profile: Values; welcome: bo
   useEffect(() => {
     if (state.ok) {
       toast.success("Profile saved");
-      if (onboarding) router.push("/dashboard");
+      if (onboarding) router.push("/settings?connect=1#connect");
     }
   }, [state, onboarding, router]);
 
@@ -95,6 +95,27 @@ export function ProfileForm({ profile, welcome }: { profile: Values; welcome: bo
         <div className="grid gap-4 sm:grid-cols-2">
           <Field name="invoice_prefix" label="Invoice number prefix" hint="1–3 letters or digits. Numbers look like INV/2026–27/0001." values={values} errors={e} maxLength={3} autoCapitalize="characters" />
           <Field name="default_sac" label="Default SAC code" hint="998391 is specialty design services. Change it per line if needed." values={values} errors={e} inputMode="numeric" maxLength={8} />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-medium">MSME registration (optional)</h2>
+          <p className="text-sm text-muted-foreground">If you&apos;re a registered micro or small enterprise, invoices state your rights under the MSMED Act. Dues checks the format only.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field name="udyam_number" label="Udyam registration number" hint="e.g. UDYAM-KR-03-0012345" values={values} errors={e} autoCapitalize="characters" maxLength={22} />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="msme_category">Enterprise category</Label>
+            <select id="msme_category" name="msme_category" defaultValue={values.msme_category} aria-invalid={!!e?.msme_category} className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm aria-invalid:border-destructive">
+              <option value="">Choose…</option>
+              <option value="micro">Micro</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+            </select>
+            <p className="text-xs text-muted-foreground">As on your Udyam certificate. The late-payment rules cover micro and small only.</p>
+            <FieldError error={e?.msme_category} />
+          </div>
         </div>
       </section>
 

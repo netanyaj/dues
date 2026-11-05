@@ -1,6 +1,8 @@
 // Turns service-layer rows into what screens show. No business rules here.
 import type { DocData, DocParty } from "@/components/invoice-document";
 import { formatINR } from "@/lib/domain/money";
+import { msmeLine } from "@/lib/domain/gst";
+import { STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
 import { formatDate } from "@/lib/domain/dates";
 import type { Client } from "@/lib/service/clients";
 import type { EventRow, InvoiceRow, ItemRow } from "@/lib/service/invoices";
@@ -32,6 +34,9 @@ export function docFromInvoice(inv: InvoiceRow, items: ItemRow[], live?: { profi
     igst_paise: inv.igst_paise,
     total_paise: inv.total_paise,
     notes: inv.notes,
+    msme_line: s
+      ? msmeLine(s.business_name ?? "", s.udyam_number, s.msme_category)
+      : msmeLine(live?.profile.business_name ?? "", live?.profile.udyam_number, live?.profile.msme_category),
     draft: inv.stage === "draft",
     cancelled: inv.stage === "cancelled",
   };
@@ -57,7 +62,8 @@ export function describeEvent(e: EventRow): { who: string; what: string } {
     payment_recorded: `recorded ${money("amount_paise")}${(p.tds_paise as number) > 0 ? ` + ${money("tds_paise")} TDS` : ""}`,
     paid: "Invoice fully paid",
     became_overdue: `marked it overdue (balance ${p.balance ?? ""})`,
-    reminder_saved: `saved a ${p.channel === "email" ? "email" : "WhatsApp"} reminder`,
+    reminder_saved: `saved a ${p.stage ? `${STAGE_LABEL[p.stage as ReminderStage].toLowerCase()} ` : ""}${p.channel === "email" ? "email" : "WhatsApp"} reminder`,
+    marked_ready: "marked it ready to send",
     reminder_sent: `opened the ${p.channel === "email" ? "email" : "WhatsApp"} reminder to send`,
     due_date_extended: `extended the due date from ${formatDate(String(p.from ?? ""))} to ${formatDate(String(p.to ?? ""))}${p.reason ? ` (${p.reason})` : ""}`,
     notes_updated: "edited the notes",

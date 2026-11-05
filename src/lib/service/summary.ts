@@ -1,5 +1,6 @@
 import { addDays, daysBetween, istDateOf, istToday } from "@/lib/domain/dates";
-import { isChasePaused } from "@/lib/domain/status";
+import { isChasePaused, nextReminderStage, STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
+import { highestStages } from "./reminders";
 import { formatINR } from "@/lib/domain/money";
 import { check, db, logEvent, type Ctx } from "./core";
 import { listInvoices, type InvoiceRow } from "./invoices";
@@ -15,14 +16,14 @@ export type Summary = {
   to_chase: ChaseRow[];
 };
 
-export type ChaseRow = InvoiceRow & { chase_note: string | null };
+export type ChaseRow = InvoiceRow & { chase_note: string | null; next_stage: ReminderStage | null };
 
 /**
  * "To chase today": overdue, or open and due within 2 days.
  * D16: an unconfirmed client report pauses chasing for 2 working days; after that the
  * invoice comes back with a note. It is never silently dropped.
  */
-export function chaseList(rows: InvoiceRow[], today = istToday()): ChaseRow[] {
+export function chaseList(rows: InvoiceRow[], today = istToday(), stages: Map<string, number> = new Map()): ChaseRow[] {
   const soon = addDays(today, 2);
   const out: ChaseRow[] = [];
   for (const r of rows) {
@@ -35,7 +36,7 @@ export function chaseList(rows: InvoiceRow[], today = istToday()): ChaseRow[] {
       const days = daysBetween(reported, today);
       note = `Reported ${days} day${days === 1 ? "" : "s"} ago, not confirmed. Check your bank.`;
     }
-    out.push({ ...r, chase_note: note });
+    out.push({ ...r, chase_note: note, next_stage: nextReminderStage(r.days_overdue, stages.get(r.id) ?? null) });
   }
   return out.sort((a, b) => b.days_overdue - a.days_overdue || a.due_date.localeCompare(b.due_date));
 }
@@ -65,7 +66,7 @@ export async function receivablesSummary(ctx: Ctx): Promise<Summary> {
     paid_this_month_paise: pays.reduce((a, p) => a + Number(p.amount_paise), 0),
     tds_this_month_paise: pays.reduce((a, p) => a + Number(p.tds_paise), 0),
     overdue_by_client: [...byClient.values()].sort((a, b) => b.overdue_paise - a.overdue_paise),
-    to_chase: chaseList(rows, today),
+    to_chase: chaseList(rows, today, await highestStages(ctx, rows.filter((r) => r.status === "overdue").map((r) => r.id))),
   };
 }
 
@@ -79,6 +80,8 @@ export function describeSummary(s: Summary) {
     to_chase_today: s.to_chase.map((r) => ({
       id: r.id, number: r.number, client: r.client_name, balance_due: formatINR(r.balance_paise), due_date: r.due_date,
       status: r.status, days_overdue: r.days_overdue, note: r.chase_note ?? undefined,
+      suggested_reminder_stage: r.next_stage ?? undefined,
+      suggested_reminder: r.next_stage ? STAGE_LABEL[r.next_stage] : undefined,
     })),
   };
 }

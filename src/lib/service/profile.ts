@@ -1,5 +1,5 @@
-import { randomBytes } from "node:crypto";
-import { panFromGstin, resolveStateCode, stateName, validateGstin, validatePan } from "@/lib/domain/gst";
+import { createHash, randomBytes } from "node:crypto";
+import { msmeLine, panFromGstin, resolveStateCode, stateName, validateGstin, validatePan, validateUdyam } from "@/lib/domain/gst";
 import { validateUpiId } from "@/lib/domain/upi";
 import { appUrl, check, cleanText, db, DuesError, type Ctx } from "./core";
 
@@ -17,7 +17,11 @@ export type Profile = {
   bank_account_number: string | null;
   bank_ifsc: string | null;
   invoice_prefix: string;
-  mcp_token: string;
+  mcp_token_hash: string | null;
+  mcp_token_last4: string | null;
+  udyam_number: string | null;
+  msme_category: "micro" | "small" | "medium" | null;
+  bank_details_changed_at: string | null;
   is_demo: boolean;
 };
 
@@ -46,7 +50,7 @@ export function isSetupComplete(p: Profile) {
 
 export type ProfileInput = Partial<Record<
   "business_name" | "address" | "gstin" | "pan" | "state_code" | "default_sac" | "upi_id" | "upi_name" |
-  "bank_account_name" | "bank_account_number" | "bank_ifsc" | "invoice_prefix", string | null>>;
+  "bank_account_name" | "bank_account_number" | "bank_ifsc" | "invoice_prefix" | "udyam_number" | "msme_category", string | null>>;
 
 export type FieldErrors = Record<string, string>;
 
@@ -109,6 +113,17 @@ export function validateProfileInput(input: ProfileInput): { values: Record<stri
   v.invoice_prefix = prefix;
   if (!/^[A-Z0-9]{1,3}$/.test(prefix)) errors.invoice_prefix = "Use 1 to 3 letters or digits, e.g. INV. This keeps invoice numbers within GST's 16-character limit.";
 
+  const udyam = t("udyam_number", 30);
+  v.udyam_number = null;
+  v.msme_category = null;
+  if (udyam) {
+    const u = validateUdyam(udyam);
+    if (u.ok) v.udyam_number = u.value; else errors.udyam_number = u.error;
+    const cat = t("msme_category", 10);
+    if (cat === "micro" || cat === "small" || cat === "medium") v.msme_category = cat;
+    else errors.msme_category = "Pick your enterprise category from your Udyam certificate.";
+  }
+
   if (!v.upi_id && !(acct && ifsc) && !errors.upi_id && !errors.bank_account_number && !errors.bank_ifsc) {
     errors.upi_id = "Add a UPI ID or bank account so clients can pay you.";
   }
@@ -126,11 +141,20 @@ export async function updateProfile(ctx: Ctx, input: ProfileInput): Promise<{ ok
 
 export const DEMO_DISABLED = "Disabled on demo accounts — sign up to try it.";
 
-export async function regenerateMcpToken(ctx: Ctx): Promise<string> {
+export function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * D25: create a new MCP token, store only its hash and last 4 characters, and
+ * return the plain token so it can be shown exactly once. Demo accounts can only
+ * create a link when they have none (the seed script does this).
+ */
+export async function regenerateMcpToken(ctx: Ctx, opts: { allowDemo?: boolean } = {}): Promise<string> {
   const p = await getProfile(ctx);
-  if (p.is_demo) throw new DuesError("demo_account", DEMO_DISABLED);
+  if (p.is_demo && p.mcp_token_hash && !opts.allowDemo) throw new DuesError("demo_account", DEMO_DISABLED);
   const token = randomBytes(24).toString("hex");
-  check(await db().from("profiles").update({ mcp_token: token, updated_at: new Date().toISOString() }).eq("user_id", ctx.userId));
+  check(await db().from("profiles").update({ mcp_token_hash: hashToken(token), mcp_token_last4: token.slice(-4), updated_at: new Date().toISOString() }).eq("user_id", ctx.userId));
   return token;
 }
 
@@ -138,10 +162,10 @@ export function mcpUrl(token: string) {
   return `${appUrl()}/api/mcp/${token}`;
 }
 
-/** MCP auth: find the user for a token. Constant-shape lookup on a unique index. */
+/** MCP auth: hash the token from the URL and look it up. The plain token is never stored. */
 export async function userIdForToken(token: string): Promise<string | null> {
   if (!/^[0-9a-f]{32,128}$/.test(token)) return null;
-  const { data } = await db().from("profiles").select("user_id").eq("mcp_token", token).maybeSingle();
+  const { data } = await db().from("profiles").select("user_id").eq("mcp_token_hash", hashToken(token)).maybeSingle();
   return data?.user_id ?? null;
 }
 
@@ -159,6 +183,7 @@ export function describeProfile(p: Profile) {
     bank_transfer_set_up: !!(p.bank_account_number && p.bank_ifsc),
     invoice_prefix: p.invoice_prefix,
     default_sac: p.default_sac,
+    msme: p.udyam_number ? { udyam_number: p.udyam_number, category: p.msme_category, invoice_line: msmeLine(p.business_name ?? "", p.udyam_number, p.msme_category) } : null,
     setup_complete: gaps.length === 0,
     missing: gaps,
   };

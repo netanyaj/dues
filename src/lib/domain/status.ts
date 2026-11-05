@@ -115,3 +115,16 @@ export const ACTION_REFUSAL: Record<Action, string> = {
   decide_report: "There's no payment report waiting on this invoice.",
   save_reminder: "Reminders can only be saved for sent invoices that still have a balance.",
 };
+
+// ---- Reminder stages (D19) -------------------------------------------------
+
+export type ReminderStage = 1 | 2 | 3;
+export const STAGE_LABEL: Record<ReminderStage, string> = { 1: "Stage 1 · friendly", 2: "Stage 2 · firm", 3: "Stage 3 · final" };
+export const STAGE_AT_DAYS: Record<ReminderStage, number> = { 1: 3, 2: 7, 3: 14 };
+
+/** Highest stage reached by days overdue (+3/+7/+14) that hasn't been saved yet; null if none due. */
+export function nextReminderStage(daysOverdue: number, highestSaved: number | null): ReminderStage | null {
+  const reached = daysOverdue >= 14 ? 3 : daysOverdue >= 7 ? 2 : daysOverdue >= 3 ? 1 : 0;
+  if (reached === 0) return null;
+  return reached > (highestSaved ?? 0) ? (reached as ReminderStage) : null;
+}

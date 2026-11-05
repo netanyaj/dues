@@ -117,3 +117,24 @@ export function validatePan(raw: string): { ok: true; value: string } | { ok: fa
 
 export const GST_RATES = [0, 5, 12, 18, 28] as const;
 export type GstRate = (typeof GST_RATES)[number];
+
+// ---- MSME (D20) ------------------------------------------------------------
+
+export const UDYAM_RE = /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/;
+export type MsmeCategory = "micro" | "small" | "medium";
+export const MSME_MAX_TERMS_DAYS = 45;
+
+export function validateUdyam(raw: string): { ok: true; value: string } | { ok: false; error: string } {
+  const v = raw.trim().toUpperCase().replace(/\s+/g, "");
+  if (!UDYAM_RE.test(v)) return { ok: false, error: `"${raw}" isn't a Udyam number. It looks like UDYAM-KR-03-0012345.` };
+  return { ok: true, value: v };
+}
+
+/** The exact, factual line from DECISIONS.md D20. Only micro and small enterprises are covered. */
+export function msmeLine(business: string, udyam: string | null | undefined, category: string | null | undefined): string | null {
+  if (!udyam || (category !== "micro" && category !== "small")) return null;
+  return `${business} is registered as a ${category} enterprise under the MSMED Act, 2006 (Udyam Registration No. ${udyam}). Under Section 15 of the Act, payment is due within the agreed period, which cannot exceed 45 days from acceptance, or within 15 days if no period is agreed. Under Section 16, late payments carry compound interest at three times the bank rate notified by the RBI. Under Section 43B(h) of the Income-tax Act, 1961, a buyer can deduct this expense only in the year it is actually paid, if it is paid after the time allowed.`;
+}
+
+export const MSME_TERMS_WARNING =
+  "This due date is more than 45 days after the invoice date. For a registered micro or small enterprise, the MSMED Act limits agreed payment terms to 45 days.";

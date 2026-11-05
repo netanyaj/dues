@@ -5,7 +5,7 @@ import { addDays, daysBetween, formatDate, istToday, isValidDate } from "@/lib/d
 import { ACTION_REFUSAL, allowedActions, statusText, type Action, type InvoiceStatus, type Stage } from "@/lib/domain/status";
 import { appUrl, check, cleanText, db, DuesError, fromDb, logEvent, type Ctx } from "./core";
 import { getProfile, type Profile } from "./profile";
-import { findClientByName, getClient, type Client } from "./clients";
+import { findClientByName, getClient, upsertClient, type Client } from "./clients";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,6 +42,7 @@ export type InvoiceRow = {
   last_report_at: string | null;
   days_overdue: number;
   original_due_date: string | null;
+  ready_to_send_at: string | null;
   public_id: string | null;
   notes: string | null;
   source: "claude" | "app";
@@ -78,13 +79,21 @@ export type PaymentRow = {
 };
 
 export type EventRow = { id: number; actor: string; type: string; payload: Record<string, unknown>; created_at: string };
-export type ReminderRow = { id: string; message: string; channel: "whatsapp" | "email"; created_by: string; created_at: string; sent_marked_at: string | null };
+export type ReminderRow = { id: string; message: string; channel: "whatsapp" | "email"; stage: number | null; created_by: string; created_at: string; sent_marked_at: string | null };
 
 export type ItemInput = { description?: string | null; qty?: number | string | null; rate_rupees?: number | string | null; sac?: string | null };
 
 export type DraftInput = {
   client_id?: string | null;
   client_name?: string | null;
+  /** D21: details for creating the client in the same step (state is required for a new client). */
+  client_state?: string | null;
+  client_email?: string | null;
+  client_phone?: string | null;
+  client_gstin?: string | null;
+  client_address?: string | null;
+  /** D23: set true to create an identical draft on purpose. */
+  allow_duplicate?: boolean | null;
   items?: ItemInput[];
   gst_rate?: number | string | null;
   issue_date?: string | null;
@@ -194,21 +203,30 @@ type Prepared = {
   warnings: string[];
 };
 
-async function resolveClient(ctx: Ctx, input: DraftInput): Promise<Client> {
+async function resolveClient(ctx: Ctx, input: DraftInput, warnings: string[]): Promise<Client> {
   if (input.client_id) {
     const c = await getClient(ctx, input.client_id);
     if (c) return c;
-    throw new DuesError("client_not_found", `No client with id "${input.client_id}". Call upsert_client first, or pass client_name.`);
+    throw new DuesError("client_not_found", `No client with id "${input.client_id}". Pass client_name (and client_state for a new client) instead.`, "client_id");
   }
-  if (input.client_name) {
-    const c = await findClientByName(ctx, input.client_name);
-    if (c) return c;
+  const name = cleanText(input.client_name, 120);
+  if (!name) throw new DuesError("invalid_input", "Say which client this invoice is for (client_name).", "client_id");
+  // D21: find or create the client in this same step. Existing clients only get blank fields filled (D24).
+  const existing = await findClientByName(ctx, name);
+  const extra = { email: input.client_email, phone: input.client_phone, gstin: input.client_gstin, address: input.client_address };
+  const hasExtra = Object.values(extra).some((v) => v != null && v !== "") || !!input.client_state;
+  if (!existing && !input.client_state && !input.client_gstin) {
     throw new DuesError(
-      "client_not_found",
-      `There's no client called "${input.client_name}" yet. Call upsert_client first with name, state_code (state name or 2-digit GST code; required), and optionally email, phone, address and gstin. Then call create_invoice again.`,
+      "client_state_needed",
+      `"${name}" is a new client. Add client_state (their state name, e.g. "Karnataka", or 2-digit GST code) and Dues will create them with this invoice. Email, phone and GSTIN are optional.`,
+      "client_state",
     );
   }
-  throw new DuesError("invalid_input", "Say which client this invoice is for (client_name or client_id).", "client_id");
+  if (existing && !hasExtra) return existing;
+  const r = await upsertClient(ctx, { name, state_code: input.client_state ?? null, ...extra });
+  if (r.created) warnings.push(`Created a new client, ${r.client.name} (${stateName(r.client.state_code)}).`);
+  if (r.kept.length) warnings.push(`Kept ${r.client.name}'s saved ${r.kept.join(", ")}. To change saved details, edit the client in the Dues app.`);
+  return r.client;
 }
 
 function prepareDates(input: DraftInput, fallbackIssue: string, fallbackTerms: number | null) {
@@ -233,8 +251,8 @@ async function prepareDraft(ctx: Ctx, profile: Profile, input: DraftInput, prev:
   if (!profile.state_code) {
     throw new DuesError("profile_incomplete", "Set your business state in Dues Settings first. It's needed to work out CGST/SGST vs IGST.");
   }
-  const client = await resolveClient(ctx, input);
   const warnings: string[] = [];
+  const client = await resolveClient(ctx, input, warnings);
 
   const rawItems = input.items ?? [];
   if (!Array.isArray(rawItems) || rawItems.length === 0) throw new DuesError("invalid_input", "Add at least one line item (description, qty, rate_rupees).", "items");
@@ -320,9 +338,31 @@ async function writeDraft(ctx: Ctx, id: string | null, p: Prepared, source: "cla
 
 export type DraftResult = { invoice: InvoiceRow; warnings: string[] };
 
-export async function createDraft(ctx: Ctx, input: DraftInput): Promise<DraftResult> {
+const norm = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
+
+/** D23: a draft identical to this one (same client, rate, items, total) from the last 10 minutes, if any. */
+async function findRecentDuplicate(ctx: Ctx, p: Prepared): Promise<string | null> {
+  const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { data } = await db().from("invoices").select("id").eq("user_id", ctx.userId).eq("client_id", p.client.id).eq("stage", "draft")
+    .eq("gst_rate", p.gstRate).eq("total_paise", p.totals.total).gte("created_at", since).order("created_at", { ascending: false }).limit(5);
+  const want = p.items.map((i) => `${norm(i.description)}|${i.qtyMilli}|${i.rate_paise}`).join("\n");
+  for (const row of data ?? []) {
+    const { data: items } = await db().from("invoice_items").select("description, qty, rate_paise").eq("invoice_id", row.id).order("position");
+    const have = (items ?? []).map((i) => `${norm(i.description)}|${parseQtyMilli(String(i.qty))}|${Number(i.rate_paise)}`).join("\n");
+    if (have === want) return row.id;
+  }
+  return null;
+}
+
+export const DUPLICATE_NOTE = "This invoice was already created a moment ago; returning the existing draft. Pass allow_duplicate: true if you really want a second identical invoice.";
+
+export async function createDraft(ctx: Ctx, input: DraftInput): Promise<DraftResult & { duplicate?: boolean }> {
   const profile = await getProfile(ctx);
   const p = await prepareDraft(ctx, profile, input, null);
+  if (!input.allow_duplicate) {
+    const dup = await findRecentDuplicate(ctx, p);
+    if (dup) return { invoice: await findInvoice(ctx, dup), warnings: [DUPLICATE_NOTE], duplicate: true };
+  }
   const source = ctx.actor === "claude" ? "claude" : "app";
   const id = await writeDraft(ctx, null, p, source);
   await logEvent(ctx, id, "draft_created", { total_paise: p.totals.total, items: p.items.length });
@@ -363,6 +403,21 @@ export async function confirmTotals(ctx: Ctx, ref: string): Promise<InvoiceRow> 
   assertAllowed(inv, "confirm_totals");
   check(await db().from("invoices").update({ needs_review: false, updated_at: new Date().toISOString() }).eq("id", inv.id).eq("user_id", ctx.userId).eq("stage", "draft"));
   await logEvent(ctx, inv.id, "totals_confirmed", { total_paise: inv.total_paise, claimed_total_paise: inv.claimed_total_paise, reason: inv.review_reason });
+  return findInvoice(ctx, inv.id);
+}
+
+/**
+ * D24: Claude can flag a draft as ready; only a person pressing Send in the app issues it.
+ * No number, no lock, no public link.
+ */
+export async function markReadyToSend(ctx: Ctx, ref: string): Promise<InvoiceRow> {
+  const inv = await findInvoice(ctx, ref);
+  if (inv.stage !== "draft") throw new DuesError("not_allowed", `This invoice was already sent as ${inv.number}.`);
+  if (inv.needs_review) {
+    throw new DuesError("needs_review", `The totals are flagged (${inv.review_reason}). Fix the line items with update_draft_invoice, or the freelancer can confirm the totals in the app: ${editUrl(inv.id)}`);
+  }
+  check(await db().from("invoices").update({ ready_to_send_at: new Date().toISOString() }).eq("id", inv.id).eq("user_id", ctx.userId).eq("stage", "draft"));
+  await logEvent(ctx, inv.id, "marked_ready", {});
   return findInvoice(ctx, inv.id);
 }
 
@@ -466,6 +521,7 @@ export function describeInvoice(inv: InvoiceRow, items?: ItemRow[]) {
     balance_due: r(inv.balance_paise),
     needs_review: inv.needs_review,
     review_reason: inv.needs_review ? inv.review_reason : null,
+    ready_to_send: inv.stage === "draft" ? !!inv.ready_to_send_at : undefined,
     created_by: inv.source,
     notes: inv.notes,
     items: items?.map((i) => ({ description: i.description, sac: i.sac, qty: String(i.qty), rate: r(i.rate_paise), amount: r(i.amount_paise) })),

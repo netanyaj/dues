@@ -9,7 +9,7 @@ import { getProfile, setupGaps } from "@/lib/service/profile";
 import { reminderLink } from "@/lib/service/reminders";
 import { formatINR, qtyMilliToString, parseQtyMilli } from "@/lib/domain/money";
 import { formatDate, formatDateTime, istToday } from "@/lib/domain/dates";
-import { allowedActions } from "@/lib/domain/status";
+import { allowedActions, STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
 import { whatsappLink } from "@/lib/domain/upi";
 import { AutoRefresh } from "@/components/bits";
 import { InvoiceDocument } from "@/components/invoice-document";
@@ -67,6 +67,9 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <AutoRefresh seconds={15} />
         {header}
         {inv.needs_review && <ConfirmTotals id={inv.id} reason={inv.review_reason} />}
+        {inv.ready_to_send_at && !inv.needs_review && (
+          <p className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-950">Claude marked this ready to send. Check it, then press Send. Only you can send it.</p>
+        )}
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-3">
           <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} />
           <PreviewLink id={inv.id} />
@@ -77,7 +80,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           key={inv.updated_at}
           invoiceId={inv.id}
           clients={clients.map((c) => ({ id: c.id, name: c.name, state_code: c.state_code, gstin: c.gstin }))}
-          supplier={{ state_code: profile.state_code, hasGstin: !!profile.gstin, default_sac: profile.default_sac }}
+          supplier={{ state_code: profile.state_code, hasGstin: !!profile.gstin, default_sac: profile.default_sac, msmeCovered: !!profile.udyam_number && (profile.msme_category === "micro" || profile.msme_category === "small") }}
           initial={{
             client_id: inv.client_id,
             items: items.map((i) => ({ description: i.description, sac: i.sac, qty: qtyMilliToString(parseQtyMilli(String(i.qty))), rate: (i.rate_paise / 100).toFixed(2).replace(/\.00$/, "") })),
@@ -108,7 +111,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             {reports.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 <div>
-                  <p>Client says they paid <b>{formatINR(r.amount_paise)}</b> · UTR {r.utr ?? "—"} · {formatDate(r.paid_on)}</p>
+                  <p>{r.reported_by === "claude" ? "Claude noted a payment of" : "Client says they paid"} <b>{formatINR(r.amount_paise)}</b>{r.tds_paise ? ` + ${formatINR(r.tds_paise)} TDS` : ""} · UTR {r.utr ?? "—"} · {formatDate(r.paid_on)}</p>
                   {r.flags.map((f) => <p key={f} className="text-sm font-medium text-amber-900">⚠ {f}</p>)}
                 </div>
                 <ReportDecision report={r} />
@@ -164,7 +167,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
                   <li key={r.id} className="rounded-lg border p-3 text-sm">
                     <p className="whitespace-pre-line">{r.message}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {r.channel === "whatsapp" ? "WhatsApp" : "Email"} · written by {r.created_by === "claude" ? "Claude" : "you"} · {formatDateTime(r.created_at)}
+                      {r.stage ? `${STAGE_LABEL[r.stage as ReminderStage]} · ` : ""}{r.channel === "whatsapp" ? "WhatsApp" : "Email"} · written by {r.created_by === "claude" ? "Claude" : "you"} · {formatDateTime(r.created_at)}
                       {r.sent_marked_at ? ` · opened to send ${formatDateTime(r.sent_marked_at)}` : ""}
                     </p>
                     <div className="mt-2"><ReminderButtons invoiceId={inv.id} reminderId={r.id} link={reminderLink(inv, profile.business_name, r)} channel={r.channel} sent={!!r.sent_marked_at} /></div>

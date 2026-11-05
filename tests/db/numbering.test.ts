@@ -66,9 +66,11 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     expect(error).toBeNull();
     expect(data.session).not.toBeNull(); // email confirmation must be OFF
     users.push({ id: data.user!.id, email, password: "" });
-    const { data: p } = await admin.from("profiles").select("mcp_token, is_demo").eq("user_id", data.user!.id).single();
-    expect(p!.mcp_token).toMatch(/^[0-9a-f]{48}$/);
+    const { data: p } = await admin.from("profiles").select("*").eq("user_id", data.user!.id).single();
+    expect(p).toBeTruthy();
     expect(p!.is_demo).toBe(false);
+    expect("mcp_token" in p!).toBe(false); // D25: the plain token is never stored
+    expect(p!.mcp_token_hash).toBeNull(); // created on demand and shown once
     // The browser can't change its own profile (no is_demo flipping, no token writes).
     await anon.auth.setSession(data.session!);
     const w = await anon.from("profiles").update({ is_demo: true }).eq("user_id", data.user!.id).select();
@@ -137,7 +139,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     expect(inv.data).toEqual([]);
     const view = await asB.from("invoice_view").select("id").eq("user_id", aId);
     expect(view.data).toEqual([]);
-    const prof = await asB.from("profiles").select("mcp_token").eq("user_id", aId);
+    const prof = await asB.from("profiles").select("mcp_token_hash").eq("user_id", aId);
     expect(prof.data).toEqual([]);
     const own = await asB.from("profiles").select("user_id").single();
     expect(own.data?.user_id).toBe(b.userId);

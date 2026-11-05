@@ -61,30 +61,42 @@ export async function getClient(ctx: Ctx, id: string): Promise<Client | null> {
   return (data as Client) ?? null;
 }
 
-/** Create, or update the existing client with the same name (case-insensitive). Used by MCP. */
-export async function upsertClient(ctx: Ctx, input: ClientInput): Promise<{ client: Client; created: boolean }> {
+/**
+ * Create a client, or add details to the existing one with the same name (case-insensitive).
+ * D21/D24: Claude may only fill in blank fields. Changing a saved phone, email, GSTIN,
+ * address or state needs the app, because injected text could otherwise redirect reminders.
+ */
+export async function upsertClient(ctx: Ctx, input: ClientInput): Promise<{ client: Client; created: boolean; kept: string[] }> {
   const existing = input.name ? await findClientByName(ctx, input.name) : null;
-  // When updating, keep existing fields that weren't provided.
-  const merged: ClientInput = existing
-    ? {
-        name: existing.name,
-        email: input.email ?? existing.email,
-        phone: input.phone ?? existing.phone,
-        address: input.address ?? existing.address,
-        gstin: input.gstin ?? existing.gstin,
-        state_code: input.state_code ?? existing.state_code,
-      }
-    : input;
-  const { values, errors } = validateClientInput(merged);
-  if (Object.keys(errors).length) {
-    throw new DuesError("invalid_input", Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join(" "));
+  if (!existing) {
+    const { values, errors } = validateClientInput(input);
+    if (Object.keys(errors).length) throw new DuesError("invalid_input", Object.values(errors).join(" "), Object.keys(errors)[0]);
+    const client = check(await db().from("clients").insert({ ...values, user_id: ctx.userId }).select("*").single()) as Client;
+    return { client, created: true, kept: [] };
   }
-  if (existing) {
-    const client = check(await db().from("clients").update({ ...values, updated_at: new Date().toISOString() }).eq("id", existing.id).eq("user_id", ctx.userId).select("*").single()) as Client;
-    return { client, created: false };
+  // Validate the provided values on their own so bad input still gets a clear error.
+  const probe = validateClientInput({ ...input, name: existing.name, state_code: input.state_code ?? existing.state_code });
+  const badKeys = Object.keys(probe.errors).filter((k) => input[k as keyof ClientInput] != null && input[k as keyof ClientInput] !== "");
+  if (badKeys.length) throw new DuesError("invalid_input", badKeys.map((k) => probe.errors[k]).join(" "), badKeys[0]);
+
+  const kept: string[] = [];
+  const patch: Record<string, string> = {};
+  for (const k of ["email", "phone", "address", "gstin", "state_code"] as const) {
+    const incoming = probe.values[k];
+    if (input[k] == null || input[k] === "" || !incoming) continue;
+    const current = existing[k];
+    if (!current) patch[k] = incoming;
+    else if (String(current).toLowerCase() !== String(incoming).toLowerCase()) kept.push(k);
   }
-  const client = check(await db().from("clients").insert({ ...values, user_id: ctx.userId }).select("*").single()) as Client;
-  return { client, created: true };
+  // A GSTIN being filled in must agree with the saved state.
+  if (patch.gstin && patch.gstin.slice(0, 2) !== existing.state_code) {
+    throw new DuesError("invalid_input", `That GSTIN is registered in ${stateName(patch.gstin.slice(0, 2))}, but ${existing.name} is saved in ${stateName(existing.state_code)}. Fix the state in the Dues app first.`, "gstin");
+  }
+  let client = existing;
+  if (Object.keys(patch).length) {
+    client = check(await db().from("clients").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", existing.id).eq("user_id", ctx.userId).select("*").single()) as Client;
+  }
+  return { client, created: false, kept };
 }
 
 export async function saveClient(ctx: Ctx, id: string | null, input: ClientInput): Promise<{ ok: true; client: Client } | { ok: false; errors: FieldErrors }> {

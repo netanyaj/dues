@@ -22,7 +22,7 @@ export default async function NewInvoice({ searchParams }: PageProps<"/invoices/
       <InvoiceForm
         invoiceId={null}
         clients={clients.map((c) => ({ id: c.id, name: c.name, state_code: c.state_code, gstin: c.gstin }))}
-        supplier={{ state_code: profile.state_code, hasGstin: !!profile.gstin, default_sac: profile.default_sac }}
+        supplier={{ state_code: profile.state_code, hasGstin: !!profile.gstin, default_sac: profile.default_sac, msmeCovered: !!profile.udyam_number && (profile.msme_category === "micro" || profile.msme_category === "small") }}
         initial={{ client_id: preset, items: [], gst_rate: profile.gstin ? 18 : 0, issue_date: today, due_date: addDays(today, 15), notes: "" }}
       />
     </div>

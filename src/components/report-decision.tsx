@@ -21,6 +21,8 @@ export type ReportForDecision = {
   balance_paise: number;
   tds_suggestion: { rate: number; tdsPaise: number } | null;
   flags?: string[];
+  tds_paise?: number;
+  reported_by?: string;
 };
 
 const rupees = (p: number) => (p / 100).toFixed(2).replace(/\.00$/, "");
@@ -29,7 +31,7 @@ export function ReportDecision({ report }: { report: ReportForDecision }) {
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(rupees(report.amount_paise));
-  const [tds, setTds] = useState(report.tds_suggestion ? rupees(report.tds_suggestion.tdsPaise) : "");
+  const [tds, setTds] = useState(report.tds_paise ? rupees(report.tds_paise) : report.tds_suggestion ? rupees(report.tds_suggestion.tdsPaise) : "");
   const [error, setError] = useState<string | null>(null);
 
   const run = (decision: "confirm" | "reject") =>

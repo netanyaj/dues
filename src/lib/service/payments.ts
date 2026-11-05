@@ -1,7 +1,7 @@
 import { formatINR, rupeesToPaise } from "@/lib/domain/money";
 import { CLAIM_TOLERANCE_PAISE, suggestTds } from "@/lib/domain/tax";
 import { formatDate, istToday, isValidDate } from "@/lib/domain/dates";
-import { check, cleanText, db, DuesError, logEvent, type Ctx } from "./core";
+import { appUrl, check, cleanText, db, DuesError, logEvent, type Ctx } from "./core";
 import { utrLooksUsual } from "@/lib/domain/upi";
 import { assertAllowed, findInvoice, type InvoiceRow, type PaymentRow } from "./invoices";
 
@@ -68,14 +68,24 @@ export async function recordPayment(ctx: Ctx, ref: string, input: PaymentInput):
       "amount_rupees",
     );
   }
+  // D24: a payment recorded from Claude is pending, exactly like a client report. Only a person confirms money.
+  const fromClaude = ctx.actor === "claude";
   const payment = check(
     await db().from("payments").insert({
       invoice_id: inv.id, user_id: ctx.userId, amount_paise: amount, tds_paise: tds,
       method: parseMethod(input.method), utr: parseUtr(input.utr, false), paid_on: parsePaidOn(input.paid_on),
-      reported_by: ctx.actor === "claude" ? "claude" : "user", status: "confirmed", decided_at: new Date().toISOString(),
+      reported_by: fromClaude ? "claude" : "user", status: fromClaude ? "reported" : "confirmed", decided_at: fromClaude ? null : new Date().toISOString(),
     }).select("*").single(),
   ) as PaymentRow;
-  await logEvent(ctx, inv.id, "payment_recorded", { amount_paise: amount, tds_paise: tds, utr: payment.utr });
+  await logEvent(ctx, inv.id, fromClaude ? "payment_reported" : "payment_recorded", { amount_paise: amount, tds_paise: tds, utr: payment.utr });
+  if (fromClaude) {
+    const after = await findInvoice(ctx, inv.id);
+    return {
+      invoice: after,
+      payment,
+      message: `Saved as pending: ${formatINR(amount)}${tds ? ` + ${formatINR(tds)} TDS` : ""} on ${inv.number}. Dues never confirms payments from chat. The freelancer confirms it under "Needs your confirmation" in the app once it's in their bank: ${appUrl()}/dashboard`,
+    };
+  }
   const after = await afterPayment(ctx, inv);
   const message = after.status === "paid"
     ? `${inv.number} is now fully paid.`
@@ -133,7 +143,7 @@ export async function reportPaymentPublic(publicId: string, input: PaymentInput)
 /** Reported payments across all invoices: the dashboard's "Needs your confirmation". */
 export async function pendingReports(ctx: Ctx) {
   const rows = check(
-    await db().from("payments").select("id, invoice_id, amount_paise, utr, paid_on, method, created_at").eq("user_id", ctx.userId).eq("status", "reported").order("created_at", { ascending: false }),
+    await db().from("payments").select("id, invoice_id, amount_paise, tds_paise, utr, paid_on, method, reported_by, created_at").eq("user_id", ctx.userId).eq("status", "reported").order("created_at", { ascending: false }),
   ) as PaymentRow[];
   if (!rows.length) return [];
   const invs = check(
@@ -159,11 +169,12 @@ export async function pendingReports(ctx: Ctx) {
     return {
       ...p,
       amount_paise: amount,
+      tds_paise: Number(p.tds_paise ?? 0),
       number: inv?.number,
       client_name: inv?.client_name,
       total_paise: Number(inv?.total_paise),
       balance_paise: Number(inv?.balance_paise),
-      tds_suggestion: inv ? suggestTds(Number(inv.subtotal_paise), Number(inv.balance_paise), amount) : null,
+      tds_suggestion: inv && !Number(p.tds_paise) ? suggestTds(Number(inv.subtotal_paise), Number(inv.balance_paise), amount) : null,
       flags,
     };
   });
@@ -189,7 +200,7 @@ export async function decideReport(
   }
 
   const amount = adjust.amount_rupees != null && adjust.amount_rupees !== "" ? rupeesToPaise(adjust.amount_rupees, "Amount") : Number(p.amount_paise);
-  const tds = adjust.tds_rupees != null && adjust.tds_rupees !== "" ? rupeesToPaise(adjust.tds_rupees, "TDS") : 0;
+  const tds = adjust.tds_rupees != null && adjust.tds_rupees !== "" ? rupeesToPaise(adjust.tds_rupees, "TDS") : Number(p.tds_paise ?? 0);
   if (amount < 0 || tds < 0 || amount + tds <= 0) throw new DuesError("invalid_input", "Amounts must be more than ₹0.");
   if (amount + tds > inv.balance_paise + CLAIM_TOLERANCE_PAISE) {
     throw new DuesError("overpayment", `That's more than the balance due (${formatINR(inv.balance_paise)}). Check the amount and TDS.`);

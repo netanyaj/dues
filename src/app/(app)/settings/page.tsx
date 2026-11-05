@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireCtx } from "@/lib/auth";
-import { getProfile, mcpUrl, setupGaps } from "@/lib/service/profile";
+import { appUrl } from "@/lib/service/core";
+import { getProfile, setupGaps } from "@/lib/service/profile";
 import { ProfileForm } from "./profile-form";
 import { McpCard } from "./mcp-card";
 
@@ -20,6 +21,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           <p className="mt-1 text-muted-foreground">
             About a minute. These details go on every invoice. You can add clients and drafts before finishing; only sending needs this.
           </p>
+        ) : sp.connect === "1" ? (
+          <p className="mt-1 text-muted-foreground">Saved. Last step: create your Claude link and add it to Claude.</p>
         ) : null}
       </div>
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -37,10 +40,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             bank_account_number: profile.bank_account_number ?? "",
             bank_ifsc: profile.bank_ifsc ?? "",
             invoice_prefix: profile.invoice_prefix ?? "INV",
+            udyam_number: profile.udyam_number ?? "",
+            msme_category: profile.msme_category ?? "",
           }}
           welcome={welcome}
         />
-        <McpCard url={mcpUrl(profile.mcp_token)} isDemo={profile.is_demo} />
+        <McpCard hasLink={!!profile.mcp_token_hash} last4={profile.mcp_token_last4} baseUrl={`${appUrl()}/api/mcp/`} isDemo={profile.is_demo} highlight={sp.connect === "1"} />
       </div>
     </div>
   );

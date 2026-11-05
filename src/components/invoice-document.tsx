@@ -27,6 +27,7 @@ export type DocData = {
   igst_paise: number;
   total_paise: number;
   notes: string | null;
+  msme_line?: string | null;
   draft?: boolean;
   cancelled?: boolean;
 };
@@ -122,6 +123,7 @@ export function InvoiceDocument({ d }: { d: DocData }) {
       </dl>
 
       {d.notes ? <p className="mt-6 text-sm whitespace-pre-line">{d.notes}</p> : null}
+      {d.msme_line ? <p className="mt-6 border-t pt-3 text-xs text-muted-foreground">{d.msme_line}</p> : null}
     </article>
   );
 }
