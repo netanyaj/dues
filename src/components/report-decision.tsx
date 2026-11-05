@@ -59,11 +59,11 @@ export function ReportDecision({ report }: { report: ReportForDecision }) {
             </DialogDescription>
           </DialogHeader>
           {report.tds_suggestion ? (
-            <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+            <p className="rounded-lg bg-muted px-3 py-2 body-6">
               The shortfall looks like {report.tds_suggestion.rate}% TDS ({formatINR(report.tds_suggestion.tdsPaise)}) on the amount before GST. It&apos;s filled in below. Change it if that&apos;s not right.
             </p>
           ) : null}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`amt-${report.id}`}>Amount received (₹)</Label>
               <Input id={`amt-${report.id}`} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10" />

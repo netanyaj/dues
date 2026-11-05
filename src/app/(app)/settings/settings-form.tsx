@@ -46,7 +46,7 @@ function Field({ f, values, errors, hidden }: { f: Exclude<FieldDef, { kind: "gr
         <Textarea id={f.name} name={f.name} defaultValue={values[f.name]} rows={f.rows ?? 3} maxLength={f.maxLength} aria-invalid={!!err} aria-describedby={describedBy} placeholder={f.placeholder} />
       )}
       {f.kind === "select" && (
-        <select id={f.name} name={f.name} defaultValue={values[f.name]} aria-invalid={!!err} aria-describedby={describedBy} className="h-10 rounded-lg border border-input bg-card px-3 text-base aria-invalid:border-destructive md:text-sm">
+        <select id={f.name} name={f.name} defaultValue={values[f.name]} aria-invalid={!!err} aria-describedby={describedBy} className="h-10 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-base aria-invalid:border-destructive md:text-sm">
           {f.placeholder != null && <option value="">{f.placeholder}</option>}
           {f.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
@@ -80,7 +80,7 @@ export function SettingsForm({ section, fields, initial, next, welcome, gstToggl
             <legend className="title-4 font-semibold">{f.title}</legend>
             {f.description && <p className="mt-0.5 body-6 text-muted-foreground">{f.description}</p>}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">{f.fields.map(render)}</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{f.fields.map(render)}</div>
         </fieldset>
       );
     }
@@ -100,7 +100,7 @@ export function SettingsForm({ section, fields, initial, next, welcome, gstToggl
         </div>
       )}
       <fieldset disabled={!!locked || pending} className="contents">
-        <div className="grid gap-4 sm:grid-cols-2">{fields.map(render)}</div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{fields.map(render)}</div>
       </fieldset>
       {footer}
       <FormMessage error={state.error ?? locked} />

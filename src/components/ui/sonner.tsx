@@ -1,7 +1,7 @@
 "use client"
 
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { CheckCircleIcon as CircleCheckIcon, InfoIcon, WarningIcon as TriangleAlertIcon, WarningOctagonIcon as OctagonXIcon, CircleNotchIcon as Loader2Icon } from "@phosphor-icons/react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (

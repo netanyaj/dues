@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +63,7 @@ export function FieldError({ id, error }: { id?: string; error?: string }) {
 export function FormMessage({ ok, error, className }: { ok?: string | null; error?: string | null; className?: string }) {
   if (!ok && !error) return null;
   return (
-    <p role={error ? "alert" : "status"} className={cn("rounded-md px-3 py-2 text-sm", error ? "border border-destructive/30 bg-destructive/5 text-destructive" : "border border-emerald-200 bg-emerald-50 text-emerald-800", className)}>
+    <p role={error ? "alert" : "status"} className={cn("rounded-md px-3 py-2 text-sm", error ? "border border-[#fecdca] bg-late-soft text-late" : "border border-[#abefc6] bg-paid-soft text-paid", className)}>
       {error ?? ok}
     </p>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, TrashIcon as Trash2Icon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,13 +95,13 @@ export function InvoiceForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="client">Client</Label>
           <select id="client" value={clientId} onChange={(e) => setClientId(e.target.value)} aria-invalid={!!fieldErr("client_id")} className="h-10 rounded-lg border border-input bg-card px-3 text-sm aria-invalid:border-destructive">
             <option value="">Choose a client…</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            <option value="__new">+ New client…</option>
+            <option value="__new">Add a new client…</option>
           </select>
           {isNew ? (
             <div className="mt-1 grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
@@ -176,7 +176,7 @@ export function InvoiceForm({
 
       <div className="grid gap-6 md:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="issue">Issue date</Label>
               <Input id="issue" type="date" value={issueDate} onChange={(e) => { const t = terms; setIssueDate(e.target.value); if (t != null && e.target.value) setDueDate(addDays(e.target.value, t)); }} className="h-10" />
@@ -191,7 +191,7 @@ export function InvoiceForm({
                 ))}
               </div>
               {supplier.msmeCovered && terms != null && terms > MSME_MAX_TERMS_DAYS && (
-                <p role="alert" className="text-xs text-amber-900">{MSME_TERMS_WARNING}</p>
+                <p role="alert" className="caption-4 text-attention">{MSME_TERMS_WARNING}</p>
               )}
             </div>
           </div>

@@ -20,7 +20,7 @@ export default async function DataSettings({ searchParams }: PageProps<"/setting
           <p className="title-4 font-semibold">CSV for your CA</p>
           <p className="mt-0.5 body-6 text-muted-foreground">One row per invoice sent in the range: number, dates, client GSTIN, taxable value, CGST, SGST, IGST, total, TDS, received and balance. Opens in Excel or Google Sheets.</p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5"><Label htmlFor="from" className="title-4">From</Label><Input id="from" type="date" name="from" defaultValue={fyStart} required /></div>
           <div className="flex flex-col gap-1.5"><Label htmlFor="to" className="title-4">To</Label><Input id="to" type="date" name="to" defaultValue={today} max={today} required /></div>
         </div>

@@ -46,7 +46,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       <AutoRefresh />
       <PageHeader title="Dashboard" description={`${formatDate(today)} · who owes you, and what needs you today`} />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <Panel className="p-5 sm:p-6 lg:col-start-1 lg:row-start-1">
             <p className="body-6 text-muted-foreground">Owed to you</p>
             <p className="amount mt-1 text-4xl font-semibold tracking-tight">{formatINR(summary.outstanding_paise, { decimals: "auto" })}</p>

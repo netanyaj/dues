@@ -49,7 +49,7 @@ export default async function ClaudeSettings({ searchParams }: PageProps<"/setti
           <Button asChild><Link href="/dashboard">Go to your dashboard</Link></Button>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-xl border bg-card p-5">
           <p className="title-4 font-semibold">Claude can</p>
           <ul className="mt-2 flex flex-col gap-1.5 body-6">{CAN.map((c) => <li key={c} className="flex gap-2"><CheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-paid" weight="bold" />{c}</li>)}</ul>

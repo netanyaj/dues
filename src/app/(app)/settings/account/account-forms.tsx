@@ -16,7 +16,7 @@ export function ChangePassword({ disabled }: { disabled: boolean }) {
   return (
     <form key={state.nonce ?? 0} action={action} className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:p-6" noValidate>
       <p className="title-4 font-semibold">Change password</p>
-      <fieldset disabled={disabled || pending} className="grid gap-4 sm:grid-cols-2">
+      <fieldset disabled={disabled || pending} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="password" className="title-4">New password</Label>
           <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} aria-invalid={!!state.errors?.password} />

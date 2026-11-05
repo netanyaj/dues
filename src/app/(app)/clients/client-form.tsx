@@ -34,7 +34,7 @@ export function ClientForm({ id, initial, onDoneHref }: { id: string | null; ini
 
   return (
     <form key={state.nonce ?? 0} action={action} className="flex flex-col gap-4" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {field("name", "Client name", { required: true, autoComplete: "organization" })}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="c-state_code">State</Label>

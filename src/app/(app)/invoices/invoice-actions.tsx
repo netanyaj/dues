@@ -109,7 +109,7 @@ export function RecordPayment({ id, balance, today }: { id: string; balance: str
           <DialogDescription>Balance due: {balance}. If the client deducted TDS, enter it separately so the invoice still counts as paid.</DialogDescription>
         </DialogHeader>
         <form
-          className="grid gap-4 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             setErr(null);

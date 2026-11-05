@@ -146,7 +146,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         </div>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <InvoiceDocument d={docFromInvoice(inv, items)} />
         <div className="flex flex-col gap-6">
           <section>
