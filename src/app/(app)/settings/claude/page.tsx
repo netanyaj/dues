@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { CheckIcon, XIcon } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/domain/dates";
 import { mcpServerUrl } from "@/lib/service/profile";
 import { ConnectSteps, McpCard } from "../mcp-card";
@@ -41,6 +43,12 @@ export default async function ClaudeSettings({ searchParams }: PageProps<"/setti
       </div>
       <McpCard serverUrl={serverUrl} hasToken={!!profile.mcp_token_hash} last4={profile.mcp_token_last4} isDemo={profile.is_demo} />
       <ConnectSteps serverUrl={serverUrl} />
+      {welcome && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-5">
+          <p className="min-w-0 flex-1 body-6">That&apos;s setup done. You can connect Claude later from this page.</p>
+          <Button asChild><Link href="/dashboard">Go to your dashboard</Link></Button>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border bg-card p-5">
           <p className="title-4 font-semibold">Claude can</p>

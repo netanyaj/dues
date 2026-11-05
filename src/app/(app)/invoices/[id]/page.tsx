@@ -10,7 +10,7 @@ import { reminderLink } from "@/lib/service/reminders";
 import { formatINR, qtyMilliToString, parseQtyMilli } from "@/lib/domain/money";
 import { formatDate, formatDateTime, istToday } from "@/lib/domain/dates";
 import { allowedActions, STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
-import { whatsappLink } from "@/lib/domain/upi";
+import { mailtoLink, whatsappLink } from "@/lib/domain/upi";
 import { AutoRefresh } from "@/components/bits";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { ClaudeBadge, StatusBadge } from "@/components/status-badge";
@@ -133,7 +133,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <Panel className="p-4">
           <p className="title-4">{inv.days_overdue > 0 ? "Send your client a reminder with the link" : "Send your client the link"}</p>
           <p className="mt-0.5 caption-5 text-muted-foreground">They can see the invoice, pay by bank transfer or UPI, and tell you once they&apos;ve paid.</p>
-          <div className="mt-3 flex flex-wrap gap-2"><ShareButtons link={link} whatsapp={whatsappLink(client?.phone, shareText)} /></div>
+          <div className="mt-3 flex flex-wrap gap-2"><ShareButtons link={link} whatsapp={whatsappLink(client?.phone, shareText)} email={client?.email ? mailtoLink(client.email, `Invoice ${inv.number} from ${profile.business_name}`, shareText) : null} /></div>
         </Panel>
       )}
       {inv.stage === "issued" && (

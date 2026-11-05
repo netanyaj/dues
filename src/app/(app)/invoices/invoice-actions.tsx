@@ -84,11 +84,12 @@ export function DeleteDraft({ id }: { id: string }) {
   );
 }
 
-export function ShareButtons({ link, whatsapp }: { link: string; whatsapp: string }) {
+export function ShareButtons({ link, whatsapp, email }: { link: string; whatsapp: string; email?: string | null }) {
   return (
     <div className="flex flex-wrap gap-2">
       <CopyButton value={link} label="Copy link" variant="default" size="default" />
       <Button asChild variant="outline"><a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a></Button>
+      {email && <Button asChild variant="outline"><a href={email}>Email</a></Button>}
       <Button asChild variant="ghost"><a href={link} target="_blank" rel="noopener noreferrer">View as client</a></Button>
     </div>
   );

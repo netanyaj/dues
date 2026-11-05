@@ -54,6 +54,9 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
   const accountAgeDays = s.account_created_at ? daysBetween(String(s.account_created_at).slice(0, 10), issuedAt.slice(0, 10)) : 999;
   const bankChangedRecently = !!s.bank_details_changed_at && daysBetween(String(s.bank_details_changed_at).slice(0, 10), issuedAt.slice(0, 10)) <= 7;
   const pendingReport = found.reports.some((r) => r.status === "reported");
+  // Closes the loop on a rejected report (FLOWS.md flow 6): the latest one, if nothing newer is pending.
+  const lastReport = found.reports[0] as { status: string; amount_paise: number } | undefined;
+  const rejected = !pendingReport && lastReport?.status === "rejected" ? Number(lastReport.amount_paise) : null;
 
   const row = (label: string, value: string | null | undefined, copy = true) =>
     value ? (
@@ -89,6 +92,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
         {inv.original_due_date && inv.original_due_date !== inv.due_date && !cancelled ? (
           <p className="mt-2 body-6">{business} moved the due date from {formatDate(inv.original_due_date)} to {formatDate(inv.due_date)}.</p>
         ) : null}
+        {rejected != null && canPay ? <div className="mt-4"><Banner tone="warning" title={`${business} couldn't find your payment of ${formatINR(rejected)} yet`}>Check the reference number, or contact them directly. If you paid, you can tell them again below.</Banner></div> : null}
         {pendingReport && canPay ? <div className="mt-4"><Banner title="You've told them you paid">{business} will confirm once the money arrives in their account.</Banner></div> : null}
       </section>
 
