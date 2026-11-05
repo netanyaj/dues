@@ -8,87 +8,108 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/bits";
-import { cn } from "@/lib/utils";
-import { regenerateLinkAction } from "./actions";
+import { Banner } from "@/components/ds";
+import { regenerateTokenAction } from "./actions";
 
 export const TRY_PROMPT =
   "Invoice Acme Corp in Bengaluru, Karnataka for 12 hours of design at ₹2,500/hr with 18% GST, due in 15 days.";
 
-export function ConnectSteps() {
-  return (
-    <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm">
-      <li>In Claude, go to <b>Customize → Connectors</b>.</li>
-      <li>Click <b>+ Add</b>, then <b>Add custom connector</b>.</li>
-      <li>Name it <b>Dues</b> and paste your Dues link as the server URL. Click <b>Continue</b>.</li>
-      <li>Under Authentication, choose <b>No sign in</b> (the link itself is your key), then click <b>Add</b>.</li>
-      <li>In a new chat, open the tools menu, check <b>Dues</b> is switched on, and try:
-        <blockquote className="mt-2 rounded-md bg-muted px-3 py-2 text-sm">“{TRY_PROMPT}”</blockquote>
-      </li>
-    </ol>
-  );
+function Code({ children, testId }: { children: string; testId?: string }) {
+  return <code data-testid={testId} className="block min-w-0 flex-1 break-all rounded-lg bg-muted px-3 py-2 font-mono text-sm">{children}</code>;
 }
 
-/** D25: the full link is shown once (after creating it). Afterwards only the last 4 characters. */
-export function McpCard({ hasLink, last4, baseUrl, isDemo, highlight }: { hasLink: boolean; last4: string | null; baseUrl: string; isDemo: boolean; highlight: boolean }) {
+/** D25 + D28: the token is shown once, after creating it. Afterwards only its last 4 characters. */
+export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: string; hasToken: boolean; last4: string | null; isDemo: boolean }) {
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
 
   const create = () =>
     start(async () => {
-      const r = await regenerateLinkAction();
+      const r = await regenerateTokenAction();
       setOpen(false);
-      if (r.ok) { setFresh(r.url); toast.success("Your Claude link is ready. Copy it now."); }
+      if (r.ok) { setFresh(r.token); toast.success("Your token is ready. Copy it now."); }
       else toast.error(r.error);
     });
 
+  const header = fresh ? `Bearer ${fresh}` : null;
   return (
-    <aside id="connect" className={cn("flex h-fit flex-col gap-4 rounded-lg border p-5", highlight && !hasLink && "border-2 border-primary")}>
-      <div>
-        <h2 className="font-medium">Connect Claude</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Your private link lets your Claude create drafts and read your invoices. Anyone with it can do the same, so don&apos;t share it.</p>
+    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6">
+      <div className="flex flex-col gap-1.5">
+        <p className="title-4">Server URL</p>
+        <div className="flex items-center gap-2"><Code>{serverUrl}</Code><CopyButton value={serverUrl} label="Copy" /></div>
       </div>
 
-      {fresh ? (
-        <div className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3">
-          <p className="text-sm font-medium text-amber-950">Copy this now — for security we can&apos;t show it again.</p>
-          <code className="block break-all rounded bg-white px-2 py-1.5 text-xs" data-testid="mcp-url">{fresh}</code>
-          <CopyButton value={fresh} label="Copy link" variant="default" />
-        </div>
-      ) : hasLink ? (
-        <div className="flex flex-col gap-1">
-          <code className="block rounded-md bg-muted px-3 py-2 text-xs">{baseUrl}••••••••{last4}</code>
-          <p className="text-xs text-muted-foreground">For security, the full link is shown only once. Lost it? Regenerate a new one.</p>
-        </div>
-      ) : (
-        <Button onClick={create} disabled={pending} className="h-10">{pending ? "Creating…" : "Create my Claude link"}</Button>
-      )}
+      <div className="flex flex-col gap-1.5">
+        <p className="title-4">Token</p>
+        {fresh ? (
+          <>
+            <Banner tone="warning" title="Copy it now. For your security, Dues can't show it again.">Anyone with this token can create drafts and read your invoices, so don&apos;t share it.</Banner>
+            <div className="flex items-center gap-2"><Code testId="mcp-token">{fresh}</Code><CopyButton value={fresh} label="Copy" /></div>
+            <p className="mt-2 title-4">Header value</p>
+            <div className="flex items-center gap-2"><Code>{header!}</Code><CopyButton value={`Authorization: ${header}`} label="Copy header" variant="default" /></div>
+            <p className="caption-5 text-muted-foreground">&ldquo;Copy header&rdquo; copies the full line, <span className="font-mono">Authorization: Bearer …</span>, for Claude Code.</p>
+          </>
+        ) : hasToken ? (
+          <>
+            <Code>{`••••••••••••••••${last4 ?? ""}`}</Code>
+            <p className="caption-5 text-muted-foreground">Only the last 4 characters are kept on screen. Dues stores a fingerprint of the token, not the token. Lost it? Make a new one; the old one stops working at once.</p>
+          </>
+        ) : (
+          <div><Button onClick={create} disabled={pending}>{pending ? "Creating…" : "Create my Claude token"}</Button></div>
+        )}
+      </div>
 
-      {hasLink && !fresh && (
+      {hasToken && !fresh && (
         <div>
           <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isDemo || pending}>{pending ? "Regenerating…" : "Regenerate link"}</Button>
+              <Button variant="outline" disabled={isDemo || pending}>{pending ? "Making a new token…" : "Regenerate token"}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Regenerate your Claude link?</AlertDialogTitle>
-                <AlertDialogDescription>The current link stops working straight away. Any Claude that uses it loses access until you add the new link.</AlertDialogDescription>
+                <AlertDialogTitle>Make a new token?</AlertDialogTitle>
+                <AlertDialogDescription>Your current token stops working straight away. Claude loses access to Dues until you paste the new one into the connector.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Keep current link</AlertDialogCancel>
-                <AlertDialogAction onClick={(ev) => { ev.preventDefault(); create(); }}>Regenerate</AlertDialogAction>
+                <AlertDialogCancel>Keep current token</AlertDialogCancel>
+                <AlertDialogAction onClick={(ev) => { ev.preventDefault(); create(); }}>Make a new token</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          {isDemo ? <p className="mt-1 text-xs text-muted-foreground">Disabled on demo accounts — sign up to try it.</p> : null}
+          {isDemo ? <p className="mt-1.5 caption-5 text-muted-foreground">Turned off on demo accounts, so the shared demo token keeps working for every reviewer.</p> : null}
         </div>
       )}
+    </div>
+  );
+}
 
-      <ConnectSteps />
-      <p className="text-xs text-muted-foreground">
-        Claude can create and edit drafts, add clients, save reminders and note payments for you to confirm. It can&apos;t send invoices or confirm payments; you do that here. Works on Claude Free (one custom connector), Pro, Max, Team and Enterprise. On Team and Enterprise, an organisation Owner adds it under Organization settings → Connectors.
-      </p>
-    </aside>
+export function ConnectSteps({ serverUrl }: { serverUrl: string }) {
+  return (
+    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6">
+      <div>
+        <p className="title-4 font-semibold">Claude on the web (claude.ai) and Claude Desktop</p>
+        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 body-6">
+          <li>Go to <b>Customize → Connectors</b>.</li>
+          <li>Click <b>+ Add</b>, then <b>Add custom connector</b>.</li>
+          <li>Name it <b>Dues</b> and paste the server URL. Click <b>Continue</b>, then <b>Continue</b> again.</li>
+          <li>Under <b>Authentication</b>, choose <b>No sign in</b>.</li>
+          <li>Under <b>Request headers</b>, add the name <span className="font-mono">Authorization</span> and the value <span className="font-mono">Bearer</span> followed by a space and your token.</li>
+          <li>Click <b>Add</b>. In a new chat, check Dues is switched on in the tools menu.</li>
+        </ol>
+        <p className="mt-2 caption-5 text-muted-foreground">Connectors you add on claude.ai also appear in Claude Desktop. On Team and Enterprise plans an Owner may need to add it under organisation settings. If you don&apos;t see Request headers, your account doesn&apos;t have that option yet; use Claude Code below.</p>
+      </div>
+      <div>
+        <p className="title-4 font-semibold">Claude Code</p>
+        <div className="mt-2 flex items-start gap-2">
+          <Code>{`claude mcp add --transport http dues ${serverUrl} --header "Authorization: Bearer <token>"`}</Code>
+        </div>
+        <p className="mt-1 caption-5 text-muted-foreground">Replace &lt;token&gt; with your token.</p>
+      </div>
+      <div>
+        <p className="title-4 font-semibold">Then try</p>
+        <blockquote className="mt-2 rounded-lg bg-muted px-3 py-2 body-6">&ldquo;{TRY_PROMPT}&rdquo;</blockquote>
+      </div>
+    </div>
   );
 }

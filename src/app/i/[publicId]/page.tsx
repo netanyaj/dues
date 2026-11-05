@@ -44,7 +44,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
   const due = inv.balance_paise;
   const canPay = !cancelled && !paid && due > 0;
 
-  const showUpi = canPay && upiEligible(s.upi_id, due);
+  const showUpi = canPay && found.showUpiQr && upiEligible(s.upi_id, due);
   const upiLink = showUpi ? upiUri({ upiId: s.upi_id!, payeeName: s.upi_name || business, amountPaise: due, note: inv.number! }) : null;
   const qr = upiLink ? await QRCode.toDataURL(upiLink, { margin: 1, width: 240, errorCorrectionLevel: "M" }) : null;
   const hasBank = !!(s.bank_account_number && s.bank_ifsc);
@@ -120,7 +120,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
               </div>
             </div>
           )}
-          {!showUpi && s.upi_id && due > UPI_QR_LIMIT_PAISE && (
+          {!showUpi && found.showUpiQr && s.upi_id && due > UPI_QR_LIMIT_PAISE && (
             <p className="body-6 text-muted-foreground">This is above the UPI limit of ₹1,00,000 per payment, so please pay by bank transfer.</p>
           )}
           {!hasBank && !showUpi && <p className="body-6 text-muted-foreground">Ask {business} for payment details.</p>}

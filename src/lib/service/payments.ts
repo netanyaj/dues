@@ -101,11 +101,13 @@ export async function getPublicInvoice(publicId: string) {
   if (!/^[0-9a-f]{32}$/.test(publicId)) return null;
   const { data } = await db().from("invoice_view").select("*").eq("public_id", publicId).neq("stage", "draft").maybeSingle();
   if (!data) return null;
-  const [{ data: items }, { data: reports }] = await Promise.all([
+  const [{ data: items }, { data: reports }, { data: prefs }] = await Promise.all([
     db().from("invoice_items").select("*").eq("invoice_id", data.id).order("position"),
     db().from("payments").select("id, amount_paise, utr, status, created_at").eq("invoice_id", data.id).eq("reported_by", "client").order("created_at", { ascending: false }),
+    db().from("profiles").select("show_upi_qr").eq("user_id", data.user_id).maybeSingle(),
   ]);
-  return { invoice: data, items: items ?? [], reports: reports ?? [] };
+  // D29: the freelancer can hide the UPI QR; the ₹1 lakh cap still applies when shown.
+  return { invoice: data, items: items ?? [], reports: reports ?? [], showUpiQr: prefs?.show_upi_qr !== false };
 }
 
 export async function reportPaymentPublic(publicId: string, input: PaymentInput): Promise<{ ok: true } | { ok: false; field?: string; error: string }> {

@@ -23,6 +23,14 @@ export type Profile = {
   msme_category: "micro" | "small" | "medium" | null;
   bank_details_changed_at: string | null;
   is_demo: boolean;
+  default_gst_rate: number;
+  default_due_days: number;
+  default_notes: string | null;
+  show_upi_qr: boolean;
+  reminder_channel: "whatsapp" | "email";
+  reminder_tone: string | null;
+  mcp_last_used_at: string | null;
+  created_at?: string;
 };
 
 export async function getProfile(ctx: Ctx): Promise<Profile> {
@@ -50,13 +58,21 @@ export function isSetupComplete(p: Profile) {
 
 export type ProfileInput = Partial<Record<
   "business_name" | "address" | "gstin" | "pan" | "state_code" | "default_sac" | "upi_id" | "upi_name" |
-  "bank_account_name" | "bank_account_number" | "bank_ifsc" | "invoice_prefix" | "udyam_number" | "msme_category", string | null>>;
+  "bank_account_name" | "bank_account_number" | "bank_ifsc" | "invoice_prefix" | "udyam_number" | "msme_category" |
+  "default_gst_rate" | "default_due_days" | "default_notes" | "show_upi_qr" | "reminder_channel" | "reminder_tone", string | null>>;
+
+export const PROFILE_FIELDS = [
+  "business_name", "address", "gstin", "pan", "state_code", "default_sac", "upi_id", "upi_name", "bank_account_name",
+  "bank_account_number", "bank_ifsc", "invoice_prefix", "udyam_number", "msme_category",
+  "default_gst_rate", "default_due_days", "default_notes", "show_upi_qr", "reminder_channel", "reminder_tone",
+] as const satisfies readonly (keyof ProfileInput)[];
 
 export type FieldErrors = Record<string, string>;
 
-export function validateProfileInput(input: ProfileInput): { values: Record<string, string | null>; errors: FieldErrors } {
+export function validateProfileInput(input: ProfileInput): { values: Record<string, string | number | boolean | null>; errors: FieldErrors } {
   const errors: FieldErrors = {};
   const v: Record<string, string | null> = {};
+  const extra: Record<string, string | number | boolean | null> = {};
   const t = (k: keyof ProfileInput, max = 300) => {
     try { return cleanText(input[k], max); } catch (e) { errors[k] = (e as Error).message; return null; }
   };
@@ -127,7 +143,58 @@ export function validateProfileInput(input: ProfileInput): { values: Record<stri
   if (!v.upi_id && !(acct && ifsc) && !errors.upi_id && !errors.bank_account_number && !errors.bank_ifsc) {
     errors.upi_id = "Add a UPI ID or bank account so clients can pay you.";
   }
-  return { values: v, errors };
+
+  // Defaults and preferences (D29). Missing input keeps the column default.
+  const rate = Number(t("default_gst_rate", 4) ?? 18);
+  if (![0, 5, 12, 18, 28].includes(rate)) errors.default_gst_rate = "Pick 0, 5, 12, 18 or 28%.";
+  extra.default_gst_rate = rate;
+  const daysRaw = t("default_due_days", 4) ?? "15";
+  const days = Number(daysRaw);
+  if (!/^[0-9]{1,3}$/.test(daysRaw) || days > 180) errors.default_due_days = "Use a whole number of days from 0 to 180.";
+  extra.default_due_days = days;
+  try { extra.default_notes = cleanText(input.default_notes, 1000); } catch { errors.default_notes = "Keep it under 1,000 characters."; }
+  extra.show_upi_qr = (input.show_upi_qr ?? "true") !== "false";
+  const ch = t("reminder_channel", 10) ?? "whatsapp";
+  if (ch !== "whatsapp" && ch !== "email") errors.reminder_channel = "Pick WhatsApp or email.";
+  extra.reminder_channel = ch;
+  try { extra.reminder_tone = cleanText(input.reminder_tone, 200); } catch { errors.reminder_tone = "Keep it under 200 characters."; }
+  return { values: { ...v, ...extra }, errors };
+}
+
+/** Values to merge a partial settings form over: what's saved now, as form strings. */
+export function profileAsInput(p: Profile): ProfileInput {
+  const out: ProfileInput = {};
+  for (const k of PROFILE_FIELDS) {
+    const val = (p as unknown as Record<string, unknown>)[k];
+    out[k] = val == null ? null : String(val);
+  }
+  return out;
+}
+
+/**
+ * Save one Settings section (D29). The whole profile is validated with the same rules as
+ * before, but only errors in this section block the save, and only this section's
+ * columns are written. So a new account can save its business details before adding a
+ * bank account.
+ */
+export async function updateProfileSection(ctx: Ctx, keys: readonly (keyof ProfileInput)[], patch: ProfileInput): Promise<{ ok: true; profile: Profile } | { ok: false; errors: FieldErrors }> {
+  const current = await getProfile(ctx);
+  const merged = { ...profileAsInput(current), ...patch };
+  const { values, errors } = validateProfileInput(merged);
+  const mine = new Set<string>(keys);
+  // PAN follows GSTIN, and UPI name follows the UPI ID, so they travel with their section.
+  if (mine.has("gstin")) mine.add("pan");
+  if (mine.has("upi_id")) mine.add("upi_name");
+  const sectionErrors: FieldErrors = Object.fromEntries(Object.entries(errors).filter(([k]) => mine.has(k)));
+  if (mine.has("state_code") && !mine.has("gstin") && errors.gstin) {
+    sectionErrors.state_code = "Your GSTIN is registered in a different state. Update it under Tax and compliance first.";
+  }
+  if (Object.keys(sectionErrors).length) return { ok: false, errors: sectionErrors };
+  const write = Object.fromEntries(Object.entries(values).filter(([k]) => mine.has(k)));
+  const profile = check(
+    await db().from("profiles").update({ ...write, updated_at: new Date().toISOString() }).eq("user_id", ctx.userId).select("*").single(),
+  ) as Profile;
+  return { ok: true, profile };
 }
 
 export async function updateProfile(ctx: Ctx, input: ProfileInput): Promise<{ ok: true; profile: Profile } | { ok: false; errors: FieldErrors }> {
@@ -158,11 +225,18 @@ export async function regenerateMcpToken(ctx: Ctx, opts: { allowDemo?: boolean }
   return token;
 }
 
-export function mcpUrl(token: string) {
-  return `${appUrl()}/api/mcp/${token}`;
+/** The one MCP server URL. The token goes in the Authorization header, never the URL (D28). */
+export function mcpServerUrl() {
+  return `${appUrl()}/api/mcp`;
 }
 
-/** MCP auth: hash the token from the URL and look it up. The plain token is never stored. */
+/** Connection status for Settings. Written at most once every 5 minutes per account. */
+export async function touchMcpLastUsed(userId: string) {
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  await db().from("profiles").update({ mcp_last_used_at: new Date().toISOString() }).eq("user_id", userId).or(`mcp_last_used_at.is.null,mcp_last_used_at.lt.${cutoff}`);
+}
+
+/** MCP auth: hash the token from the Authorization header and look it up. The plain token is never stored. */
 export async function userIdForToken(token: string): Promise<string | null> {
   if (!/^[0-9a-f]{32,128}$/.test(token)) return null;
   const { data } = await db().from("profiles").select("user_id").eq("mcp_token_hash", hashToken(token)).maybeSingle();
@@ -183,6 +257,12 @@ export function describeProfile(p: Profile) {
     bank_transfer_set_up: !!(p.bank_account_number && p.bank_ifsc),
     invoice_prefix: p.invoice_prefix,
     default_sac: p.default_sac,
+    defaults: { gst_rate: p.default_gst_rate ?? 18, due_in_days: p.default_due_days ?? 15, notes: p.default_notes ?? null },
+    reminders: {
+      channel: p.reminder_channel ?? "whatsapp",
+      tone: p.reminder_tone ?? null,
+      stages: "Stage 1 friendly at 3 days late, stage 2 firm at 7, stage 3 final at 14.",
+    },
     msme: p.udyam_number ? { udyam_number: p.udyam_number, category: p.msme_category, invoice_line: msmeLine(p.business_name ?? "", p.udyam_number, p.msme_category) } : null,
     setup_complete: gaps.length === 0,
     missing: gaps,

@@ -3,10 +3,10 @@
 //   npm run seed -- sandeep@dues.test rosh@dues.test maneeshwar@dues.test spare@dues.test
 //   npm run seed -- reviewer@dues.test --reset-password --new-link
 //
-// New accounts get a strong random password and a Claude link. Both are written ONLY to
+// New accounts get a strong random password and a Claude token. Both are written ONLY to
 // .demo-accounts.local.txt (gitignored), never printed to logs or committed. On re-runs the
-// password and link are kept unless --reset-password / --new-link are passed
-// (the link can't be shown again: only its hash is stored, D25).
+// password and token are kept unless --reset-password / --new-link are passed
+// (the token can't be shown again: only its hash is stored, D25). D28: header auth only.
 import { config } from "dotenv";
 config({ path: ".env.local", quiet: true });
 import fs from "node:fs";
@@ -19,7 +19,7 @@ import { upsertClient } from "../src/lib/service/clients";
 import { createDraft, markReadyToSend, cancelInvoice } from "../src/lib/service/invoices";
 import { decideReport, recordPayment, reportPaymentPublic } from "../src/lib/service/payments";
 import { saveReminder } from "../src/lib/service/reminders";
-import { mcpUrl, regenerateMcpToken } from "../src/lib/service/profile";
+import { mcpServerUrl, regenerateMcpToken } from "../src/lib/service/profile";
 
 const args = process.argv.slice(2);
 const emails = args.filter((a) => a.includes("@"));
@@ -147,18 +147,19 @@ async function seedOne(email: string) {
 
   // Claude link: only issue a new one when there's none or --new-link (can't be shown again).
   const { data: prof } = await admin.from("profiles").select("mcp_token_hash").eq("user_id", userId).single();
-  let link: string | null = null;
-  if (!prof?.mcp_token_hash || newLink) link = mcpUrl(await regenerateMcpToken(ctx, { allowDemo: true }));
+  let token: string | null = null;
+  if (!prof?.mcp_token_hash || newLink) token = await regenerateMcpToken(ctx, { allowDemo: true });
 
   const lines = [
     `# ${email}  (seeded ${new Date().toISOString()})`,
     password ? `password: ${password}` : "password: (unchanged; use --reset-password to set a new one)",
-    link ? `claude link: ${link}` : "claude link: (unchanged; use --new-link to issue a new one)",
+    `mcp server url: ${mcpServerUrl()}`,
+    token ? `authorization header: Bearer ${token}` : "authorization header: (unchanged; use --new-link to issue a new token)",
     "",
   ];
   fs.appendFileSync(OUT, lines.join("\n") + "\n", { mode: 0o600 });
-  console.log(`✓ ${email}: 3 clients, 9 invoices, reminders, payments. ${password ? "New password" : "Password kept"}; ${link ? "new link" : "link kept"} → ${OUT}`);
+  console.log(`✓ ${email}: 3 clients, 9 invoices, reminders, payments. ${password ? "New password" : "Password kept"}; ${token ? "new token" : "token kept"} → ${OUT}`);
 }
 
 for (const e of emails) await seedOne(e);
-console.log(`\nCredentials and links are in ${OUT} (gitignored). Copy them into the submission form, then delete the file.`);
+console.log(`\nCredentials and Claude tokens are in ${OUT} (gitignored). Copy them into the submission form, then delete the file.`);

@@ -1,40 +1,74 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireCtx } from "@/lib/auth";
-import { toDuesError } from "@/lib/service/core";
-import { mcpUrl, regenerateMcpToken, updateProfile, type ProfileInput } from "@/lib/service/profile";
+import { db, toDuesError } from "@/lib/service/core";
+import { DEMO_DISABLED, getProfile, regenerateMcpToken, updateProfileSection, type ProfileInput } from "@/lib/service/profile";
+import { supabaseServer } from "@/lib/supabase/server";
+import { SECTIONS, type FormSection } from "./sections";
 
-export type ProfileState = { ok?: string; error?: string; errors?: Record<string, string>; values?: Record<string, string>; nonce?: number };
+export type SectionState = { ok?: string; error?: string; errors?: Record<string, string>; values?: Record<string, string>; nonce?: number };
 
-const FIELDS = ["business_name", "address", "gstin", "pan", "state_code", "default_sac", "upi_id", "upi_name", "bank_account_name", "bank_account_number", "bank_ifsc", "invoice_prefix", "udyam_number", "msme_category"] as const;
-
-export async function saveProfileAction(_: ProfileState, fd: FormData): Promise<ProfileState> {
+/** Save one Settings section. Only that section's fields are read and written (D29). */
+export async function saveSectionAction(section: FormSection, _: SectionState, fd: FormData): Promise<SectionState> {
   const ctx = await requireCtx();
-  const input: ProfileInput = {};
+  const keys = SECTIONS.find((s) => s.slug === section)!.keys as readonly (keyof ProfileInput)[];
+  const patch: ProfileInput = {};
   const values: Record<string, string> = {};
-  for (const f of FIELDS) {
-    values[f] = String(fd.get(f) ?? "");
-    input[f] = values[f];
+  for (const k of keys) {
+    if (k === "show_upi_qr") values[k] = fd.get(k) === "on" ? "true" : "false";
+    else values[k] = String(fd.get(k) ?? "");
+    patch[k] = values[k];
   }
+  // "Not GST-registered" clears the GSTIN, which is how Dues already decides "no GST" (D3).
+  if (section === "tax" && fd.get("gst_registered") !== "on") { patch.gstin = ""; values.gstin = ""; }
   try {
-    const res = await updateProfile(ctx, input);
-    if (!res.ok) return { errors: res.errors, values, error: "Some fields need fixing. See the notes below each one.", nonce: Date.now() };
+    const res = await updateProfileSection(ctx, keys, patch);
+    if (!res.ok) return { errors: res.errors, values, error: "Some fields need fixing. See the note under each one.", nonce: Date.now() };
     revalidatePath("/", "layout");
-    return { ok: "Saved.", values: Object.fromEntries(FIELDS.map((k) => [k, res.profile[k] == null ? "" : String(res.profile[k])])), nonce: Date.now() };
+    const saved = res.profile as unknown as Record<string, unknown>;
+    return { ok: "Saved", values: Object.fromEntries([...keys, "pan", "upi_name"].map((k) => [k, saved[k] == null ? "" : String(saved[k])])), nonce: Date.now() };
   } catch (e) {
     return { error: toDuesError(e).message, values, nonce: Date.now() };
   }
 }
 
-/** D25: returns the plain link exactly once. Only its hash is stored. */
-export async function regenerateLinkAction(): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+/** D25 + D28: returns the plain token exactly once. Only its hash is stored. */
+export async function regenerateTokenAction(): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const ctx = await requireCtx();
   try {
     const token = await regenerateMcpToken(ctx);
-    revalidatePath("/settings");
-    return { ok: true, url: mcpUrl(token) };
+    revalidatePath("/settings/claude");
+    return { ok: true, token };
   } catch (e) {
     return { ok: false, error: toDuesError(e).message };
   }
+}
+
+export async function changePasswordAction(_: SectionState, fd: FormData): Promise<SectionState> {
+  const ctx = await requireCtx();
+  const profile = await getProfile(ctx);
+  if (profile.is_demo) return { error: DEMO_DISABLED };
+  const password = String(fd.get("password") ?? "");
+  const confirm = String(fd.get("confirm") ?? "");
+  if (password.length < 8) return { errors: { password: "Use at least 8 characters." } };
+  if (password !== confirm) return { errors: { confirm: "The two passwords don't match." } };
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: /different|same/i.test(error.message) ? "That's your current password. Choose a new one." : "We couldn't change your password. Please try again." };
+  return { ok: "Password changed. Use it next time you log in.", nonce: Date.now() };
+}
+
+/** Permanently deletes the account and everything in it (all tables cascade from auth.users). */
+export async function deleteAccountAction(_: SectionState, fd: FormData): Promise<SectionState> {
+  const ctx = await requireCtx();
+  const profile = await getProfile(ctx);
+  if (profile.is_demo) return { error: DEMO_DISABLED };
+  if (String(fd.get("confirm") ?? "").trim().toUpperCase() !== "DELETE") return { errors: { confirm: "Type DELETE to confirm." } };
+  const supabase = await supabaseServer();
+  const { error } = await db().auth.admin.deleteUser(ctx.userId);
+  if (error) return { error: "We couldn't delete your account. Please try again." };
+  await supabase.auth.signOut();
+  redirect("/?deleted=1");
 }

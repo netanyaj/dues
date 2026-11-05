@@ -23,12 +23,11 @@ function step(name: string) {
   console.log(`  ✓ ${name}`);
 }
 
-async function rpc(token: string, method: string, params: unknown = {}, id = 1): Promise<{ result?: any; error?: any; status: number }> {
-  const res = await fetch(`${BASE}/api/mcp/${token}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": "2025-06-18" },
-    body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
-  });
+// D28: one URL, token in the Authorization header only.
+async function rpc(token: string | null, method: string, params: unknown = {}, id = 1, url = `${BASE}/api/mcp`): Promise<{ result?: any; error?: any; status: number }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": "2025-06-18" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(url, { method: "POST", headers, body: JSON.stringify({ jsonrpc: "2.0", id, method, params }) });
   const text = await res.text();
   const json = text.startsWith("{") ? JSON.parse(text) : JSON.parse(text.split("\n").find((l) => l.startsWith("data: "))!.slice(6));
   return { ...json, status: res.status };
@@ -206,17 +205,29 @@ async function main() {
   assert.equal(conf!.length, 0);
   step("no MCP tool sent an invoice, confirmed totals or confirmed a payment");
 
-  // Regenerate breaks the old link (D25)
+  // D28: header-only auth
+  const none = await rpc(null, "tools/list");
+  assert.equal(none.status, 401);
+  assert.match(none.error.message, /Authorization header/);
+  const wrong = await rpc("f".repeat(48), "tools/list");
+  assert.equal(wrong.status, 401);
+  assert.match(wrong.error.message, /isn't valid/);
+  const retired = await rpc(null, "tools/list", {}, 1, `${BASE}/api/mcp/${a.token}`);
+  assert.equal(retired.status, 410);
+  assert.match(retired.error.message, /retired/);
+  step("auth: no header → 401, wrong token → 401, old token-in-URL format → 410 with instructions");
+
+  // Regenerate cuts off the old token (D25)
   const fresh = await regenerateMcpToken({ userId: a.userId, actor: "user" });
   const old = await rpc(a.token, "tools/list");
-  assert.equal(old.status, 404);
+  assert.equal(old.status, 401);
   assert.match(old.error.message, /isn't valid/);
   const neu = await rpc(fresh, "tools/list");
   assert.equal(neu.result.tools.length, 9);
   const { data: stored } = await admin.from("profiles").select("mcp_token_hash, mcp_token_last4").eq("user_id", a.userId).single();
   assert.notEqual(stored!.mcp_token_hash, fresh);
   assert.equal(stored!.mcp_token_last4, fresh.slice(-4));
-  step("regenerate: old link gets a clear error, new link works, only the hash is stored");
+  step("regenerate: old token gets a clear 401, new token works, only the hash is stored");
 
   console.log(`\n${passed} checks passed.`);
 }
