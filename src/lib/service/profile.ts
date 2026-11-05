@@ -48,8 +48,12 @@ export function setupGaps(p: Profile): string[] {
   if (!p.business_name) gaps.push("business name");
   if (!p.address) gaps.push("business address");
   if (!p.state_code) gaps.push("state");
-  if (!p.upi_id && !(p.bank_account_number && p.bank_ifsc)) gaps.push("a way to get paid (UPI ID or bank account)");
   return gaps;
+}
+
+/** D35: bank details are asked for at the first Send, not at sign-up. UPI stays optional. */
+export function hasBankDetails(p: Pick<Profile, "bank_account_number" | "bank_ifsc">): boolean {
+  return !!(p.bank_account_number && p.bank_ifsc);
 }
 
 export function isSetupComplete(p: Profile) {

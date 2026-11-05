@@ -4,7 +4,7 @@ import { checkClaimedTotal, computeTotals } from "@/lib/domain/tax";
 import { addDays, daysBetween, formatDate, istToday, isValidDate } from "@/lib/domain/dates";
 import { ACTION_REFUSAL, allowedActions, statusText, type Action, type InvoiceStatus, type Stage } from "@/lib/domain/status";
 import { appUrl, check, cleanText, db, DuesError, fromDb, logEvent, type Ctx } from "./core";
-import { getProfile, type Profile } from "./profile";
+import { getProfile, hasBankDetails, setupGaps, type Profile } from "./profile";
 import { findClientByName, getClient, upsertClient, type Client } from "./clients";
 
 // ---------------------------------------------------------------------------
@@ -440,6 +440,11 @@ export async function deleteDraft(ctx: Ctx, ref: string): Promise<void> {
 export async function sendInvoice(ctx: Ctx, ref: string): Promise<InvoiceRow> {
   const inv = await findInvoice(ctx, ref);
   assertAllowed(inv, "send");
+  // D35: never issue an invoice the client can't pay. Checked here, not only in the UI.
+  const profile = await getProfile(ctx);
+  const gaps = setupGaps(profile);
+  if (gaps.length) throw new DuesError("setup_incomplete", `Add your ${gaps.join(", ")} in Settings before sending.`);
+  if (!hasBankDetails(profile)) throw new DuesError("bank_details_required", "Add your bank account before sending, so your client can pay you.");
   const { error } = await db().rpc("issue_invoice", { p_user: ctx.userId, p_invoice: inv.id, p_today: istToday(), p_actor: ctx.actor });
   if (error) fromDb(error);
   return findInvoice(ctx, inv.id);

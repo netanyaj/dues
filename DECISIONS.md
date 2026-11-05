@@ -486,3 +486,14 @@ The founder rejected the first two mock directions as still generic. They picked
 - A summary bar shows Still owed (or Paid), Invoice total, Due (with days late in amber) and Issued. Drafts show Total, Client, Due and "Number: When you send".
 - Menu items open the same dialogs as before, now as controlled dialogs. Every confirmation and server rule is unchanged.
 - Destructive items sit below a separator, in red.
+
+## D35. Bank details are required to send, asked for at the first Send
+
+**Context:** an invoice could be sent with only a UPI ID, or with nothing, if setup was skipped. Above ₹1 lakh, or with no UPI, the client page ended in "Ask {business} for payment details", a dead end.
+
+**Decision:**
+- **Sign-up doesn't ask for bank details.** Setup gaps are now business name, address and state.
+- **`sendInvoice` refuses** without a bank account number and IFSC (`bank_details_required`), and also with setup gaps (`setup_incomplete`). The check is in the service, so it can't be bypassed, and a test covers it.
+- **In the app,** Send opens an "Add your bank account to send" dialog. It saves through the same validation as Settings → Getting paid (so the bank-changed trust note still works), then sends in one confirmed step. UPI stays optional.
+- **The client page drops the "Ask … for payment details" line.** Invoices sent before this rule with no bank details simply show "I've paid".
+- **Claude:** `get_business_profile.missing` says when the bank account is still to be added at first Send.

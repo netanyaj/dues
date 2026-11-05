@@ -9,6 +9,7 @@ import {
 } from "@/lib/service/invoices";
 import { recordPayment } from "@/lib/service/payments";
 import { markReminderSent } from "@/lib/service/reminders";
+import { updateProfileSection } from "@/lib/service/profile";
 
 export type Result = { ok: true; message?: string; id?: string } | { ok: false; error: string; field?: string };
 
@@ -47,6 +48,24 @@ export async function sendAction(id: string): Promise<Result> {
     const inv = await sendInvoice(ctx, id);
     refresh(id);
     return { ok: true, message: `Sent as ${inv.number}. Copy the link or share it on WhatsApp.` };
+  } catch (e) { return fail(e); }
+}
+
+/** D35: first Send without bank details. Saves them to the profile (same validation as Settings), then sends. */
+export async function saveBankAndSendAction(id: string, f: { name: string; number: string; ifsc: string }): Promise<Result> {
+  const ctx = await requireCtx();
+  try {
+    const saved = await updateProfileSection(ctx, ["bank_account_name", "bank_account_number", "bank_ifsc"], {
+      bank_account_name: f.name, bank_account_number: f.number, bank_ifsc: f.ifsc,
+    });
+    if (!saved.ok) {
+      const [field, error] = Object.entries(saved.errors)[0] ?? ["", "Check the bank details."];
+      return { ok: false, error, field };
+    }
+    revalidatePath("/settings", "layout");
+    const inv = await sendInvoice(ctx, id);
+    refresh(id);
+    return { ok: true, message: `Bank details saved. Sent as ${inv.number}.` };
   } catch (e) { return fail(e); }
 }
 

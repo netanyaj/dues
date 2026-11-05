@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Ctx } from "@/lib/service/core";
-import { confirmTotals, createDraft, findInvoice, updateDraft } from "@/lib/service/invoices";
+import { confirmTotals, createDraft, findInvoice, sendInvoice, updateDraft } from "@/lib/service/invoices";
 
 const enabled = !!process.env.SUPABASE_SECRET_KEY;
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://x", process.env.SUPABASE_SECRET_KEY ?? "x", { auth: { persistSession: false } });
@@ -30,5 +30,13 @@ describe.skipIf(!enabled)("confirmed totals stay confirmed (TESTING T4 bug)", ()
     expect((await findInvoice(user, d.invoice.id)).needs_review).toBe(false);
     await updateDraft(user, d.invoice.id, { items: [{ description: "Deck", qty: 1, rate_rupees: 31000 }] });
     expect((await findInvoice(user, d.invoice.id)).needs_review).toBe(true);
+  });
+
+  it("D35: Send is refused without bank details, even if the UI is bypassed", async () => {
+    const user: Ctx = { userId, actor: "user" };
+    await admin.from("profiles").update({ address: "1 MG Road", upi_id: "review.test@okicici" }).eq("user_id", userId);
+    const d = await createDraft(user, { client_name: "Bankless Co", client_state: "29", items: [{ description: "Work", qty: 1, rate_rupees: 1000 }], gst_rate: 0 });
+    await expect(sendInvoice(user, d.invoice.id)).rejects.toMatchObject({ code: "bank_details_required" });
+    expect((await findInvoice(user, d.invoice.id)).stage).toBe("draft");
   });
 });

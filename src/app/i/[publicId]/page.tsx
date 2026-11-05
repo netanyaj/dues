@@ -130,7 +130,6 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           {!showUpi && found.showUpiQr && s.upi_id && due > UPI_QR_LIMIT_PAISE && (
             <p className="body-6 text-muted-foreground">This is above the UPI limit of ₹1,00,000 per payment, so please pay by bank transfer.</p>
           )}
-          {!hasBank && !showUpi && <p className="body-6 text-muted-foreground">Ask {business} for payment details.</p>}
           <PaidForm publicId={publicId} due={paiseToDecimalString(due)} business={business} />
         </section>
       )}

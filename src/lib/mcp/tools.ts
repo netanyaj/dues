@@ -3,7 +3,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { toDuesError, appUrl, type Ctx } from "@/lib/service/core";
-import { describeProfile, getProfile, setupGaps } from "@/lib/service/profile";
+import { describeProfile, getProfile, hasBankDetails, setupGaps } from "@/lib/service/profile";
 import { describeClient, upsertClient } from "@/lib/service/clients";
 import { createDraft, describeInvoice, getInvoiceDetail, listInvoices, markReadyToSend, updateDraft } from "@/lib/service/invoices";
 import { recordPayment } from "@/lib/service/payments";
@@ -57,7 +57,7 @@ export function registerDuesTools(server: McpServer, ctx: Ctx) {
     },
     async () => run(async () => {
       const p = await getProfile(ctx);
-      return { ...describeProfile(p), settings_url: `${appUrl()}/settings`, missing: setupGaps(p) };
+      return { ...describeProfile(p), settings_url: `${appUrl()}/settings`, missing: [...setupGaps(p), ...(hasBankDetails(p) ? [] : ["bank account (the freelancer adds it at their first Send)"])] };
     }),
   );
 

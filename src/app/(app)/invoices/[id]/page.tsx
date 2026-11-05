@@ -6,7 +6,7 @@ import { requireCtx } from "@/lib/auth";
 import { DuesError } from "@/lib/service/core";
 import { getClient, listClients } from "@/lib/service/clients";
 import { getInvoiceDetail, publicUrl } from "@/lib/service/invoices";
-import { getProfile, setupGaps } from "@/lib/service/profile";
+import { getProfile, hasBankDetails, setupGaps } from "@/lib/service/profile";
 import { reminderLink } from "@/lib/service/reminders";
 import { formatINR, qtyMilliToString, parseQtyMilli } from "@/lib/domain/money";
 import { formatDate, formatDateTime, istToday } from "@/lib/domain/dates";
@@ -89,7 +89,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       <div className="flex flex-col gap-6">
         <AutoRefresh seconds={15} />
         {header(
-          <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} />,
+          <SendButton id={inv.id} total={formatINR(inv.total_paise)} client={inv.client_name} blockedReason={blocked} needsBank={!hasBankDetails(profile)} accountName={profile.business_name ?? ""} />,
           <InvoiceMoreMenu id={inv.id} can={{ delete: true }} links={[{ label: "Preview as client", href: `/invoices/${inv.id}/preview` }]} />,
         )}
         <p className="-mt-4 caption-5 text-muted-foreground">

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CopyButton } from "@/components/bits";
 import { Banner } from "@/components/ds";
-import { cancelAction, confirmTotalsAction, deleteDraftAction, markReminderSentAction, recordPaymentAction, sendAction, updateIssuedAction, type Result } from "./actions";
+import { cancelAction, confirmTotalsAction, deleteDraftAction, markReminderSentAction, recordPaymentAction, saveBankAndSendAction, sendAction, updateIssuedAction, type Result } from "./actions";
 
 type Controlled = { open?: boolean; onOpenChange?: (open: boolean) => void };
 
@@ -51,11 +51,12 @@ export function ConfirmTotals({ id, reason }: { id: string; reason: string | nul
   );
 }
 
-export function SendButton({ id, total, client, blockedReason }: { id: string; total: string; client: string; blockedReason: string | null }) {
+export function SendButton({ id, total, client, blockedReason, needsBank = false, accountName = "" }: { id: string; total: string; client: string; blockedReason: string | null; needsBank?: boolean; accountName?: string }) {
   const { pending, run } = useRun();
   if (blockedReason) {
     return <Button disabled title={blockedReason}>Send</Button>;
   }
+  if (needsBank) return <SendWithBank id={id} total={total} client={client} accountName={accountName} />;
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild><Button disabled={pending} className="h-10 px-5">{pending ? "Sending…" : "Send invoice"}</Button></AlertDialogTrigger>
@@ -72,6 +73,43 @@ export function SendButton({ id, total, client, blockedReason }: { id: string; t
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** D35: the first Send asks for bank details inline, then sends, instead of a dead end. */
+function SendWithBank({ id, total, client, accountName }: { id: string; total: string; client: string; accountName: string }) {
+  const { pending, run } = useRun();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ name: accountName, number: "", ifsc: "" });
+  const [err, setErr] = useState<{ error: string; field?: string } | null>(null);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button className="h-10 px-5">Send invoice</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add your bank account to send</DialogTitle>
+          <DialogDescription>Your client needs it to pay you. It&apos;s saved to Settings and shown on every invoice. UPI stays optional.</DialogDescription>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setErr(null);
+            run(async () => { const r = await saveBankAndSendAction(id, f); if (!r.ok) setErr({ error: r.error, field: r.field }); return r; }, () => setOpen(false));
+          }}
+        >
+          <div className="flex flex-col gap-1.5"><Label htmlFor="ban">Account name</Label><Input id="ban" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="h-10" aria-invalid={err?.field === "bank_account_name"} /></div>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="bno">Account number</Label><Input id="bno" inputMode="numeric" value={f.number} onChange={(e) => setF({ ...f, number: e.target.value })} className="h-10" required aria-invalid={err?.field === "bank_account_number"} /></div>
+          <div className="flex flex-col gap-1.5"><Label htmlFor="bif">IFSC</Label><Input id="bif" value={f.ifsc} onChange={(e) => setF({ ...f, ifsc: e.target.value.toUpperCase() })} className="h-10" required placeholder="HDFC0001234" aria-invalid={err?.field === "bank_ifsc"} /></div>
+          {err ? <p role="alert" className="text-sm text-destructive">{err.error}</p> : null}
+          <p className="caption-5 text-muted-foreground">Sending gives this invoice the next number and dates it today. The amounts ({total}) are then locked. It goes to {client} only when you share the link.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Not now</Button>
+            <Button type="submit" disabled={pending}>{pending ? "Sending…" : "Save and send"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
