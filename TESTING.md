@@ -45,10 +45,10 @@ Tick ✅ with the date when it passes on production. ◐ = checked locally only.
 | T21 | **CSV export (D22):** download for a date range; columns and GST split match the invoices; it opens in a spreadsheet. | ✅ prod (founder) |
 | T22 | **MSME (D20):** with Udyam number + micro/small, the line appears on the invoice and client page; medium shows nothing; 50-day terms show the warning. | ◐ prod: MSME line on the public page; check the 45-day warning in the form |
 | T23 | **Token hash (D25):** the link is shown once after Regenerate; Settings then shows only the last 4 characters; the database holds only the hash. | ✅ prod (founder); now token + header (D28) |
-| T24 | **Header auth (D28):** no header → 401 with the fix; wrong token → 401; old `/api/mcp/<token>` → 410 with reconnect instructions; regenerate cuts off the old token. | ✅ local (MCP script, 21 checks); prod ⬜ |
+| T24 | **Header auth (D28):** no header → 401 with the fix; wrong token → 401; old `/api/mcp/<token>` → 410 with reconnect instructions; regenerate cuts off the old token. | ✅ prod (MCP script, 21 checks, 00:14 IST) |
 | T25 | **Settings (D29):** each of the 8 sections saves on its own; a new account can save its business name before adding bank details; changing state with a GSTIN from another state is blocked. | ◐ local |
 | T26 | **Onboarding (FLOWS 1):** sign-up → steps 1–4 → "Go to your dashboard". | ⬜ |
 | T27 | **Client page loop (FLOWS 6):** after a reject, the client page says the payment wasn't found. | ⬜ |
-| T28 | **Link previews:** pasting a client link in WhatsApp shows "Invoice {number} from {business}" and the balance; the page stays noindex. | ✅ local (OG image renders ₹); prod ⬜ |
+| T28 | **Link previews:** pasting a client link in WhatsApp shows "Invoice {number} from {business}" and the balance; the page stays noindex. | ◐ OG image renders ₹ on local and prod; WhatsApp paste not tried |
 | T29 | **Redesign regressions:** keyboard-only pass (skip link, sidebar, table rows, dialogs), focus ring visible, text contrast ≥ 4.5:1. | ◐ local: contrast checked (muted text 6:1 on white, 5.9:1 on canvas; status colours ≥ 5.6:1), focus ring is a 2 px ink outline; a full keyboard-only pass is still to do |
 
