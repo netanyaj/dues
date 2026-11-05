@@ -155,6 +155,12 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     expect(write.data ?? []).toEqual([]);
   });
 
+  it("invoice_view exposes every invoices column (views freeze i.* at creation)", async () => {
+    const { data: inv } = await admin.from("invoices").select("*").limit(1).single();
+    const { data: view } = await admin.from("invoice_view").select("*").eq("id", inv!.id).single();
+    for (const k of Object.keys(inv!)) expect(view).toHaveProperty(k);
+  });
+
   it("invoice_view derives overdue and paid", async () => {
     const u = userA;
     const { data: inv } = await admin.from("invoices").select("id, total_paise").eq("user_id", u.id).eq("stage", "issued").order("seq").limit(2);

@@ -10,14 +10,17 @@
     "test": "vitest run tests/unit",
     "test:db": "vitest run tests/db",
     "db:push": "node -e \"require('dotenv').config({path:'.env.local'});const u=process.env.SUPABASE_DB_URL;if(!u){console.error('Set SUPABASE_DB_URL in .env.local');process.exit(1)};require('child_process').execFileSync('supabase',['db','push','--db-url',u,'--include-all'],{stdio:'inherit'})\"",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:mcp": "tsx --tsconfig tsconfig.json tests/mcp/integration.mts"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "lucide-react": "^1.69.0",
+    "mcp-handler": "^2.3.0",
     "next": "16.4.5",
     "qrcode": "^1.5.4",
     "radix-ui": "^1.8.1",
