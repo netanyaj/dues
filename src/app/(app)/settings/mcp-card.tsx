@@ -46,9 +46,12 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
           <>
             <Banner tone="warning" title="Copy it now. For your security, Dues can't show it again.">Anyone with this token can create drafts and read your invoices, so don&apos;t share it.</Banner>
             <div className="flex items-center gap-2"><Code testId="mcp-token">{fresh}</Code><CopyButton value={fresh} label="Copy token" /></div>
-            <p className="mt-2 title-4">Header value</p>
-            <div className="flex items-center gap-2"><Code>{header!}</Code><CopyButton value={`Authorization: ${header}`} label="Copy header line" /></div>
-            <p className="caption-5 text-muted-foreground">Copies the full line, <span className="font-mono">Authorization: Bearer …</span>, for Claude Code.</p>
+            <p className="mt-2 title-4">Header value for claude.ai</p>
+            {/* D44: copy exactly what's shown. claude.ai sends the value as typed, under the name "authorization". */}
+            <div className="flex items-center gap-2"><Code>{header!}</Code><CopyButton value={header!} label="Copy header value" /></div>
+            <p className="caption-5 text-muted-foreground">Paste into Request headers → value, with the name <span className="font-mono">authorization</span>.</p>
+            <p className="mt-2 title-4">Claude Code command</p>
+            <div className="flex items-center gap-2"><Code>{`claude mcp add --transport http dues ${serverUrl} --header "Authorization: ${header}"`}</Code><CopyButton value={`claude mcp add --transport http dues ${serverUrl} --header "Authorization: ${header}"`} label="Copy Claude Code command" /></div>
           </>
         ) : hasToken ? (
           <>

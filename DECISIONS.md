@@ -594,3 +594,12 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **The amount card now holds the actions:** "Pay with UPI" (when allowed) and "Notify as paid" (renamed from "I've paid"), plus a "Bank transfer details below" jump link. With bank details present they used to sit below the bank rows, out of view on a phone.
 - **The "Notify as paid" form opens in place:** amount, UTR, method and an optional receipt, then Send.
 - **Long text breaks instead of overflowing:** `overflow-wrap: break-word` on the body, so URLs, UTRs, emails and GSTINs wrap inside their box. Reminder messages use `overflow-wrap: anywhere`, since a link inside them is one long word.
+
+## D44. The header copy button copies exactly what it shows
+
+**Context:** the founder connected claude.ai once they spotted it. Settings showed `Bearer <token>`, but its copy button copied `Authorization: Bearer <token>` (the Claude Code form). Pasted into claude.ai's value field, that became a header value starting with "Authorization:", which the strict parser rejected before D41.
+
+**Decision:**
+- "Header value for claude.ai" copies exactly `Bearer <token>`, as displayed.
+- A separate "Claude Code command" row copies the full `claude mcp add … --header "Authorization: Bearer <token>"` with the token filled in.
+- The server still accepts every form (D41), so older copies keep working.

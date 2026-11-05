@@ -86,7 +86,7 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
 
 - **First time:**
   1. Settings → Claude connection → **Create my Claude token**.
-  2. The token is shown once, with icon copy buttons for the token and the full header line.
+  2. The token is shown once, with copy buttons for the token, the claude.ai header value (`Bearer <token>`, exactly as shown) and a ready Claude Code command (D44).
   3. Follow the claude.ai steps: Customize → Connectors → + Add → Add custom connector → URL → No sign in → Request headers `Authorization: Bearer …` → Add. Claude Code users run a one-line command.
   4. Status changes from "Token created · not used yet" to "Connected · last used …" after Claude's first call.
 - **Regenerate:** a confirmation dialog explains that the old token stops working at once. The new token is shown once. The old one gets 401 "This Dues token isn't valid. It may have been regenerated…".
