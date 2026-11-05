@@ -164,7 +164,7 @@
   body { background: white; }
 }
 
-/* D45: landing motion. Soft orchid and violet glows drift slowly behind dark panels and the hero.
+/* D45: landing motion. Soft orchid glows (shades of the one accent) drift slowly behind dark panels and the hero.
    Only transform and opacity animate (landing-page-design B7); reduced motion stops them (rule above). */
 @keyframes glow-drift-a { 0% { transform: translate3d(-10%, -6%, 0) scale(1); } 50% { transform: translate3d(14%, 8%, 0) scale(1.15); } 100% { transform: translate3d(-10%, -6%, 0) scale(1); } }
 @keyframes glow-drift-b { 0% { transform: translate3d(12%, 10%, 0) scale(1.1); } 50% { transform: translate3d(-12%, -8%, 0) scale(0.95); } 100% { transform: translate3d(12%, 10%, 0) scale(1.1); } }
@@ -173,6 +173,6 @@
 @utility glow-b { animation: glow-drift-b 22s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 @utility glow-pulse { animation: glow-pulse 9s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 @utility text-gradient-brand {
-  background-image: linear-gradient(90deg, #a82e92 0%, #da5cc7 45%, #7c5cf0 100%);
+  background-image: linear-gradient(90deg, #8f2479 0%, #c043ab 45%, #e766d4 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }

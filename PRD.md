@@ -103,7 +103,7 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ◐ README, ARCHITECTURE, METRICS, FLOWS written; final pass pending |
 
 **Must-ship:** everything in §4–§5, including the chase list, reminders with stages (D19), CSV export (D22) and the cron.
-**If ahead, in order:** `get_recent_items` and line-item autosuggest (D26), "Reset demo data" (D13). Already built: client pages, event timeline. Not planned: Google sign-in (the brief and D12 say one login flow).
+**If ahead:** client pages and the event timeline were built. Moved to v2 by the founder at 03:40 IST (D47): `get_recent_items` and line-item autosuggest (D26), the "Reset demo data" button (D13; re-running `npm run seed` covers it). Not planned: Google sign-in (the brief and D12 say one login flow).
 **If behind, cut in order:** reminders → timeline UI (keep the events table) → partial payments. Never cut the number checks, locking or the client page.
 
 ## 9. Risks and open questions
@@ -121,6 +121,8 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 - **Spam sign-ups:** with email confirmation off (D12), handled by Supabase rate limits and the 50-invoice cap; Turnstile is v2.
 
 ## 10. Later (see roadmap.md)
+- `get_recent_items` MCP tool and line-item autosuggest ("same as last month", D26).
+- "Reset demo data" button (D13); for now re-run `npm run seed`.
 - **v2 (3–6 months):**
   - connect your own Razorpay or Cashfree for automatic confirmation;
   - email sending and scheduled reminders;

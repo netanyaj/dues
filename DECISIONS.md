@@ -609,8 +609,8 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 **Context:** the founder found the landing static. The final call to action was one flat orchid block, and the accent had mostly left the UI after D42.
 
 **Decision:**
-- **Drifting glows** sit behind the dark tagline band and the final call to action, which is now ink, not flat orchid. They're soft orchid (`#DA5CC7`) and violet (`#7C5CF0`) blurred shapes, plus a faint version behind the hero. They drift over 18–22s. Only `transform` and `opacity` animate, and reduced motion stops them.
-- **The hero's "Get paid on time."** uses an orchid-to-violet gradient on the text (gradients on hero heading text are allowed; on backgrounds they're only these soft glows).
+- **Drifting glows** sit behind the dark tagline band and the final call to action, which is now ink, not flat orchid. They're blurred shapes in shades of the one orchid accent only (`#DA5CC7`, deeper `#A82E92`, lighter `#F3A6E6`), never other hues, plus a faint version behind the hero. They drift over 18–22s. Only `transform` and `opacity` animate, and reduced motion stops them.
+- **The hero's "Get paid on time."** uses a gradient across orchid shades (`#8F2479` → `#C043AB` → `#E766D4`) on the text (gradients on hero heading text are allowed; on backgrounds they're only these soft glows).
 - **Sections rise 32px and fade in once,** via IntersectionObserver.
 - **App accent:**
   - the active nav icon is orchid;
@@ -631,3 +631,11 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - Keep the prompts as they are.
 - Also show the three flows as copyable prompts on Settings → Claude connection.
 - The tool descriptions and server instructions already steer plain-language requests ("chase my overdue invoices") to the same tools.
+
+## D47. v1 scope cut at feature freeze (03:45 IST)
+
+- **Moved to v2:**
+  - `get_recent_items` and line-item autosuggest (D26);
+  - the "Reset demo data" button (D13; re-running `npm run seed` is enough for reviewers).
+- **Coral accent `#FF5B37`: rejected.** White text on it is 3.09:1 and it sits on white at 2.92:1, below AA for buttons and body text. The darkened `#B93A1E` passes but loses the colour's character, and coral sits too close to the overdue amber. Orchid (D42) was kept.
+- **Gradients use shades of the one accent only:** `#8F2479` → `#C043AB` → `#E766D4`. No second hue (founder's call; updates D45).
