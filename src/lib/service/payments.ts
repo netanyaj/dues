@@ -212,3 +212,17 @@ export function describePayment(p: PaymentRow) {
     status: p.status,
   };
 }
+
+/** D17: "Report this invoice". Logs only; nothing happens automatically. */
+export async function reportAbusePublic(publicId: string, reason: string | null, ipHash: string | null): Promise<{ ok: boolean }> {
+  const found = await getPublicInvoice(publicId);
+  if (!found) return { ok: false };
+  const inv = found.invoice as Record<string, unknown>;
+  const r = (reason ?? "").trim().slice(0, 1000) || null;
+  // Simple flood guard: at most 5 reports per invoice.
+  const { count } = await db().from("abuse_reports").select("id", { count: "exact", head: true }).eq("invoice_id", inv.id);
+  if ((count ?? 0) >= 5) return { ok: true };
+  await db().from("abuse_reports").insert({ invoice_id: inv.id, user_id: inv.user_id, reason: r, reporter_ip_hash: ipHash });
+  await logEvent({ userId: String(inv.user_id), actor: "client" }, String(inv.id), "abuse_reported", {});
+  return { ok: true };
+}
