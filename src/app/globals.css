@@ -54,6 +54,9 @@
   --color-attention-border: var(--attention-border);
   --color-paid-border: var(--paid-border);
   --color-review: var(--review);
+  --color-tone-faint: var(--tone-faint);
+  --color-tone-mid: var(--tone-mid);
+  --color-tone-strong: var(--tone-strong);
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -103,6 +106,10 @@
   --paid-soft: #ecfdf3;
   --paid-border: #abefc6;
   --review: #454545;
+  /* Neutral scale for dots and the aging bar (D48). */
+  --tone-faint: #d4d4d4;
+  --tone-mid: #a3a3a3;
+  --tone-strong: #5c5c5c;
   /* Orchid accent, highlights only (buttons are ink): --brand #A82E92 (6.05:1) for accent text and
      links; --brand-vivid #DA5CC7 (3.3:1) only for the logo, fills and 24px+ type. */
   --brand: #a82e92;
@@ -113,6 +120,9 @@
 }
 
 /* Text styles (landing-page-design B1). Use these names, not loose size + weight. */
+@utility heading-3 { font-size: 2.25rem; line-height: 2.5rem; font-weight: 600; letter-spacing: -0.02em; }
+@utility body-1 { font-size: 1rem; line-height: 1.5rem; font-weight: 600; }
+@utility body-4 { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; }
 @utility heading-4 { font-size: 1.875rem; line-height: 2.25rem; font-weight: 600; letter-spacing: -0.02em; }
 @utility heading-5 { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.015em; }
 @utility heading-6 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.01em; }

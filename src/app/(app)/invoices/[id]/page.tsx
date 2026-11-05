@@ -69,7 +69,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
     <div className="flex flex-col gap-2">
       <nav aria-label="Breadcrumb" className="caption-4 text-muted-foreground">
         <Link href="/dashboard" className="hover:text-foreground hover:underline">Dashboard</Link>
-        <span aria-hidden className="mx-1.5">/</span>
+        <span aria-hidden className="mx-2">/</span>
         <Link href={`/clients/${inv.client_id}`} className="hover:text-foreground hover:underline">{inv.client_name}</Link>
       </nav>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -165,7 +165,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <InvoiceDocument d={docFromInvoice(inv, items)} />
         <div className="flex flex-col gap-6">
           <section>
-            <h2 className="title-4 font-semibold">Payments</h2>
+            <h2 className="body-4">Payments</h2>
             {payments.length === 0 ? (
               <p className="mt-1 body-6 text-muted-foreground">None yet. When your client taps &ldquo;Notify as paid&rdquo;, it shows up here and on your dashboard.</p>
             ) : (
@@ -185,7 +185,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             )}
           </section>
           <section>
-            <h2 className="title-4 font-semibold">Reminders</h2>
+            <h2 className="body-4">Reminders</h2>
             {reminders.length === 0 ? (
               <p className="mt-1 body-6 text-muted-foreground">No reminders yet. Ask Claude: &ldquo;Write a polite reminder for {inv.number} and save it for WhatsApp.&rdquo;</p>
             ) : (
@@ -213,13 +213,13 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
 function Timeline({ events }: { events: { id: number; actor: string; type: string; payload: Record<string, unknown>; created_at: string }[] }) {
   return (
     <section>
-      <h2 className="title-4 font-semibold">History</h2>
+      <h2 className="body-4">History</h2>
       <ol className="mt-2 flex flex-col gap-3 body-6">
         {events.filter((e, i, all) => e.type !== "viewed" || e.payload?.n === 1 || i === all.findLastIndex((x) => x.type === "viewed")).slice().reverse().map((e) => {
           const d = describeEvent(e);
           return (
             <li key={e.id} className="flex gap-3">
-              <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-[#a3a3a3]" />
+              <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-tone-mid" />
               <div className="min-w-0 break-words">
                 <p><span className="font-medium">{d.who}</span> {d.what}</p>
                 <p className="caption-5 text-muted-foreground">{formatDateTime(e.created_at)}</p>

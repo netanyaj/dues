@@ -639,3 +639,15 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
   - the "Reset demo data" button (D13; re-running `npm run seed` is enough for reviewers).
 - **Coral accent `#FF5B37`: rejected.** White text on it is 3.09:1 and it sits on white at 2.92:1, below AA for buttons and body text. The darkened `#B93A1E` passes but loses the colour's character, and coral sits too close to the overdue amber. Orchid (D42) was kept.
 - **Gradients use shades of the one accent only:** `#8F2479` → `#C043AB` → `#E766D4`. No second hue (founder's call; updates D45).
+
+## D48. Feature-freeze fixes: onboarding step 3 and a design-system pass on the demo screens
+
+**Onboarding bug (found in T26):** Settings → Getting paid still demanded "a UPI ID or bank account", which contradicted D35. A new user couldn't finish step 3 without bank details. The rule is removed from profile validation; sending still requires a bank account (D35).
+
+**Design-system pass** on dashboard, invoice detail, new invoice, client page and Settings → Claude connection, plus the components they share:
+- **Spacing:** off-scale values (6, 10 and 20px) moved to the scale (8, 12, 24px).
+- **Type:** raw `text-sm`, `text-xs` and `text-base` became the named styles. Stacked weights became named styles too: `title-4 font-semibold` → `body-4`, `title-3 font-semibold` → `body-1`, and amounts → `heading-3`.
+- **Radius:** menu items inside 12px panels with 4px padding are now 8px (the nested-radius rule).
+- **Colours:** the last hex greys (status dots, aging bar, row hover) became tokens `--tone-faint`, `--tone-mid` and `--tone-strong`.
+- **Copy labels:** they keep acronyms ("Copy IFSC", "Copy UPI ID").
+- **Other screens:** not audited (out of scope tonight).

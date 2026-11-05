@@ -54,9 +54,9 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
       <PageHeader title="Dashboard" description={`${formatDate(today)} · who owes you, and what needs you today`} />
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <Panel className="p-5 sm:p-6 lg:col-start-1 lg:row-start-1">
+          <Panel className="p-6 lg:col-start-1 lg:row-start-1">
             <p className="body-6 text-muted-foreground">Owed to you</p>
-            <p className="amount mt-1 text-4xl font-semibold tracking-tight">{formatINR(summary.outstanding_paise, { decimals: "auto" })}</p>
+            <p className="amount mt-1 heading-3">{formatINR(summary.outstanding_paise, { decimals: "auto" })}</p>
             {agedTotal > 0 && <AgeBar buckets={buckets} total={agedTotal} active={age} />}
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
               <div><dt className="caption-4 text-muted-foreground">Late</dt><dd className={`amount title-4 ${summary.overdue_paise > 0 ? "text-late" : ""}`}>{formatINR(summary.overdue_paise, { decimals: "auto" })}</dd></div>
@@ -105,7 +105,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
               ))}
               {chase.map((r) => (
                 <li key={r.id}>
-                  <Link href={`/invoices/${r.id}`} className="flex gap-3 rounded-xl border bg-card p-4 hover:bg-[#fafafa]">
+                  <Link href={`/invoices/${r.id}`} className="flex gap-3 rounded-xl border bg-card p-4 hover:bg-muted/50">
                     <ClockCountdownIcon aria-hidden className={`mt-0.5 size-5 shrink-0 ${r.days_overdue > 0 ? "text-late" : "text-muted-foreground"}`} />
                     <div className="min-w-0">
                       <p className="title-4">
@@ -129,7 +129,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
             title="Invoices"
             action={hasAny ? (
               <details className="relative">
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1 body-5 hover:bg-muted [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 body-5 hover:bg-muted [&::-webkit-details-marker]:hidden">
                   <DownloadSimpleIcon aria-hidden className="size-4" />Export CSV
                 </summary>
                 <form action="/api/export" method="get" className="absolute right-0 z-20 mt-2 flex w-72 flex-col gap-3 rounded-xl border bg-card p-4 shadow-lg">
@@ -173,15 +173,15 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                 <table className="hidden w-full body-6 lg:table">
                   <thead className="border-b text-left caption-4 text-muted-foreground">
                     <tr>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Invoice</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Client</th>
-                      <th scope="col" className="px-4 py-2.5 text-right font-medium">Still owed</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Status</th>
+                      <th scope="col" className="px-4 py-3 font-medium">Invoice</th>
+                      <th scope="col" className="px-4 py-3 font-medium">Client</th>
+                      <th scope="col" className="px-4 py-3 text-right font-medium">Still owed</th>
+                      <th scope="col" className="px-4 py-3 font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {invoices.map((i) => (
-                      <tr key={i.id} className="group relative hover:bg-[#fafafa]">
+                      <tr key={i.id} className="group relative hover:bg-muted/50">
                         <td className="px-4 py-3">
                           <Link href={`/invoices/${i.id}`} className="amount font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring">
                             {i.number ?? "Draft"}
@@ -231,11 +231,11 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
 
 /** D39: one chart. Open balances by invoice age, with the MSME 45-day line. Each bucket filters the list. */
 function AgeBar({ buckets, total, active }: { buckets: ReturnType<typeof ageBuckets>; total: number; active: AgeKey | null }) {
-  const TONE: Record<AgeKey, string> = { "0-15": "bg-[#d4d4d4]", "16-30": "bg-[#a3a3a3]", "31-45": "bg-[#5c5c5c]", "45+": "bg-late" };
+  const TONE: Record<AgeKey, string> = { "0-15": "bg-tone-faint", "16-30": "bg-tone-mid", "31-45": "bg-tone-strong", "45+": "bg-late" };
   const before45 = buckets.filter((b) => b.key !== "45+").reduce((a, b) => a + b.paise, 0);
   const markerPct = (before45 / total) * 100;
   return (
-    <div className="mt-5">
+    <div className="mt-6">
       <p className="caption-4 text-muted-foreground">Who owes you, by age</p>
       <div className="relative mt-2">
         <div className="flex h-3 overflow-hidden rounded-full bg-muted" role="img" aria-label={buckets.map((b) => `${b.label}: ${formatINR(b.paise, { decimals: "auto" })}`).join(", ")}>
@@ -252,8 +252,8 @@ function AgeBar({ buckets, total, active }: { buckets: ReturnType<typeof ageBuck
         {buckets.map((b) => (
           <li key={b.key}>
             <Link href={active === b.key ? "/dashboard" : `/dashboard?age=${b.key}`} aria-current={active === b.key ? "true" : undefined}
-              className={`flex flex-col rounded-lg border px-2.5 py-1.5 hover:bg-muted/60 ${active === b.key ? "border-foreground" : "border-transparent"}`}>
-              <span className="flex items-center gap-1.5 caption-4 text-muted-foreground"><span aria-hidden className={`size-2 rounded-full ${TONE[b.key]}`} />{b.label}</span>
+              className={`flex flex-col rounded-lg border px-3 py-2 hover:bg-muted/60 ${active === b.key ? "border-foreground" : "border-transparent"}`}>
+              <span className="flex items-center gap-2 caption-4 text-muted-foreground"><span aria-hidden className={`size-2 rounded-full ${TONE[b.key]}`} />{b.label}</span>
               <span className={`amount title-4 ${b.key === "45+" && b.paise > 0 ? "text-late" : ""}`}>{formatINR(b.paise, { decimals: "auto" })}</span>
             </Link>
           </li>

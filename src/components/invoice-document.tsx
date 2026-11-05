@@ -49,7 +49,7 @@ function Party({ title, p }: { title: string; p: DocParty }) {
 
 function Row({ label, value, strong = false }: { label: string; value: number; strong?: boolean }) {
   return (
-    <div className={strong ? "mt-1 flex justify-between border-t pt-2 title-3 font-semibold" : "flex justify-between body-6"}>
+    <div className={strong ? "mt-1 flex justify-between border-t pt-2 body-1" : "flex justify-between body-6"}>
       <dt>{label}</dt><dd className="amount">{formatINR(value)}</dd>
     </div>
   );
@@ -117,7 +117,7 @@ export function InvoiceDocument({ d }: { d: DocData }) {
       </table>
       <ul className="mt-6 divide-y border-y sm:hidden">
         {d.items.map((it, i) => (
-          <li key={i} className="flex justify-between gap-4 py-2.5">
+          <li key={i} className="flex justify-between gap-4 py-3">
             <div className="min-w-0">
               <p className="body-6 break-words">{it.description}</p>
               <p className="amount caption-5 text-muted-foreground">{qty(it.qty)} × {formatINR(it.rate_paise)} · SAC {it.sac}</p>

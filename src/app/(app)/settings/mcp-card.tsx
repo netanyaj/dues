@@ -15,7 +15,7 @@ export const TRY_PROMPT =
   "Invoice Acme Corp in Bengaluru, Karnataka for 12 hours of design at ₹2,500/hr with 18% GST, due in 15 days.";
 
 function Code({ children, testId }: { children: string; testId?: string }) {
-  return <code data-testid={testId} className="block min-w-0 flex-1 break-all rounded-lg bg-muted px-3 py-2 font-mono text-sm">{children}</code>;
+  return <code data-testid={testId} className="block min-w-0 flex-1 break-all rounded-lg bg-muted px-3 py-2 font-mono body-6">{children}</code>;
 }
 
 /** D25 + D28: the token is shown once, after creating it. Afterwards only its last 4 characters. */
@@ -34,13 +34,13 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
 
   const header = fresh ? `Bearer ${fresh}` : null;
   return (
-    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6">
-      <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-6 rounded-xl border bg-card p-6">
+      <div className="flex flex-col gap-2">
         <p className="title-4">Server URL</p>
         <div className="flex items-center gap-2"><Code>{serverUrl}</Code><CopyButton value={serverUrl} label="Copy server URL" /></div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <p className="title-4">Token</p>
         {fresh ? (
           <>
@@ -80,7 +80,7 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          {isDemo ? <p className="mt-1.5 caption-5 text-muted-foreground">Turned off on demo accounts, so the shared demo token keeps working for every reviewer.</p> : null}
+          {isDemo ? <p className="mt-2 caption-5 text-muted-foreground">Turned off on demo accounts, so the shared demo token keeps working for every reviewer.</p> : null}
         </div>
       )}
     </div>
@@ -89,10 +89,10 @@ export function McpCard({ serverUrl, hasToken, last4, isDemo }: { serverUrl: str
 
 export function ConnectSteps({ serverUrl }: { serverUrl: string }) {
   return (
-    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6">
+    <div className="flex flex-col gap-6 rounded-xl border bg-card p-6">
       <div>
-        <p className="title-4 font-semibold">Claude on the web (claude.ai) and Claude Desktop</p>
-        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5 body-6">
+        <p className="body-4">Claude on the web (claude.ai) and Claude Desktop</p>
+        <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 body-6">
           <li>Go to <b>Customize → Connectors</b>.</li>
           <li>Click <b>+ Add</b>, then <b>Add custom connector</b>.</li>
           <li>Name it <b>Dues</b> and paste the server URL. Click <b>Continue</b>, then <b>Continue</b> again.</li>
@@ -104,14 +104,14 @@ export function ConnectSteps({ serverUrl }: { serverUrl: string }) {
         <p className="mt-2 caption-5 text-muted-foreground">Connectors you add on claude.ai also appear in Claude Desktop. On Team and Enterprise plans an Owner may need to add it under organisation settings. If you don&apos;t see Request headers, your account doesn&apos;t have that option yet; use Claude Code below.</p>
       </div>
       <div>
-        <p className="title-4 font-semibold">Claude Code</p>
+        <p className="body-4">Claude Code</p>
         <div className="mt-2 flex items-start gap-2">
           <Code>{`claude mcp add --transport http dues ${serverUrl} --header "Authorization: Bearer <token>"`}</Code>
         </div>
         <p className="mt-1 caption-5 text-muted-foreground">Replace &lt;token&gt; with your token.</p>
       </div>
       <div>
-        <p className="title-4 font-semibold">Then try</p>
+        <p className="body-4">Then try</p>
         {/* D46: the same three flows as the MCP prompts. claude.ai doesn't list connector prompts
             reliably yet (anthropics/claude-ai-mcp#333), so they're also here to copy. Claude Code shows
             them as /mcp__dues__chase_overdue and so on. */}

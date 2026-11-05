@@ -144,9 +144,8 @@ export function validateProfileInput(input: ProfileInput): { values: Record<stri
     else errors.msme_category = "Pick your enterprise category from your Udyam certificate.";
   }
 
-  if (!v.upi_id && !(acct && ifsc) && !errors.upi_id && !errors.bank_account_number && !errors.bank_ifsc) {
-    errors.upi_id = "Add a UPI ID or bank account so clients can pay you.";
-  }
+  // D35: no "UPI or bank required" rule here. Onboarding can skip Getting paid; sending checks
+  // for a bank account (sendInvoice) and asks for it inline at the first Send.
 
   // Defaults and preferences (D29). Missing input keeps the column default.
   const rate = Number(t("default_gst_rate", 4) ?? 18);

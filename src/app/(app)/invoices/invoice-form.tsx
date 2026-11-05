@@ -95,28 +95,28 @@ export function InvoiceForm({
   return (
     <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="client">Client</Label>
           <ClientPicker clients={clientList} value={clientId} invalid={!!fieldErr("client_id")} onChange={(id, added) => { if (added) setClientList((xs) => [...xs, added].sort((x, y) => x.name.localeCompare(y.name))); setClientId(id); }} />
-          <p className="text-xs text-muted-foreground">
+          <p className="caption-5 text-muted-foreground">
             {client ? `${stateName(client.state_code)}${client.gstin ? ` · GSTIN ${client.gstin}` : " · no GSTIN"}` : <Link href="/clients" className="underline">Manage clients</Link>}
           </p>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="gst">GST rate</Label>
           {supplier.hasGstin ? (
-            <select id="gst" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-10 rounded-lg border border-input bg-card px-3 text-sm">
+            <select id="gst" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-10 rounded-lg border border-input bg-card px-3 body-6">
               {GST_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
             </select>
           ) : (
-            <p className="flex h-10 items-center rounded-lg border bg-muted/40 px-3 text-sm text-muted-foreground">GST not applicable (no GSTIN in your profile)</p>
+            <p className="flex h-10 items-center rounded-lg border bg-muted/40 px-3 body-6 text-muted-foreground">GST not applicable (no GSTIN in your profile)</p>
           )}
         </div>
       </div>
 
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 font-medium">Line items</legend>
-        <div className="hidden grid-cols-[1fr_90px_80px_120px_110px_36px] gap-2 text-xs text-muted-foreground md:grid">
+        <div className="hidden grid-cols-[1fr_90px_80px_120px_110px_36px] gap-2 caption-5 text-muted-foreground md:grid">
           <span>Description</span><span>SAC</span><span>Qty</span><span>Rate (₹)</span><span className="text-right">Amount</span><span />
         </div>
         {items.map((it, i) => (
@@ -137,7 +137,7 @@ export function InvoiceForm({
               <Label htmlFor={`r${i}`} className="md:sr-only">Rate (₹)</Label>
               <Input id={`r${i}`} value={it.rate} onChange={(e) => setItem(i, { rate: e.target.value })} inputMode="decimal" placeholder="0" aria-invalid={!!fieldErr(`items.${i}.rate_rupees`)} className="h-10" />
             </div>
-            <p className="flex items-center justify-end text-sm tabular-nums" aria-label={`Line ${i + 1} amount`}>{formatINR(totals.lineAmounts[i] ?? 0)}</p>
+            <p className="flex items-center justify-end body-6 tabular-nums" aria-label={`Line ${i + 1} amount`}>{formatINR(totals.lineAmounts[i] ?? 0)}</p>
             <div className="flex items-center justify-end">
               <Button type="button" variant="ghost" size="icon" onClick={() => setItems((xs) => xs.filter((_, j) => j !== i))} disabled={items.length === 1} aria-label={`Remove line ${i + 1}`}>
                 <Trash2Icon />
@@ -155,15 +155,15 @@ export function InvoiceForm({
       <div className="grid gap-6 md:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="issue">Issue date</Label>
               <Input id="issue" type="date" value={issueDate} onChange={(e) => { const t = terms; setIssueDate(e.target.value); if (t != null && e.target.value) setDueDate(addDays(e.target.value, t)); }} className="h-10" />
-              <p className="text-xs text-muted-foreground">Becomes the send date when you send it.</p>
+              <p className="caption-5 text-muted-foreground">Becomes the send date when you send it.</p>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="due">Due date</Label>
               <Input id="due" type="date" value={dueDate} min={issueDate} onChange={(e) => setDueDate(e.target.value)} aria-invalid={!!fieldErr("due_date")} className="h-10" />
-              <div className="flex gap-1.5">
+              <div className="flex gap-2">
                 {[7, 15, 30].map((d) => (
                   <Button key={d} type="button" variant={terms === d ? "secondary" : "ghost"} size="xs" onClick={() => setDueDate(addDays(issueDate, d))}>{d} days</Button>
                 ))}
@@ -173,13 +173,13 @@ export function InvoiceForm({
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="notes">Notes (shown on the invoice)</Label>
             <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={1000} placeholder="e.g. Thanks for your business. Payment terms: 15 days." />
           </div>
         </div>
 
-        <dl className="flex h-fit flex-col gap-1.5 rounded-lg border bg-muted/30 p-4 text-sm" aria-live="polite">
+        <dl className="flex h-fit flex-col gap-2 rounded-lg border bg-muted/30 p-4 body-6" aria-live="polite">
           <div className="flex justify-between"><dt>Subtotal</dt><dd className="tabular-nums">{formatINR(totals.subtotal)}</dd></div>
           {totals.mode === "intra" && (<>
             <div className="flex justify-between text-muted-foreground"><dt>CGST {gstRate / 2}%</dt><dd className="tabular-nums">{formatINR(totals.cgst)}</dd></div>
@@ -189,9 +189,9 @@ export function InvoiceForm({
             <div className="flex justify-between text-muted-foreground"><dt>IGST {gstRate}%</dt><dd className="tabular-nums">{formatINR(totals.igst)}</dd></div>
           )}
           {totals.mode === "none" && <p className="text-muted-foreground">GST not applicable</p>}
-          <div className="mt-1 flex justify-between border-t pt-2 text-base font-semibold"><dt>Total</dt><dd className="tabular-nums">{formatINR(totals.total)}</dd></div>
+          <div className="mt-1 flex justify-between border-t pt-2 body-1"><dt>Total</dt><dd className="tabular-nums">{formatINR(totals.total)}</dd></div>
           {totals.mode !== "none" && client && (
-            <p className="text-xs text-muted-foreground">
+            <p className="caption-5 text-muted-foreground">
               {totals.mode === "intra" ? "Same state, so CGST + SGST." : `${stateName(client.state_code)} is another state, so IGST.`} Dues recalculates this on save.
             </p>
           )}
@@ -200,8 +200,8 @@ export function InvoiceForm({
 
       <FormMessage error={error?.msg} />
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={pending} className="h-10 px-5">{pending ? "Saving…" : invoiceId ? "Save draft" : "Create draft"}</Button>
-        <p className="self-center text-sm text-muted-foreground">Drafts get an invoice number when you send them.</p>
+        <Button type="submit" disabled={pending} className="h-10 px-6">{pending ? "Saving…" : invoiceId ? "Save draft" : "Create draft"}</Button>
+        <p className="self-center body-6 text-muted-foreground">Drafts get an invoice number when you send them.</p>
       </div>
     </form>
   );

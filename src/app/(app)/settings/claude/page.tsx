@@ -38,25 +38,25 @@ export default async function ClaudeSettings({ searchParams }: PageProps<"/setti
         description="Connect your own Claude so you can say who to invoice in plain words. Claude drafts; Dues checks the numbers; you send."
       />
       <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 body-5">
-        <span aria-hidden className={`size-2 rounded-full ${profile.mcp_last_used_at ? "bg-paid" : "bg-[#a3a3a3]"}`} />
+        <span aria-hidden className={`size-2 rounded-full ${profile.mcp_last_used_at ? "bg-paid" : "bg-tone-mid"}`} />
         {status}
       </div>
       <McpCard serverUrl={serverUrl} hasToken={!!profile.mcp_token_hash} last4={profile.mcp_token_last4} isDemo={profile.is_demo} />
       <ConnectSteps serverUrl={serverUrl} />
       {welcome && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-5">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-6">
           <p className="min-w-0 flex-1 body-6">That&apos;s setup done. You can connect Claude later from this page.</p>
           <Button asChild><Link href="/dashboard">Go to your dashboard</Link></Button>
         </div>
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border bg-card p-5">
-          <p className="title-4 font-semibold">Claude can</p>
-          <ul className="mt-2 flex flex-col gap-1.5 body-6">{CAN.map((c) => <li key={c} className="flex gap-2"><CheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-paid" weight="bold" />{c}</li>)}</ul>
+        <div className="rounded-xl border bg-card p-6">
+          <p className="body-4">Claude can</p>
+          <ul className="mt-2 flex flex-col gap-2 body-6">{CAN.map((c) => <li key={c} className="flex gap-2"><CheckIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-paid" weight="bold" />{c}</li>)}</ul>
         </div>
-        <div className="rounded-xl border bg-card p-5">
-          <p className="title-4 font-semibold">Only you can, in Dues</p>
-          <ul className="mt-2 flex flex-col gap-1.5 body-6">{CANT.map((c) => <li key={c} className="flex gap-2"><XIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" weight="bold" />{c}</li>)}</ul>
+        <div className="rounded-xl border bg-card p-6">
+          <p className="body-4">Only you can, in Dues</p>
+          <ul className="mt-2 flex flex-col gap-2 body-6">{CANT.map((c) => <li key={c} className="flex gap-2"><XIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" weight="bold" />{c}</li>)}</ul>
         </div>
       </div>
     </div>

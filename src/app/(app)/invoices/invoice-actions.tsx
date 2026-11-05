@@ -59,7 +59,7 @@ export function SendButton({ id, total, client, blockedReason, needsBank = false
   if (needsBank) return <SendWithBank id={id} total={total} client={client} accountName={accountName} />;
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild><Button disabled={pending} className="h-10 px-5">{pending ? "Sending…" : "Send invoice"}</Button></AlertDialogTrigger>
+      <AlertDialogTrigger asChild><Button disabled={pending} className="h-10 px-6">{pending ? "Sending…" : "Send invoice"}</Button></AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Send this invoice to {client}?</AlertDialogTitle>
@@ -84,7 +84,7 @@ function SendWithBank({ id, total, client, accountName }: { id: string; total: s
   const [err, setErr] = useState<{ error: string; field?: string } | null>(null);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button className="h-10 px-5">Send invoice</Button></DialogTrigger>
+      <DialogTrigger asChild><Button className="h-10 px-6">Send invoice</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add your bank account to send</DialogTitle>
@@ -98,10 +98,10 @@ function SendWithBank({ id, total, client, accountName }: { id: string; total: s
             run(async () => { const r = await saveBankAndSendAction(id, f); if (!r.ok) setErr({ error: r.error, field: r.field }); return r; }, () => setOpen(false));
           }}
         >
-          <div className="flex flex-col gap-1.5"><Label htmlFor="ban">Account name</Label><Input id="ban" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="h-10" aria-invalid={err?.field === "bank_account_name"} /></div>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="bno">Account number</Label><Input id="bno" inputMode="numeric" value={f.number} onChange={(e) => setF({ ...f, number: e.target.value })} className="h-10" required aria-invalid={err?.field === "bank_account_number"} /></div>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="bif">IFSC</Label><Input id="bif" value={f.ifsc} onChange={(e) => setF({ ...f, ifsc: e.target.value.toUpperCase() })} className="h-10" required placeholder="HDFC0001234" aria-invalid={err?.field === "bank_ifsc"} /></div>
-          {err ? <p role="alert" className="text-sm text-destructive">{err.error}</p> : null}
+          <div className="flex flex-col gap-2"><Label htmlFor="ban">Account name</Label><Input id="ban" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="h-10" aria-invalid={err?.field === "bank_account_name"} /></div>
+          <div className="flex flex-col gap-2"><Label htmlFor="bno">Account number</Label><Input id="bno" inputMode="numeric" value={f.number} onChange={(e) => setF({ ...f, number: e.target.value })} className="h-10" required aria-invalid={err?.field === "bank_account_number"} /></div>
+          <div className="flex flex-col gap-2"><Label htmlFor="bif">IFSC</Label><Input id="bif" value={f.ifsc} onChange={(e) => setF({ ...f, ifsc: e.target.value.toUpperCase() })} className="h-10" required placeholder="HDFC0001234" aria-invalid={err?.field === "bank_ifsc"} /></div>
+          {err ? <p role="alert" className="body-6 text-destructive">{err.error}</p> : null}
           <p className="caption-5 text-muted-foreground">Sending gives this invoice the next number and dates it today. The amounts ({total}) are then locked. It goes to {client} only when you share the link.</p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Not now</Button>
@@ -170,17 +170,17 @@ export function RecordPayment({ id, balance, today, open: openProp, onOpenChange
             run(async () => { const r = await recordPaymentAction(id, f); if (!r.ok) setErr(r.error); return r; }, () => setOpen(false));
           }}
         >
-          <div className="flex flex-col gap-1.5"><Label htmlFor="pa">Amount received (₹)</Label><Input id="pa" inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} className="h-10" required /></div>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="pt">TDS deducted (₹)</Label><Input id="pt" inputMode="decimal" value={f.tds} onChange={(e) => setF({ ...f, tds: e.target.value })} placeholder="0" className="h-10" /></div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2"><Label htmlFor="pa">Amount received (₹)</Label><Input id="pa" inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} className="h-10" required /></div>
+          <div className="flex flex-col gap-2"><Label htmlFor="pt">TDS deducted (₹)</Label><Input id="pt" inputMode="decimal" value={f.tds} onChange={(e) => setF({ ...f, tds: e.target.value })} placeholder="0" className="h-10" /></div>
+          <div className="flex flex-col gap-2">
             <Label htmlFor="pm">Method</Label>
-            <select id="pm" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} className="h-10 rounded-lg border border-input bg-card px-3 text-sm">
+            <select id="pm" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} className="h-10 rounded-lg border border-input bg-card px-3 body-6">
               <option value="bank_transfer">Bank transfer</option><option value="upi">UPI</option><option value="other">Other</option>
             </select>
           </div>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="pd">Paid on</Label><Input id="pd" type="date" max={today} value={f.paid_on} onChange={(e) => setF({ ...f, paid_on: e.target.value })} className="h-10" /></div>
-          <div className="flex flex-col gap-1.5 sm:col-span-2"><Label htmlFor="pu">Reference / UTR (optional)</Label><Input id="pu" value={f.utr} onChange={(e) => setF({ ...f, utr: e.target.value })} className="h-10" /></div>
-          {err ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{err}</p> : null}
+          <div className="flex flex-col gap-2"><Label htmlFor="pd">Paid on</Label><Input id="pd" type="date" max={today} value={f.paid_on} onChange={(e) => setF({ ...f, paid_on: e.target.value })} className="h-10" /></div>
+          <div className="flex flex-col gap-2 sm:col-span-2"><Label htmlFor="pu">Reference / UTR (optional)</Label><Input id="pu" value={f.utr} onChange={(e) => setF({ ...f, utr: e.target.value })} className="h-10" /></div>
+          {err ? <p role="alert" className="body-6 text-destructive sm:col-span-2">{err}</p> : null}
           <DialogFooter className="sm:col-span-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Not now</Button>
             <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Record payment"}</Button>
@@ -206,9 +206,9 @@ export function ExtendDueDate({ id, current, open: openProp, onOpenChange }: { i
           <DialogDescription>The client&apos;s page will say the date was extended. Your on-time metrics still use the original date.</DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); setErr(null); run(async () => { const r = await updateIssuedAction(id, { due_date: date, reason }); if (!r.ok) setErr(r.error); return r; }, () => setOpen(false)); }}>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="nd">New due date</Label><Input id="nd" type="date" min={current} value={date} onChange={(e) => setDate(e.target.value)} className="h-10" /></div>
-          <div className="flex flex-col gap-1.5"><Label htmlFor="nr">Reason</Label><Input id="nr" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Client asked for 30 days" maxLength={200} className="h-10" /></div>
-          {err ? <p role="alert" className="text-sm text-destructive">{err}</p> : null}
+          <div className="flex flex-col gap-2"><Label htmlFor="nd">New due date</Label><Input id="nd" type="date" min={current} value={date} onChange={(e) => setDate(e.target.value)} className="h-10" /></div>
+          <div className="flex flex-col gap-2"><Label htmlFor="nr">Reason</Label><Input id="nr" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Client asked for 30 days" maxLength={200} className="h-10" /></div>
+          {err ? <p role="alert" className="body-6 text-destructive">{err}</p> : null}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Not now</Button>
             <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Extend"}</Button>
@@ -291,7 +291,7 @@ export function InvoiceMoreMenu(p: {
 }) {
   const [which, setWhich] = useState<MenuDialog | null>(null);
   const set = (d: MenuDialog) => (o: boolean) => setWhich(o ? d : null);
-  const item = "flex w-full cursor-pointer items-center rounded-md px-2.5 py-2 body-6 outline-none data-[highlighted]:bg-muted";
+  const item = "flex w-full cursor-pointer items-center rounded-lg px-3 py-2 body-6 outline-none data-[highlighted]:bg-muted";
   const LABEL: Record<MenuDialog, string> = { record: "Record payment", extend: "Extend due date", notes: "Edit notes", cancel: "Cancel invoice", delete: "Delete draft" };
   const order: MenuDialog[] = ["record", "extend", "notes"];
   const danger: MenuDialog[] = ["cancel", "delete"];

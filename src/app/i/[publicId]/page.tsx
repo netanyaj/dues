@@ -71,7 +71,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           <dt className="caption-4 text-muted-foreground">{label}</dt>
           <dd className="amount body-5 break-all whitespace-normal">{value}</dd>
         </div>
-        {copy && <CopyButton value={String(value)} label={`Copy ${label.toLowerCase()}`} variant="ghost" />}
+        {copy && <CopyButton value={String(value)} label={`Copy ${/^[A-Z]{2,}/.test(label) ? label : label.toLowerCase()}`} variant="ghost" />}
       </div>
     ) : null;
 
@@ -80,7 +80,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
       {/* Phones: summary, pay, trust, then the document. Desktop: document left, the paying column right. */}
       <div className="flex min-w-0 flex-col gap-4 lg:col-start-2 lg:row-start-1 print:hidden">
       {/* Summary: who, how much, by when */}
-      <section className="rounded-xl border bg-card p-5 sm:p-6 print:hidden">
+      <section className="rounded-xl border bg-card p-6 print:hidden">
         <p className="body-6 text-muted-foreground">{business} has sent you an invoice</p>
         <p className="amount caption-4 text-muted-foreground">{inv.number} · {formatDate(inv.issue_date)}</p>
         {cancelled ? (
@@ -89,8 +89,8 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
           <div className="mt-4"><Banner tone="success" title="Paid in full">Nothing more to pay. Thank you.</Banner></div>
         ) : (
           <>
-            <p className="mt-5 caption-4 text-muted-foreground">{due < inv.total_paise ? "Balance due" : "Amount due"}</p>
-            <p className="amount mt-1 text-4xl font-semibold tracking-tight">{formatINR(due)}</p>
+            <p className="mt-6 caption-4 text-muted-foreground">{due < inv.total_paise ? "Balance due" : "Amount due"}</p>
+            <p className="amount mt-1 heading-3">{formatINR(due)}</p>
             <p className={`mt-1 body-6 ${inv.status === "overdue" ? "font-medium text-late" : "text-muted-foreground"}`}>
               {inv.status === "overdue" ? `Was due on ${formatDate(inv.due_date)}` : `Due on ${formatDate(inv.due_date)}`}
               {due < inv.total_paise ? <span className="text-muted-foreground"> · invoice total {formatINR(inv.total_paise)}</span> : null}
@@ -104,7 +104,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
         {pendingReport && canPay ? <div className="mt-4"><Banner title="Payment reported">{business} will confirm once it arrives.</Banner></div> : null}
         {/* D43: the two actions sit with the amount, so nobody has to scroll past bank details to find them. */}
         {canPay && (
-          <div className="mt-5 flex flex-col gap-2">
+          <div className="mt-6 flex flex-col gap-2">
             {showUpi && <Button asChild size="lg" className="w-full"><a href={upiLink!}>Pay with UPI</a></Button>}
             <PaidForm publicId={publicId} due={paiseToDecimalString(due)} business={business} primary={!showUpi} />
             {hasBank && <a href="#pay-h" className="mx-auto caption-4 text-muted-foreground underline underline-offset-4 hover:text-foreground">Bank transfer details below</a>}
@@ -113,8 +113,8 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
       </section>
 
       {canPay && (
-        <section className="flex flex-col gap-5 rounded-xl border bg-card p-5 sm:p-6 print:hidden" aria-labelledby="pay-h">
-          <h2 id="pay-h" className="scroll-mt-6 title-3 font-semibold">How to pay</h2>
+        <section className="flex flex-col gap-6 rounded-xl border bg-card p-6 print:hidden" aria-labelledby="pay-h">
+          <h2 id="pay-h" className="scroll-mt-6 body-1">How to pay</h2>
           {hasBank && (
             <div>
               <h3 className="title-4">Bank transfer (NEFT, IMPS or RTGS)</h3>
@@ -128,7 +128,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
             </div>
           )}
           {showUpi && (
-            <div className={hasBank ? "border-t pt-5" : ""}>
+            <div className={hasBank ? "border-t pt-6" : ""}>
               <h3 className="title-4">UPI</h3>
               <div className="mt-3 flex flex-col items-center gap-4 sm:flex-row sm:items-start lg:flex-col lg:items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -147,7 +147,7 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
       )}
 
       {/* D17: claim nothing we can't back up */}
-      <section className="rounded-xl border bg-card p-5 body-6 print:hidden" aria-label="About this invoice">
+      <section className="rounded-xl border bg-card p-6 body-6 print:hidden" aria-label="About this invoice">
         <p className="title-4">Before you pay</p>
         <p className="mt-1 text-muted-foreground">
           Invoice issued by {business} using Dues. Dues does not verify businesses or bank details.

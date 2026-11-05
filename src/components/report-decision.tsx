@@ -64,16 +64,16 @@ export function ReportDecision({ report }: { report: ReportForDecision }) {
             </p>
           ) : null}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor={`amt-${report.id}`}>Amount received (₹)</Label>
               <Input id={`amt-${report.id}`} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10" />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor={`tds-${report.id}`}>TDS deducted (₹)</Label>
               <Input id={`tds-${report.id}`} inputMode="decimal" value={tds} onChange={(e) => setTds(e.target.value)} placeholder="0" className="h-10" />
             </div>
           </div>
-          {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p role="alert" className="body-6 text-destructive">{error}</p> : null}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>Not now</Button>
             <Button onClick={() => run("confirm")} disabled={pending}>{pending ? "Confirming…" : "Confirm payment"}</Button>
