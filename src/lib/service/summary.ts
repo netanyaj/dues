@@ -1,9 +1,10 @@
-import { addDays, istToday } from "@/lib/domain/dates";
+import { addDays, daysBetween, istDateOf, istToday } from "@/lib/domain/dates";
+import { isChasePaused } from "@/lib/domain/status";
 import { formatINR } from "@/lib/domain/money";
 import { check, db, logEvent, type Ctx } from "./core";
 import { listInvoices, type InvoiceRow } from "./invoices";
 
-const OPEN = new Set(["sent", "partially_paid", "overdue", "payment_reported"]);
+const OPEN = new Set(["sent", "partially_paid", "overdue"]);
 
 export type Summary = {
   outstanding_paise: number;
@@ -11,15 +12,32 @@ export type Summary = {
   paid_this_month_paise: number;
   tds_this_month_paise: number;
   overdue_by_client: { client: string; client_id: string; overdue_paise: number; invoices: number }[];
-  to_chase: InvoiceRow[];
+  to_chase: ChaseRow[];
 };
 
-/** "To chase today": overdue, or open and due within 2 days. Excludes ones waiting on a client report. */
-export function chaseList(rows: InvoiceRow[], today = istToday()): InvoiceRow[] {
+export type ChaseRow = InvoiceRow & { chase_note: string | null };
+
+/**
+ * "To chase today": overdue, or open and due within 2 days.
+ * D16: an unconfirmed client report pauses chasing for 2 working days; after that the
+ * invoice comes back with a note. It is never silently dropped.
+ */
+export function chaseList(rows: InvoiceRow[], today = istToday()): ChaseRow[] {
   const soon = addDays(today, 2);
-  return rows
-    .filter((r) => r.status === "overdue" || ((r.status === "sent" || r.status === "partially_paid") && r.due_date <= soon))
-    .sort((a, b) => b.days_overdue - a.days_overdue || a.due_date.localeCompare(b.due_date));
+  const out: ChaseRow[] = [];
+  for (const r of rows) {
+    const due = r.status === "overdue" || ((r.status === "sent" || r.status === "partially_paid") && r.due_date <= soon);
+    if (!due) continue;
+    let note: string | null = null;
+    if (r.pending_reports > 0 && r.last_report_at) {
+      const reported = istDateOf(r.last_report_at);
+      if (isChasePaused(reported, today)) continue;
+      const days = daysBetween(reported, today);
+      note = `Reported ${days} day${days === 1 ? "" : "s"} ago, not confirmed. Check your bank.`;
+    }
+    out.push({ ...r, chase_note: note });
+  }
+  return out.sort((a, b) => b.days_overdue - a.days_overdue || a.due_date.localeCompare(b.due_date));
 }
 
 export async function receivablesSummary(ctx: Ctx): Promise<Summary> {
@@ -60,7 +78,7 @@ export function describeSummary(s: Summary) {
     overdue_by_client: s.overdue_by_client.map((c) => ({ client: c.client, overdue: formatINR(c.overdue_paise), invoices: c.invoices })),
     to_chase_today: s.to_chase.map((r) => ({
       id: r.id, number: r.number, client: r.client_name, balance_due: formatINR(r.balance_paise), due_date: r.due_date,
-      status: r.status, days_overdue: r.days_overdue,
+      status: r.status, days_overdue: r.days_overdue, note: r.chase_note ?? undefined,
     })),
   };
 }

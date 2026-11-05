@@ -3,8 +3,8 @@ import { formatINR, lineAmountPaise, parseQtyMilli, rupeesToPaise, InputError } 
 import { computeTotals, checkClaimedTotal, suggestTds } from "@/lib/domain/tax";
 import { gstinCheckChar, validateGstin, resolveStateCode, panFromGstin } from "@/lib/domain/gst";
 import { addDays, formatDate, formatInvoiceNumber, fyFor, istToday } from "@/lib/domain/dates";
-import { allowedActions, deriveStatus } from "@/lib/domain/status";
-import { upiEligible, upiUri, validateUpiId, waPhone } from "@/lib/domain/upi";
+import { allowedActions, deriveStatus, isChasePaused, statusText } from "@/lib/domain/status";
+import { upiEligible, upiUri, utrLooksUsual, validateUpiId, waPhone } from "@/lib/domain/upi";
 
 const withCheck = (first14: string) => first14 + gstinCheckChar(first14);
 const KA_GSTIN = withCheck("29ABCDE1234F1Z");
@@ -175,11 +175,28 @@ describe("derived status", () => {
     expect(deriveStatus({ ...base, today: "2026-11-21" })).toMatchObject({ status: "overdue", daysOverdue: 1 });
     expect(deriveStatus({ ...base, today: "2026-11-20" }).status).toBe("sent"); // due today is not overdue
   });
-  it("payment reported outranks overdue; rejected falls back", () => {
+  it("a client report is a flag; it never hides overdue (D16)", () => {
     const reported = { status: "reported" as const, amountPaise: 3540000, tdsPaise: 0 };
-    expect(deriveStatus({ ...base, today: "2026-11-25", payments: [reported] }).status).toBe("payment_reported");
-    expect(deriveStatus({ ...base, today: "2026-11-25", payments: [{ ...reported, status: "rejected" }] }).status).toBe("overdue");
-    expect(deriveStatus({ ...base, payments: [{ ...reported, status: "rejected" }] }).status).toBe("sent");
+    expect(deriveStatus({ ...base, today: "2026-11-25", payments: [reported] })).toMatchObject({ status: "overdue", paymentReported: true });
+    expect(deriveStatus({ ...base, payments: [reported] })).toMatchObject({ status: "sent", paymentReported: true });
+    expect(deriveStatus({ ...base, today: "2026-11-25", payments: [{ ...reported, status: "rejected" }] })).toMatchObject({ status: "overdue", paymentReported: false });
+    expect(statusText("overdue", 1)).toBe("Overdue · payment reported");
+    expect(statusText("paid", 1)).toBe("Paid");
+  });
+  it("a report pauses chasing for 2 working days, skipping weekends (D16)", () => {
+    // Thu 2026-11-05 report
+    expect(isChasePaused("2026-11-05", "2026-11-05")).toBe(true);
+    expect(isChasePaused("2026-11-05", "2026-11-06")).toBe(true); // Fri = 1
+    expect(isChasePaused("2026-11-05", "2026-11-08")).toBe(true); // Sun, still 1
+    expect(isChasePaused("2026-11-05", "2026-11-09")).toBe(true); // Mon = 2
+    expect(isChasePaused("2026-11-05", "2026-11-10")).toBe(false); // Tue = 3, back on the list
+    expect(isChasePaused(null, "2026-11-10")).toBe(false);
+  });
+  it("flags unusual reference formats", () => {
+    expect(utrLooksUsual("412345678901")).toBe(true);
+    expect(utrLooksUsual("HDFCN52026110512")).toBe(true);
+    expect(utrLooksUsual("T2311051234567890123456")).toBe(false);
+    expect(utrLooksUsual("ABC123")).toBe(false);
   });
   it("partial payments keep a balance; TDS counts toward paid", () => {
     const part = deriveStatus({ ...base, payments: [{ status: "confirmed", amountPaise: 3000000, tdsPaise: 0 }] });

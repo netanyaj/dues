@@ -45,3 +45,12 @@ export function whatsappLink(phone: string | null | undefined, text: string): st
 export function mailtoLink(email: string | null | undefined, subject: string, body: string): string {
   return `mailto:${email ? encodeURIComponent(email) : ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+/**
+ * D16: cheap reference checks. Flag, never block. UPI/IMPS RRN = 12 digits;
+ * NEFT UTR = 16 characters; RTGS UTR = 22 characters.
+ */
+export function utrLooksUsual(utr: string | null | undefined): boolean {
+  if (!utr) return false;
+  return /^\d{12}$/.test(utr) || /^[A-Z0-9]{16}$/.test(utr) || /^[A-Z0-9]{22}$/.test(utr);
+}

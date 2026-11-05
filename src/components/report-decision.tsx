@@ -20,6 +20,7 @@ export type ReportForDecision = {
   number: string | null;
   balance_paise: number;
   tds_suggestion: { rate: number; tdsPaise: number } | null;
+  flags?: string[];
 };
 
 const rupees = (p: number) => (p / 100).toFixed(2).replace(/\.00$/, "");

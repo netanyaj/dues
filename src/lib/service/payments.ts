@@ -2,6 +2,7 @@ import { formatINR, rupeesToPaise } from "@/lib/domain/money";
 import { CLAIM_TOLERANCE_PAISE, suggestTds } from "@/lib/domain/tax";
 import { formatDate, istToday, isValidDate } from "@/lib/domain/dates";
 import { check, cleanText, db, DuesError, logEvent, type Ctx } from "./core";
+import { utrLooksUsual } from "@/lib/domain/upi";
 import { assertAllowed, findInvoice, type InvoiceRow, type PaymentRow } from "./invoices";
 
 export type PaymentInput = {
@@ -137,7 +138,20 @@ export async function pendingReports(ctx: Ctx) {
     await db().from("invoice_view").select("id, number, client_name, total_paise, subtotal_paise, balance_paise").in("id", [...new Set(rows.map((r) => r.invoice_id))]),
   ) as { id: string; number: string; client_name: string; total_paise: number; subtotal_paise: number; balance_paise: number }[];
   const byId = new Map(invs.map((i) => [i.id, i]));
+  // D16: flag (never block) references reused on another payment.
+  const utrs = [...new Set(rows.map((r) => r.utr).filter(Boolean))] as string[];
+  const dupes = utrs.length
+    ? (check(await db().from("payments").select("id, invoice_id, utr").eq("user_id", ctx.userId).neq("status", "rejected").in("utr", utrs)) as { id: string; invoice_id: string; utr: string }[])
+    : [];
+  const otherInvoiceIds = [...new Set(dupes.map((d) => d.invoice_id))];
+  const numbers = otherInvoiceIds.length
+    ? new Map((check(await db().from("invoices").select("id, number").in("id", otherInvoiceIds)) as { id: string; number: string }[]).map((x) => [x.id, x.number]))
+    : new Map<string, string>();
   return rows.map((p) => {
+    const reused = dupes.find((d) => d.utr === p.utr && d.id !== p.id);
+    const flags: string[] = [];
+    if (!utrLooksUsual(p.utr)) flags.push("Unusual reference format. UPI/IMPS references are 12 digits; NEFT 16 and RTGS 22 characters.");
+    if (reused) flags.push(`Reference already used on ${numbers.get(reused.invoice_id) ?? "another invoice"}.`);
     const inv = byId.get(p.invoice_id)!;
     const amount = Number(p.amount_paise);
     return {
@@ -148,6 +162,7 @@ export async function pendingReports(ctx: Ctx) {
       total_paise: Number(inv?.total_paise),
       balance_paise: Number(inv?.balance_paise),
       tds_suggestion: inv ? suggestTds(Number(inv.subtotal_paise), Number(inv.balance_paise), amount) : null,
+      flags,
     };
   });
 }

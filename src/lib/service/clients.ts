@@ -114,7 +114,7 @@ export async function clientStats(ctx: Ctx, clientId: string) {
   let outstanding = 0, overdue = 0, tds = 0;
   for (const r of rows) {
     tds += Number(r.tds_total_paise);
-    if (["sent", "partially_paid", "overdue", "payment_reported"].includes(r.status)) outstanding += Number(r.balance_paise);
+    if (["sent", "partially_paid", "overdue"].includes(r.status)) outstanding += Number(r.balance_paise);
     if (r.status === "overdue") overdue += Number(r.balance_paise);
   }
   return { outstanding_paise: outstanding, overdue_paise: overdue, tds_paise: tds, invoice_count: rows.length };

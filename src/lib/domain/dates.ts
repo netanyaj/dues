@@ -52,3 +52,21 @@ export function formatDateTime(ts: string): string {
   const ist = new Date(Date.parse(ts) + 330 * 60 * 1000).toISOString();
   return `${formatDate(ist.slice(0, 10))}, ${ist.slice(11, 16)}`;
 }
+
+/** Weekday check for a YYYY-MM-DD date (Sat/Sun are not working days; bank holidays not modelled, D16). */
+export function isWeekend(date: string): boolean {
+  const d = new Date(`${date}T00:00:00Z`).getUTCDay();
+  return d === 0 || d === 6;
+}
+
+/** Working days strictly after `from`, up to and including `to`. */
+export function workingDaysBetween(from: string, to: string): number {
+  let n = 0;
+  for (let d = addDays(from, 1); d <= to; d = addDays(d, 1)) if (!isWeekend(d)) n++;
+  return n;
+}
+
+/** IST calendar date of a timestamp. */
+export function istDateOf(ts: string): string {
+  return istToday(new Date(ts));
+}

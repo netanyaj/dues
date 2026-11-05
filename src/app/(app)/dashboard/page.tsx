@@ -29,7 +29,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "re
 export default async function Dashboard({ searchParams }: PageProps<"/dashboard">) {
   const ctx = await requireCtx();
   const sp = await searchParams;
-  const status = typeof sp.status === "string" && (ALL_STATUSES as string[]).concat("outstanding").includes(sp.status) ? (sp.status as InvoiceStatus | "outstanding") : null;
+  const status = typeof sp.status === "string" && (ALL_STATUSES as string[]).concat("outstanding", "payment_reported").includes(sp.status) ? (sp.status as InvoiceStatus | "outstanding" | "payment_reported") : null;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 60) : "";
 
   const [summary, reports, invoices, anyInvoices] = await Promise.all([
@@ -65,6 +65,9 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                     UTR {r.utr ?? "—"} · {formatDate(r.paid_on)}
                     {r.tds_suggestion ? ` · rest looks like ${r.tds_suggestion.rate}% TDS` : r.amount_paise < r.balance_paise ? ` · ${formatINR(r.balance_paise - r.amount_paise)} short of the balance` : ""}
                   </p>
+                  {r.flags.map((f) => (
+                    <p key={f} className="mt-0.5 text-sm font-medium text-amber-900">⚠ {f}</p>
+                  ))}
                 </div>
                 <ReportDecision report={r} />
               </li>
@@ -83,6 +86,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                   <span className="min-w-0">
                     <span className="font-medium">{r.client_name}</span>{" "}
                     <span className="text-sm text-muted-foreground">{r.number}</span>
+                    {r.chase_note && <span className="block text-sm text-amber-900">{r.chase_note}</span>}
                   </span>
                   <span className="flex items-center gap-3 text-sm">
                     <span className="tabular-nums">{formatINR(r.balance_paise)}</span>
@@ -106,6 +110,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
               <select id="status" name="status" defaultValue={status ?? ""} className="h-9 rounded-lg border border-input bg-transparent px-2 text-sm">
                 <option value="">All statuses</option>
                 <option value="outstanding">Outstanding</option>
+                <option value="payment_reported">Payment reported</option>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
               </select>
               <label htmlFor="q" className="sr-only">Search</label>
@@ -153,7 +158,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                     <td className="px-4 py-2.5 whitespace-nowrap">{formatDate(i.due_date)}</td>
                     <td className="px-4 py-2.5">
                       <span className="flex items-center gap-1.5">
-                        <StatusBadge status={i.status} />
+                        <StatusBadge status={i.status} pendingReports={i.pending_reports} />
                         {i.needs_review && <span className="text-xs font-medium whitespace-nowrap text-amber-800">Check totals</span>}
                       </span>
                     </td>

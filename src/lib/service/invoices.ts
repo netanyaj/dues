@@ -2,7 +2,7 @@ import { GST_RATES, stateName, type GstRate } from "@/lib/domain/gst";
 import { formatINR, parseQtyMilli, qtyMilliToString, rupeesToPaise } from "@/lib/domain/money";
 import { checkClaimedTotal, computeTotals } from "@/lib/domain/tax";
 import { addDays, daysBetween, formatDate, istToday, isValidDate } from "@/lib/domain/dates";
-import { ACTION_REFUSAL, allowedActions, STATUS_LABEL, type Action, type InvoiceStatus, type Stage } from "@/lib/domain/status";
+import { ACTION_REFUSAL, allowedActions, statusText, type Action, type InvoiceStatus, type Stage } from "@/lib/domain/status";
 import { appUrl, check, cleanText, db, DuesError, fromDb, logEvent, type Ctx } from "./core";
 import { getProfile, type Profile } from "./profile";
 import { findClientByName, getClient, type Client } from "./clients";
@@ -39,7 +39,9 @@ export type InvoiceRow = {
   tds_total_paise: number;
   balance_paise: number;
   pending_reports: number;
+  last_report_at: string | null;
   days_overdue: number;
+  original_due_date: string | null;
   public_id: string | null;
   notes: string | null;
   source: "claude" | "app";
@@ -142,11 +144,12 @@ export async function getInvoiceDetail(ctx: Ctx, id: string) {
   };
 }
 
-export type ListFilters = { status?: InvoiceStatus | "outstanding" | null; client?: string | null; q?: string | null; limit?: number };
+export type ListFilters = { status?: InvoiceStatus | "outstanding" | "payment_reported" | null; client?: string | null; q?: string | null; limit?: number };
 
 export async function listInvoices(ctx: Ctx, f: ListFilters = {}): Promise<InvoiceRow[]> {
   let q = db().from("invoice_view").select("*").eq("user_id", ctx.userId).order("created_at", { ascending: false }).limit(Math.min(Math.max(f.limit ?? 100, 1), 500));
-  if (f.status === "outstanding") q = q.in("status", ["sent", "partially_paid", "overdue", "payment_reported"]);
+  if (f.status === "outstanding") q = q.in("status", ["sent", "partially_paid", "overdue"]);
+  else if (f.status === "payment_reported") q = q.gt("pending_reports", 0).in("status", ["sent", "partially_paid", "overdue"]);
   else if (f.status) q = q.eq("status", f.status);
   if (f.client) {
     if (UUID.test(f.client)) q = q.eq("client_id", f.client);
@@ -392,26 +395,33 @@ export async function cancelInvoice(ctx: Ctx, ref: string, reason?: string | nul
   return findInvoice(ctx, inv.id);
 }
 
-/** After sending, only notes and the due date can change (rule 5). */
-export async function updateIssuedDetails(ctx: Ctx, ref: string, patch: { notes?: string | null; due_date?: string | null }): Promise<InvoiceRow> {
+/**
+ * After sending, only notes and the due date can change (rule 5).
+ * D18: the due date can only be extended, with a reason; original_due_date never changes.
+ */
+export async function updateIssuedDetails(ctx: Ctx, ref: string, patch: { notes?: string | null; due_date?: string | null; reason?: string | null }): Promise<InvoiceRow> {
   const inv = await findInvoice(ctx, ref);
   assertAllowed(inv, "edit_notes_due");
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  const changed: Record<string, unknown> = {};
-  if (patch.due_date !== undefined && patch.due_date !== null && patch.due_date !== inv.due_date) {
+  const events: [string, Record<string, unknown>][] = [];
+  if (patch.due_date && patch.due_date !== inv.due_date) {
     const d = String(patch.due_date).slice(0, 10);
     if (!isValidDate(d)) throw new DuesError("invalid_input", "That due date isn't valid. Use YYYY-MM-DD.", "due_date");
-    if (d < inv.issue_date) throw new DuesError("invalid_input", `The due date can't be before the issue date (${formatDate(inv.issue_date)}).`, "due_date");
+    if (d < inv.due_date) {
+      throw new DuesError("invalid_input", `A sent invoice's due date can only be extended, not brought forward (currently ${formatDate(inv.due_date)}).`, "due_date");
+    }
+    const reason = cleanText(patch.reason, 200);
+    if (!reason) throw new DuesError("invalid_input", "Add a short reason for the extension, e.g. \"Client asked for 30 days\".", "reason");
     update.due_date = d;
-    changed.due_date = { from: inv.due_date, to: d };
+    events.push(["due_date_extended", { from: inv.due_date, to: d, original: inv.original_due_date, reason }]);
   }
   if (patch.notes !== undefined) {
     const n = cleanText(patch.notes, 1000);
-    if (n !== inv.notes) { update.notes = n; changed.notes = true; }
+    if (n !== inv.notes) { update.notes = n; events.push(["notes_updated", {}]); }
   }
-  if (Object.keys(changed).length === 0) return inv;
+  if (events.length === 0) return inv;
   check(await db().from("invoices").update(update).eq("id", inv.id).eq("user_id", ctx.userId));
-  await logEvent(ctx, inv.id, "details_updated", changed);
+  for (const [type, payload] of events) await logEvent(ctx, inv.id, type, payload);
   return findInvoice(ctx, inv.id);
 }
 
@@ -441,10 +451,12 @@ export function describeInvoice(inv: InvoiceRow, items?: ItemRow[]) {
     number: inv.number ?? null,
     label: inv.number ?? `Draft · ${formatDate(inv.created_at.slice(0, 10))}`,
     status: inv.status,
-    status_label: STATUS_LABEL[inv.status],
+    status_label: statusText(inv.status, inv.pending_reports),
+    payment_reported_unconfirmed: inv.pending_reports > 0,
     client: inv.client_name,
     issue_date: inv.issue_date,
     due_date: inv.due_date,
+    original_due_date: inv.original_due_date ?? undefined,
     days_overdue: inv.days_overdue,
     subtotal: r(inv.subtotal_paise),
     tax,

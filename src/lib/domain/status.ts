@@ -1,10 +1,12 @@
-// Mirrors the CASE in invoice_view (supabase/migrations/0001_schema.sql).
+import { workingDaysBetween } from "./dates";
+
+// Mirrors the CASE in invoice_view (supabase/migrations/0004_trust_and_extensions.sql).
 // The SQL view is the source of truth for reads; this is used for tests,
 // for deciding which actions are allowed, and for labels.
 
 export type Stage = "draft" | "issued" | "cancelled";
 export type PaymentStatus = "reported" | "confirmed" | "rejected";
-export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "overdue" | "payment_reported" | "paid" | "cancelled";
+export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "overdue" | "paid" | "cancelled";
 
 export type StatusInput = {
   stage: Stage;
@@ -14,7 +16,11 @@ export type StatusInput = {
   payments: { status: PaymentStatus; amountPaise: number; tdsPaise: number }[];
 };
 
-export function deriveStatus(i: StatusInput): { status: InvoiceStatus; balancePaise: number; daysOverdue: number } {
+/**
+ * D16: status is decided by confirmed money only. A client's report is a separate
+ * flag (`paymentReported`) and never changes whether an invoice is overdue.
+ */
+export function deriveStatus(i: StatusInput): { status: InvoiceStatus; balancePaise: number; daysOverdue: number; paymentReported: boolean } {
   const settled = i.payments.filter((p) => p.status === "confirmed").reduce((a, p) => a + p.amountPaise + p.tdsPaise, 0);
   const pending = i.payments.some((p) => p.status === "reported");
   const balancePaise = Math.max(i.totalPaise - settled, 0);
@@ -28,11 +34,10 @@ export function deriveStatus(i: StatusInput): { status: InvoiceStatus; balancePa
   if (i.stage === "cancelled") status = "cancelled";
   else if (i.stage === "draft") status = "draft";
   else if (settled >= i.totalPaise) status = "paid";
-  else if (pending) status = "payment_reported";
   else if (pastDue) status = "overdue";
   else if (settled > 0) status = "partially_paid";
   else status = "sent";
-  return { status, balancePaise, daysOverdue };
+  return { status, balancePaise, daysOverdue, paymentReported: pending && i.stage === "issued" && status !== "paid" };
 }
 
 export const STATUS_LABEL: Record<InvoiceStatus, string> = {
@@ -40,12 +45,25 @@ export const STATUS_LABEL: Record<InvoiceStatus, string> = {
   sent: "Sent",
   partially_paid: "Partially paid",
   overdue: "Overdue",
-  payment_reported: "Payment reported",
   paid: "Paid",
   cancelled: "Cancelled",
 };
 
 export const ALL_STATUSES = Object.keys(STATUS_LABEL) as InvoiceStatus[];
+
+/** "Overdue · payment reported" */
+export function statusText(status: InvoiceStatus, pendingReports: number): string {
+  return pendingReports > 0 && status !== "paid" && status !== "cancelled" && status !== "draft"
+    ? `${STATUS_LABEL[status]} · payment reported`
+    : STATUS_LABEL[status];
+}
+
+/** D16: a client's report pauses chasing for 2 working days after the report date (IST). */
+export const REPORT_PAUSE_WORKING_DAYS = 2;
+export function isChasePaused(lastReportIstDate: string | null, today: string): boolean {
+  if (!lastReportIstDate) return false;
+  return workingDaysBetween(lastReportIstDate, today) <= REPORT_PAUSE_WORKING_DAYS;
+}
 
 // ---- Transitions (rule 5 and 6, adapted per DECISIONS.md D4) ---------------
 
