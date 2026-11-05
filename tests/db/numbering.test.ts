@@ -16,6 +16,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   let admin: SupabaseClient;
   const users: { id: string; email: string; password: string }[] = [];
   const stamp = Date.now();
+  let userA = { id: "" };
 
   async function makeUser(tag: string) {
     const email = `test-${tag}-${stamp}@dues.test`;
@@ -76,6 +77,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
 
   it("20 concurrent sends get 20 distinct, consecutive numbers", async () => {
     const a = await makeUser("a");
+    userA = { id: a.userId };
     const drafts = await Promise.all(Array.from({ length: 20 }, () => makeDraft(a.userId, a.clientId)));
     const results = await Promise.all(
       drafts.map((id) => admin.rpc("issue_invoice", { p_user: a.userId, p_invoice: id, p_today: "2026-11-05", p_actor: "user" })),
@@ -94,7 +96,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   });
 
   it("sending twice is refused and doesn't burn a number", async () => {
-    const u = users[0];
+    const u = userA;
     const { data: c } = await admin.from("clients").select("id").eq("user_id", u.id).single();
     const id = await makeDraft(u.id, c!.id);
     const one = await admin.rpc("issue_invoice", { p_user: u.id, p_invoice: id, p_today: "2026-11-05", p_actor: "user" });
@@ -106,7 +108,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   });
 
   it("sent invoices are locked against save_draft", async () => {
-    const u = users[0];
+    const u = userA;
     const { data: inv } = await admin.from("invoices").select("id, client_id").eq("user_id", u.id).eq("stage", "issued").limit(1).single();
     const r = await admin.rpc("save_draft", {
       p_user: u.id,
@@ -117,7 +119,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   });
 
   it("flagged drafts can't be sent", async () => {
-    const u = users[0];
+    const u = userA;
     const { data: c } = await admin.from("clients").select("id").eq("user_id", u.id).single();
     const id = await makeDraft(u.id, c!.id);
     await admin.from("invoices").update({ needs_review: true, review_reason: "test" }).eq("id", id);
@@ -130,7 +132,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     const asB = createClient(URL!, PUBLISHABLE!, { auth: { persistSession: false } });
     const { error: se } = await asB.auth.signInWithPassword({ email: b.email, password: b.password });
     expect(se).toBeNull();
-    const aId = users[0].id;
+    const aId = userA.id;
     const inv = await asB.from("invoices").select("id").eq("user_id", aId);
     expect(inv.data).toEqual([]);
     const view = await asB.from("invoice_view").select("id").eq("user_id", aId);
@@ -152,7 +154,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   });
 
   it("invoice_view derives overdue and paid", async () => {
-    const u = users[0];
+    const u = userA;
     const { data: inv } = await admin.from("invoices").select("id, total_paise").eq("user_id", u.id).eq("stage", "issued").order("seq").limit(2);
     const [x, y] = inv!;
     await admin.from("invoices").update({ issue_date: "2026-10-01", due_date: "2026-10-16" }).eq("id", x.id);
