@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { getPublicInvoice } from "@/lib/service/payments";
@@ -155,9 +156,9 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
       </section>
 
       <InvoiceDocument d={docFromInvoice(inv, items)} />
-      <a href="/" className="mx-auto flex items-center gap-2 caption-5 text-muted-foreground hover:text-foreground print:hidden">
+      <Link href="/" className="mx-auto flex items-center gap-2 caption-5 text-muted-foreground hover:text-foreground print:hidden">
         <LogoMark size={16} /> Sent with Dues
-      </a>
+      </Link>
     </main>
   );
 }
