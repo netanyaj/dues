@@ -32,3 +32,10 @@ Tick ✅ with the date when it passes on production. ◐ = checked locally only.
 | T15 | **Extension (D18):** extend a sent invoice's due date with a reason; the client page shows "Due date extended from … to …"; `original_due_date` is unchanged. Moving it earlier is refused. | ⬜ |
 | T16 | **Reference checks (D16):** a reused UTR and an unusual-format UTR are flagged to the freelancer, not blocked for the client. | ◐ local: PhonePe-style 23-char ID accepted and flagged |
 | T17 | Walk the main loop at phone width and fix anything awkward. | ⬜ |
+| T18 | **Claude retries (D23):** the same `create_invoice` twice returns the same draft id; `allow_duplicate: true` creates a second. | ⬜ |
+| T19 | **Claude can't finalise (D24):** `mark_ready_to_send` doesn't number or lock; `record_payment` from Claude lands in "Needs your confirmation"; `upsert_client` can't overwrite a saved phone. | ⬜ |
+| T20 | **Reminder stages (D19):** an invoice 8 days overdue suggests "Stage 2 · firm"; the saved reminder shows its stage. | ⬜ |
+| T21 | **CSV export (D22):** download for a date range; columns and GST split match the invoices; it opens in a spreadsheet. | ⬜ |
+| T22 | **MSME (D20):** with Udyam number + micro/small, the line appears on the invoice and client page; medium shows nothing; 50-day terms show the warning. | ⬜ |
+| T23 | **Token hash (D25):** the link is shown once after Regenerate; Settings then shows only the last 4 characters; the database holds only the hash. | ⬜ |
+

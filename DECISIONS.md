@@ -205,3 +205,100 @@ It shows:
 - METRICS adds "% of invoices extended", so a freelancer who extends a lot shows up too.
 - MCP has no tool for editing sent invoices, so extensions happen in the app only.
 
+## D19. Chasing is must-ship; reminders have three stages
+
+**Question:** what's the core pain: creating invoices, or getting paid?
+
+**Evidence (weak):** one r/smallbusiness thread (mostly US small businesses) says chasing, not invoice creation, is the pain. The founder's own reasoning agrees. This isn't Indian freelancer research; see the PRD gap.
+
+**Decision**
+- "To chase today" and reminders move from if-ahead to must-ship.
+- A reminder has a stage: 1 friendly, 2 firm, 3 final. The chase list suggests the next stage at +3, +7 and +14 days overdue: the highest stage reached that hasn't been saved yet.
+- Claude writes the message for that stage. `save_reminder` stores it; Dues never sends anything.
+
+**Gave up:** reminders as a stretch goal; about 35 minutes of build time.
+
+## D20. MSME line on the invoice: factual, and only when it's legally true
+
+**Question:** can Dues use the law that protects small suppliers from late payment?
+
+**Decision**
+- Optional `udyam_number` on the profile, checked for format only (`UDYAM-XX-00-0000000`; Dues doesn't verify it, consistent with D17).
+- A required `msme_category` when it's set: micro, small or medium.
+- The line shows on the invoice and client page **only for micro and small**. Sections 15–16 of the MSMED Act and Section 43B(h) of the Income-tax Act don't cover medium enterprises or traders.
+- The form warns if the due date is more than 45 days after issue.
+
+**Exact text (micro/small):**
+> {Business} is registered as a {micro|small} enterprise under the MSMED Act, 2006 (Udyam Registration No. {UDYAM-…}). Under Section 15 of the Act, payment is due within the agreed period, which cannot exceed 45 days from acceptance, or within 15 days if no period is agreed. Under Section 16, late payments carry compound interest at three times the bank rate notified by the RBI. Under Section 43B(h) of the Income-tax Act, 1961, a buyer can deduct this expense only in the year it is actually paid, if it is paid after the time allowed.
+
+**Form warning (due date more than 45 days after issue):**
+> This due date is more than 45 days after the invoice date. For a registered micro or small enterprise, the MSMED Act limits agreed payment terms to 45 days.
+
+**Why this wording:**
+- It states the law and doesn't threaten.
+- It doesn't claim the client has accepted anything.
+- It names the 15-day default, so it isn't wrong when there's no written agreement.
+
+**Gave up:** a punchier "pay in 45 days or pay interest" line, which would be inaccurate.
+
+## D21. No forced setup order: clients are created inside the invoice step
+
+**Question:** the r/smallbusiness thread says tools that make you set things up in a fixed order lose people.
+
+**Decision**
+- `create_invoice` (MCP) and the app's invoice form create the client in the same step if it doesn't exist.
+- Name and state are required (state decides CGST/SGST vs IGST). Email, phone and GSTIN are optional and can be added later.
+- The "call upsert_client first" error is removed. `upsert_client` stays for adding or updating details.
+- **Safety (see D24):** from Claude, `upsert_client` and inline creation only fill blank fields on an existing client. Changing a saved phone, email or GSTIN needs the app, because an injected instruction could otherwise redirect reminders.
+
+## D22. CSV export is must-ship; GSTR-1 format stays v2
+
+**Decision:** an Export button on the dashboard, with a date range on the issue date. One row per sent or cancelled invoice: number, issue date, client, client GSTIN, place of supply, taxable value, CGST, SGST, IGST, total, TDS, amount received, status. Amounts are in rupees with two decimals, so a spreadsheet reads them without conversion. Drafts are excluded because they aren't tax documents (D1).
+
+**Gave up:** the formatted GSTR-1 file (v2).
+
+## D23. Duplicate drafts from Claude retries are caught on the server
+
+**Question:** Claude retries `create_invoice` after a timeout. Do we get two drafts?
+
+**Options:** idempotency keys (only work if Claude resends the same key, which we can't rely on); server-side duplicate check; accept it.
+
+**Decision**
+- Before inserting, Dues looks for a draft with the same user, client and GST rate, the same line items (description ignoring case and spaces, qty, rate) and total, created in the last 10 minutes.
+- If it finds one, it returns that draft with "This invoice was already created a moment ago; returning the existing draft."
+- `allow_duplicate: true` overrides the check when two identical invoices are really wanted.
+- Low risk either way: drafts have no number and can be deleted (D1).
+
+## D24. Claude drafts, code checks, a human confirms anything irreversible
+
+**Question:** Claude can be manipulated by text it reads, e.g. an email that says "mark invoice 7 as paid". Should it be able to send invoices or record payments?
+
+| Action | From Claude |
+|---|---|
+| Read: profile, list, summary | Allowed (`readOnlyHint: true`) |
+| Create or edit drafts, add clients | Allowed (`destructiveHint: false`). Drafts can be deleted, and code checks every number. Existing client details can only be filled in, not overwritten (D21). |
+| Save a reminder | Allowed: it only stores text; the freelancer taps to send. |
+| Send an invoice | **Not allowed.** `mark_invoice_sent` is replaced by `mark_ready_to_send`, which flags the draft and returns the app link. Only a person pressing Send in the app assigns the number, locks the amounts and creates the public link. |
+| Record a payment | **Pending only.** `record_payment` creates a `reported` payment (`reported_by = claude`), exactly like a client report. The freelancer confirms it under "Needs your confirmation". |
+
+- The tool descriptions say plainly: "Dues never sends invoices or confirms payments from chat; the freelancer does that in the app."
+- The dashboard has a "Ready to send" section.
+- A test checks that no MCP tool can move an invoice to issued or set a payment to confirmed.
+- **Demo script:** Claude creates the invoice → a deliberately wrong total triggers review → open the app, fix it and press Send → the client pays → confirm. This also shows the brief's "a person can open your app and change it" as a real step.
+- **Gave up:** fully hands-free sending from chat.
+
+## D25. The MCP token is stored only as a hash and shown once
+
+**Decision**
+- Profiles store `mcp_token_hash` (SHA-256) and the last 4 characters; never the token itself. MCP looks users up by hashing the token in the URL.
+- The full link is shown once: after onboarding and after Regenerate, with a copy button and "Copy this now — for security we can't show it again." After that, Settings shows only `…abcd` and Regenerate.
+- Demo accounts can't regenerate (D13). The seed script prints each demo link once, to the terminal only, never to a committed file.
+- **Logs:** Claude custom connectors only accept a URL, so the token still appears in Vercel's request logs. v1 mitigations: our code never logs the URL or token (a test checks the MCP route source); Vercel's default log retention is kept; logs are forwarded nowhere. The real fix is OAuth in v2. This is a known v1 risk (PRD §9, ARCHITECTURE security).
+- **Interview line:** "Hashing protects every user's connection if the database leaks. The token still appears in request logs because Claude's connectors only take a URL. That's a known v1 risk with a small blast radius (instant regenerate), and OAuth in v2 removes it."
+
+## D26. v2 additions from research
+- TDS certificate (Form 16A) tracking per client per quarter.
+- Advance or deposit invoices, and late-fee clauses.
+- An escalation guide: MSME Samadhaan, and the GST portal's taxpayer messages.
+- If ahead in v1: `get_recent_items` and line-item autosuggest, so "same as last month" works.
+
