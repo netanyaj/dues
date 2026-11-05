@@ -391,6 +391,12 @@ export async function updateDraft(ctx: Ctx, ref: string, patch: DraftInput): Pro
   };
   const terms = daysBetween(invoice.issue_date, invoice.due_date);
   const p = await prepareDraft(ctx, profile, merged, { issueDate: invoice.issue_date, terms, claimed: invoice.claimed_total_paise });
+  // The freelancer already confirmed this total (flag off, reason kept). Saving again without
+  // changing the total, or a new claim, must not raise the flag again.
+  const confirmedEarlier = !invoice.needs_review && invoice.review_reason != null;
+  if (confirmedEarlier && p.review.needsReview && p.totals.total === invoice.total_paise && patch.expected_total_rupees == null) {
+    p.review = { needsReview: false, reason: invoice.review_reason };
+  }
   await writeDraft(ctx, invoice.id, p, invoice.source);
   await logEvent(ctx, invoice.id, "draft_updated", { total_paise: p.totals.total, previous_total_paise: invoice.total_paise });
   if (p.review.needsReview && !invoice.needs_review) await logEvent(ctx, invoice.id, "flagged_for_review", { reason: p.review.reason });
