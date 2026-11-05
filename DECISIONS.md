@@ -603,3 +603,31 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - "Header value for claude.ai" copies exactly `Bearer <token>`, as displayed.
 - A separate "Claude Code command" row copies the full `claude mcp add … --header "Authorization: Bearer <token>"` with the token filled in.
 - The server still accepts every form (D41), so older copies keep working.
+
+## D45. Landing motion and accent: drifting glows, gradient headline, scroll reveals
+
+**Context:** the founder found the landing static. The final call to action was one flat orchid block, and the accent had mostly left the UI after D42.
+
+**Decision:**
+- **Drifting glows** sit behind the dark tagline band and the final call to action, which is now ink, not flat orchid. They're soft orchid (`#DA5CC7`) and violet (`#7C5CF0`) blurred shapes, plus a faint version behind the hero. They drift over 18–22s. Only `transform` and `opacity` animate, and reduced motion stops them.
+- **The hero's "Get paid on time."** uses an orchid-to-violet gradient on the text (gradients on hero heading text are allowed; on backgrounds they're only these soft glows).
+- **Sections rise 32px and fade in once,** via IntersectionObserver.
+- **App accent:**
+  - the active nav icon is orchid;
+  - section count chips ("Needs you 5") are orchid on a light orchid tint;
+  - buttons stay ink.
+
+## D46. MCP prompts: server is spec-correct; claude.ai doesn't list them yet
+
+**Checked on production:**
+- `initialize` declares `capabilities.prompts.listChanged = true` (2025-06-18 and 2025-11-25).
+- `prompts/list` returns `chase_overdue`, `what_am_i_owed` and `invoice_client`, each with name, title and description. `invoice_client` also lists its two optional arguments.
+- `prompts/get` works with and without arguments.
+- mcp-handler passes all of this through unchanged.
+
+**Why they're missing in claude.ai:** connector prompts are currently missing from claude.ai and Desktop for spec-correct servers. They used to sit under + → Connectors → Add from {server}; see [anthropics/claude-ai-mcp#333](https://github.com/anthropics/claude-ai-mcp/issues/333) and [anthropics/claude-code#105358](https://github.com/anthropics/claude-code/issues/105358). Claude Code shows them as `/mcp__dues__…`.
+
+**Decision:**
+- Keep the prompts as they are.
+- Also show the three flows as copyable prompts on Settings → Claude connection.
+- The tool descriptions and server instructions already steer plain-language requests ("chase my overdue invoices") to the same tools.

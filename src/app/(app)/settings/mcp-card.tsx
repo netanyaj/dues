@@ -112,7 +112,17 @@ export function ConnectSteps({ serverUrl }: { serverUrl: string }) {
       </div>
       <div>
         <p className="title-4 font-semibold">Then try</p>
-        <blockquote className="mt-2 rounded-lg bg-muted px-3 py-2 body-6">&ldquo;{TRY_PROMPT}&rdquo;</blockquote>
+        {/* D46: the same three flows as the MCP prompts. claude.ai doesn't list connector prompts
+            reliably yet (anthropics/claude-ai-mcp#333), so they're also here to copy. Claude Code shows
+            them as /mcp__dues__chase_overdue and so on. */}
+        <ul className="mt-2 flex flex-col gap-2">
+          {[TRY_PROMPT, "Chase my overdue invoices. Use Dues for who to chase and save the reminders.", "What am I owed? Use Dues and quote its figures."].map((p) => (
+            <li key={p} className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2 body-6">
+              <span className="min-w-0 flex-1">&ldquo;{p}&rdquo;</span>
+              <CopyButton value={p} label="Copy prompt" variant="ghost" size="icon-xs" />
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

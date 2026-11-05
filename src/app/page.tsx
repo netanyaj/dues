@@ -7,6 +7,8 @@ import { Logo } from "@/components/logo";
 import { sessionUser } from "@/lib/auth";
 import { ClientPagePreview } from "@/components/landing/client-page-preview";
 import { TaglineReveal } from "@/components/landing/tagline-reveal";
+import { Glow } from "@/components/landing/glow";
+import { Reveal } from "@/components/landing/reveal";
 
 export const metadata: Metadata = {
   title: { absolute: "Dues · Get paid on time, with correct GST on every invoice" },
@@ -60,11 +62,13 @@ export default async function Home() {
 
       <main id="main">
         {/* Hero */}
-        <section className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-20 pt-16 md:grid-cols-[1fr_auto] md:pt-24">
+        <section className="relative">
+          <Glow tone="light" />
+          <div className="relative mx-auto grid max-w-5xl items-center gap-12 px-4 pb-20 pt-16 md:grid-cols-[1fr_auto] md:pt-24">
           <div className="max-w-[680px]">
             <p className="inline-flex rounded-full bg-brand-soft px-3 py-1 caption-3 text-brand">For Indian freelancers and small studios</p>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-none">
-              <span className="text-brand-vivid">Get paid on time.</span><br />Correct GST on every invoice.
+              <span className="text-gradient-brand">Get paid on time.</span><br />Correct GST on every invoice.
             </h1>
             <p className="mt-6 max-w-[560px] body-3 text-muted-foreground">
               Dues tracks who owes you and tells you when to chase. Make invoices by asking your Claude: Dues works out the GST, numbers them in order and gives your client a page to pay by bank transfer or UPI.
@@ -76,10 +80,11 @@ export default async function Home() {
             <p className="mt-4 caption-5 text-muted-foreground">Free for up to 50 invoices · No fees on payments · No card needed</p>
           </div>
           <ClientPagePreview />
+          </div>
         </section>
 
         {/* Problem */}
-        <section className="border-t bg-background">
+        <Reveal><section className="border-t bg-background">
           <div className="mx-auto max-w-5xl px-4 py-20">
             <h2 className="max-w-[680px] heading-5 sm:heading-4">Making the invoice is the easy part. Getting paid is the second job.</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -106,10 +111,10 @@ export default async function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </section></Reveal>
 
         {/* How it works */}
-        <section id="how" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
+        <Reveal><section id="how" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
           <h2 className="heading-5 sm:heading-4">How it works</h2>
           <ol className="mt-10 grid gap-6 md:grid-cols-3">
             {[
@@ -124,15 +129,16 @@ export default async function Home() {
               </li>
             ))}
           </ol>
-        </section>
+        </section></Reveal>
 
         {/* Tagline */}
-        <section className="bg-sidebar px-4 py-24 text-center text-white">
-          <TaglineReveal accentLast lines={["Claude drafts.", "Code checks every rupee.", "You send, and you confirm."]} />
+        <section className="relative overflow-hidden bg-sidebar px-4 py-24 text-center text-white">
+          <Glow />
+          <div className="relative"><TaglineReveal accentLast lines={["Claude drafts.", "Code checks every rupee.", "You send, and you confirm."]} /></div>
         </section>
 
         {/* Checks */}
-        <section id="checks" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
+        <Reveal><section id="checks" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
           <h2 className="heading-5 sm:heading-4">What Dues checks in code</h2>
           <p className="mt-3 max-w-[560px] body-3 text-muted-foreground">Claude is good at understanding what you mean. Rules about money shouldn&apos;t depend on that, so Dues enforces them itself.</p>
           <dl className="mt-10 grid gap-x-10 gap-y-6 sm:grid-cols-2">
@@ -153,10 +159,10 @@ export default async function Home() {
               </div>
             ))}
           </dl>
-        </section>
+        </section></Reveal>
 
         {/* Connect */}
-        <section className="border-t bg-background">
+        <Reveal><section className="border-t bg-background">
           <div className="mx-auto max-w-5xl px-4 py-20">
             <h2 className="heading-5 sm:heading-4">Works with your Claude</h2>
             <p className="mt-3 max-w-[560px] body-3 text-muted-foreground">Ask Claude in plain words and the draft appears in Dues. Claude writes; Dues checks every number in code and never runs AI itself. You can also make every invoice by hand.</p>
@@ -174,10 +180,10 @@ export default async function Home() {
               ))}
             </ol>
           </div>
-        </section>
+        </section></Reveal>
 
         {/* Pricing */}
-        <section id="pricing" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
+        <Reveal><section id="pricing" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20">
           <h2 className="heading-5 sm:heading-4">Pricing</h2>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             <div className="flex flex-col rounded-xl border-2 border-brand p-6">
@@ -200,10 +206,10 @@ export default async function Home() {
               </ul>
             </div>
           </div>
-        </section>
+        </section></Reveal>
 
         {/* FAQ */}
-        <section id="faq" className="border-t bg-background">
+        <Reveal><section id="faq" className="border-t bg-background">
           <div className="mx-auto max-w-3xl scroll-mt-24 px-4 py-20">
             <h2 className="heading-5 sm:heading-4">Questions</h2>
             <div className="mt-8 divide-y rounded-xl border bg-card">
@@ -217,14 +223,17 @@ export default async function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </section></Reveal>
 
         {/* Final CTA */}
         <section className="mx-auto max-w-5xl px-4 py-20">
-          <div className="rounded-2xl bg-brand px-6 py-16 text-center text-white">
+          <div className="relative overflow-hidden rounded-2xl bg-sidebar px-6 py-16 text-center text-white">
+            <Glow />
+            <div className="relative">
             <h2 className="mx-auto max-w-[680px] heading-5 sm:heading-4">Send your next invoice from Claude, and know when it&apos;s paid.</h2>
-            <div className="mt-8 flex justify-center"><Button asChild size="lg" variant="secondary" className="bg-white hover:bg-brand-soft"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
+            <div className="mt-8 flex justify-center"><Button asChild size="lg" variant="secondary" className="bg-white text-foreground hover:bg-brand-soft"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button></div>
             <p className="mt-4 caption-5 text-white/80">Free for up to 50 invoices · No card needed</p>
+            </div>
           </div>
         </section>
       </main>

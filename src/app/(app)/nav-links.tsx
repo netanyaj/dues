@@ -29,7 +29,7 @@ export function SideNav() {
               active ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
             )}
           >
-            <Icon aria-hidden className="size-4" weight={active ? "fill" : "regular"} />
+            <Icon aria-hidden className={cn("size-4", active && "text-brand-on-dark")} weight={active ? "fill" : "regular"} />
             {l.label}
           </Link>
         );
@@ -49,7 +49,7 @@ export function TabBar() {
         return (
           <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
             className={cn("flex h-14 flex-col items-center justify-center gap-0.5 caption-4", active ? "text-foreground" : "text-muted-foreground")}>
-            <Icon aria-hidden className="size-5" weight={active ? "fill" : "regular"} />
+            <Icon aria-hidden className={cn("size-5", active && "text-brand")} weight={active ? "fill" : "regular"} />
             {l.label}
           </Link>
         );

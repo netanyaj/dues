@@ -23,7 +23,7 @@ export function Section({ title, count, action, children, className, id }: { tit
     <section id={id} className={cn("min-w-0", className)} aria-label={typeof title === "string" ? title : undefined}>
       <div className="mb-3 flex items-center gap-2">
         <h2 className="title-4 font-semibold">{title}</h2>
-        {count != null && <span className="caption-3 rounded-md bg-foreground px-1.5 text-background amount">{count}</span>}
+        {count != null && <span className="caption-3 rounded-md bg-brand-soft px-1.5 text-brand amount">{count}</span>}
         {action && <div className="ml-auto">{action}</div>}
       </div>
       {children}
