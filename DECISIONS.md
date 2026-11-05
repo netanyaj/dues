@@ -59,7 +59,7 @@ A Postgres view (`invoice_view`) works out the label, so the app, the filters an
 
 **Question:** a corporate client pays ₹32,400 against a ₹35,400 invoice. Is that a partial payment, or 10% TDS on the ₹30,000 subtotal?
 
-**Decision:** the client's "I've paid" form records only what the client says. When the freelancer confirms, Dues checks whether the shortfall equals 1%, 2%, 5% or 10% of the pre-GST subtotal, within ₹1. If it does, the form is pre-filled with "Looks like 10% TDS (₹3,000)". The freelancer accepts or changes it. This is plain arithmetic, not AI.
+**Decision:** the client's "I've paid" form records only what the client says. When the freelancer confirms, Dues checks whether the shortfall equals 1%, 2% or 10% of the pre-GST subtotal, within ₹1. These are the 194C (1%/2%) and 194J (2%/10%) rates that apply to freelancers; leaving out other rates avoids false matches. If it does, the form is pre-filled with "Looks like 10% TDS (₹3,000)". The freelancer accepts or changes it. This is plain arithmetic, not AI.
 
 **Why:** TDS is deducted on the amount before GST, and the client's word about it can't be trusted on its own.
 
@@ -108,7 +108,49 @@ All amounts are stored as `bigint` paise. Rupee inputs are parsed from their tex
 
 shadcn copies components into the repo instead of adding a heavy dependency, so it fits "no component-library rabbit holes". We add only the components we use.
 
----
+## D11. Why Dues, and not Zoho Invoice? Why does the app exist outside Claude?
 
-## Open questions
-- **Why Dues and not Zoho Invoice?** Zoho Invoice is free, GST-compliant and sends reminders. With bank transfer first, "zero fees" is no longer a differentiator. To be answered before Step 2.
+**Question:** Zoho Invoice is free, GST-compliant, sends reminders and accepts payments. With bank transfer first, "zero fees" isn't a differentiator.
+
+**Answer:** "Claude is where the freelancer works; Dues is where the money is kept honest." Zoho has a Claude connection too, but it's a full accounting suite underneath. Dues does one job, getting paid correctly, with no setup. **Our users aren't leaving Zoho; they're leaving Word and WhatsApp.** We concede openly that Zoho is free and strong.
+
+**Why the app must exist outside Claude:**
+- the client needs a page to pay from;
+- invoice numbering and tax rules must be enforced somewhere Claude can't override;
+- payment status must be tracked when no chat is open;
+- Claude's figures must be checked in code before anything is sent.
+
+**Follow-up to prepare:** Word is free. Who pays ₹299/month to replace it? (For the mock grilling.)
+
+## D12. Open sign-up, with email confirmation off
+
+**Question:** can reviewers sign up, or only use the test account?
+
+**Decision:** open sign-up, email confirmation off, and the user is logged in straight away. Supabase's built-in email sender is limited to a few emails an hour, so a reviewer's confirmation email might never arrive. We saw this ourselves: our own sign-up test hit "email rate limit exceeded" while confirmation was still on.
+
+**Cost:** spam sign-ups and junk data.
+
+**v1 mitigations:**
+- Supabase's auth rate limits;
+- a cap of 50 invoices per account, enforced by a database trigger;
+- `noindex` on public invoice pages.
+
+**v2:** Cloudflare Turnstile and email verification through a proper email sender.
+
+## D13. Seeded demo accounts, one per reviewer
+
+**Question:** several reviewers sharing one test account would see each other's Claude-created invoices. And the first one who tries "Regenerate link" disconnects everyone else.
+
+**Decision:** one seeded account per reviewer (sandeep@, rosh@, maneeshwar@, spare@dues.test). The seed script takes an email and creates a fully populated account with invoices in every state. Demo accounts have `is_demo = true`, which blocks "Regenerate link" (and client deletion, if we add it), with the note "Disabled on demo accounts — sign up to try it." The passwords go in the submission form, never in the repo. Stretch goal: a "Reset demo data" button that re-seeds only that account.
+
+**Why seeded and not sign-up only:** the brief asks for login details. A new account starts empty, so a reviewer would need about 15 minutes to create the states that show the thinking (overdue, partial payment with TDS, a reported payment, a cancelled invoice). Seeding costs one script.
+
+**Submission note:** "Fastest: sign up in 30 seconds and connect your own Claude. Or log in with your seeded account (Sandeep / Rosh / Maneeshwar), which already has invoices in every state."
+
+## D14. An incomplete profile blocks only Send
+
+New users land on a short setup page first, but nothing else is locked: they can add clients and drafts straight away. Send is refused in the database (`issue_invoice`) until the business name, address and state are set. Claude's tools return "Finish setup in Dues first: <link>" when something they need is missing.
+
+## D15. Browser roles can only read; every write goes through the server
+
+The browser's publishable key can read the user's own rows (RLS) but can't write any table. This blocks a user from setting `is_demo = false` on their own profile or writing a token. All writes go through server actions or MCP into the service layer (D8). The Supabase keys are the new-style ones: the publishable key (browser) and the secret key (server only, never `NEXT_PUBLIC_`).

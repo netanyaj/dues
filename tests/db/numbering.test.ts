@@ -8,9 +8,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { gstinCheckChar } from "@/lib/domain/gst";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const enabled = !!(URL && ANON && SERVICE);
+const PUBLISHABLE = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const SECRET = process.env.SUPABASE_SECRET_KEY;
+const enabled = !!(URL && PUBLISHABLE && SECRET);
 
 describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   let admin: SupabaseClient;
@@ -48,7 +48,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
   }
 
   beforeAll(async () => {
-    admin = createClient(URL!, SERVICE!, { auth: { persistSession: false } });
+    admin = createClient(URL!, SECRET!, { auth: { persistSession: false } });
   });
 
   afterAll(async () => {
@@ -56,6 +56,22 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
       await admin.from("invoices").delete().eq("user_id", u.id);
       await admin.auth.admin.deleteUser(u.id);
     }
+  });
+
+  it("sign-up creates a profile with a unique MCP token (trigger)", async () => {
+    const email = `dues-signup-test-${stamp}@example.com`;
+    const anon = createClient(URL!, PUBLISHABLE!, { auth: { persistSession: false } });
+    const { data, error } = await anon.auth.signUp({ email, password: `T3st!${stamp}signup` });
+    expect(error).toBeNull();
+    expect(data.session).not.toBeNull(); // email confirmation must be OFF
+    users.push({ id: data.user!.id, email, password: "" });
+    const { data: p } = await admin.from("profiles").select("mcp_token, is_demo").eq("user_id", data.user!.id).single();
+    expect(p!.mcp_token).toMatch(/^[0-9a-f]{48}$/);
+    expect(p!.is_demo).toBe(false);
+    // The browser can't change its own profile (no is_demo flipping, no token writes).
+    await anon.auth.setSession(data.session!);
+    const w = await anon.from("profiles").update({ is_demo: true }).eq("user_id", data.user!.id).select();
+    expect(w.data ?? []).toEqual([]);
   });
 
   it("20 concurrent sends get 20 distinct, consecutive numbers", async () => {
@@ -111,7 +127,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
 
   it("another user sees none of this user's data, and can't call server functions", async () => {
     const b = await makeUser("b");
-    const asB = createClient(URL!, ANON!, { auth: { persistSession: false } });
+    const asB = createClient(URL!, PUBLISHABLE!, { auth: { persistSession: false } });
     const { error: se } = await asB.auth.signInWithPassword({ email: b.email, password: b.password });
     expect(se).toBeNull();
     const aId = users[0].id;
@@ -127,7 +143,7 @@ describe.skipIf(!enabled)("database: numbering, RLS, function grants", () => {
     const rpc = await asB.rpc("issue_invoice", { p_user: aId, p_invoice: "00000000-0000-0000-0000-000000000000", p_today: "2026-11-05", p_actor: "user" });
     expect(rpc.error).not.toBeNull();
     expect(rpc.error?.message).toMatch(/permission denied/);
-    const anon = createClient(URL!, ANON!, { auth: { persistSession: false } });
+    const anon = createClient(URL!, PUBLISHABLE!, { auth: { persistSession: false } });
     const anonRead = await anon.from("invoices").select("id");
     expect(anonRead.data ?? []).toEqual([]);
     // Browser can't write invoices directly even for itself.

@@ -11,8 +11,8 @@ export function db(): SupabaseClient {
   if (typeof window !== "undefined") throw new Error("service layer is server-only");
   if (_db) return _db;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Supabase env vars are missing (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).");
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error("Supabase env vars are missing (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY).");
   _db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   return _db;
 }
@@ -39,6 +39,7 @@ const DB_ERRORS: Record<string, string> = {
   zero_total: "An invoice with a total of ₹0 can't be sent.",
   no_items: "Add at least one line item before sending.",
   profile_incomplete: "Finish your business profile in Settings (business name, address, state) before sending invoices.",
+  invoice_limit: "This account has reached the 50-invoice limit for the free test version of Dues. Delete unused drafts to make room.",
   number_too_long: "Your invoice numbers would exceed 16 characters. Use a shorter prefix in Settings.",
 };
 

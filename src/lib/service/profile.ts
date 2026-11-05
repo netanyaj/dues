@@ -18,6 +18,7 @@ export type Profile = {
   bank_ifsc: string | null;
   invoice_prefix: string;
   mcp_token: string;
+  is_demo: boolean;
 };
 
 export async function getProfile(ctx: Ctx): Promise<Profile> {
@@ -123,7 +124,11 @@ export async function updateProfile(ctx: Ctx, input: ProfileInput): Promise<{ ok
   return { ok: true, profile };
 }
 
+export const DEMO_DISABLED = "Disabled on demo accounts — sign up to try it.";
+
 export async function regenerateMcpToken(ctx: Ctx): Promise<string> {
+  const p = await getProfile(ctx);
+  if (p.is_demo) throw new DuesError("demo_account", DEMO_DISABLED);
   const token = randomBytes(24).toString("hex");
   check(await db().from("profiles").update({ mcp_token: token, updated_at: new Date().toISOString() }).eq("user_id", ctx.userId));
   return token;

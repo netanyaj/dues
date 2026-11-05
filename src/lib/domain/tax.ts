@@ -57,7 +57,8 @@ export function checkClaimedTotal(computed: number, claimed: number | null | und
 }
 
 /** DECISIONS.md D5: does the shortfall look like TDS on the pre-GST subtotal? */
-export const TDS_RATES = [10, 5, 2, 1] as const;
+/** 194J (10% professional / 2% technical), 194C (1% / 2% contracts). DECISIONS.md D5. */
+export const TDS_RATES = [10, 2, 1] as const;
 
 export function suggestTds(subtotal: number, balance: number, amountPaid: number): { rate: number; tdsPaise: number } | null {
   const shortfall = balance - amountPaid;
