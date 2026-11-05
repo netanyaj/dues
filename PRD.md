@@ -99,7 +99,7 @@ Indian freelancers and small agencies invoice from Word or Excel templates and c
 | M4 | MCP tools, cron, integration script, seed, no-AI check | Fri 00:30 | ✅ 20:16 |
 | M5 | Deploy and production test (checkpoint, moved from 01:00 for D19–D25) | Fri ~01:45 | ✅ deployed 20:59; founder's real-Claude walkthrough passed (bugs fixed: D30 confirm-totals, mobile dashboard) |
 | M5b | Redesign, Settings rebuild, header-only MCP auth, FLOWS.md (D27–D30) | Fri 02:30 | ✅ 00:30 |
-| M5c | Live-site fixes: MCP discovery bug (D32), hot-pink brand (D33), invoice header (D34), bank at Send (D35), client dropdown (D36), views (D37), MCP prompts (D38), aging bar (D39), proof upload (D40) | Fri 03:45 | ✅ 02:40 local; production deploy waiting on the founder's go-ahead |
+| M5c | Live-site fixes: MCP discovery bug (D32), hot-pink brand (D33), invoice header (D34), bank at Send (D35), client dropdown (D36), views (D37), MCP prompts (D38), aging bar (D39), proof upload (D40) | Fri 03:45 | ✅ deployed 02:50; 26 MCP checks pass on production |
 | M6 | Docs | Fri 10:00 (submit by 12:00, hard limit 14:00) | ◐ README, ARCHITECTURE, METRICS, FLOWS written; final pass pending |
 
 **Must-ship:** everything in §4–§5, including the chase list, reminders with stages (D19), CSV export (D22) and the cron.
