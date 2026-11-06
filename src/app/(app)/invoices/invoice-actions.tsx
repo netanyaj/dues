@@ -335,7 +335,7 @@ export function ShareButton({ invoiceId, link, message, title, phone, email, sub
         <Label htmlFor={`share-${reminderId ?? invoiceId}`} className="sr-only">Message</Label>
         <Textarea id={`share-${reminderId ?? invoiceId}`} value={text} onChange={(e) => setText(e.target.value)} rows={5} maxLength={2000} className="[overflow-wrap:anywhere]" />
         <div className="grid grid-cols-2 gap-2">
-          <Button asChild><a href={whatsappHref(phone, text)} target="_blank" rel="noopener noreferrer" onClick={() => log("whatsapp")}><WhatsappLogoIcon weight="fill" aria-hidden />WhatsApp</a></Button>
+          <Button asChild variant="outline"><a href={whatsappHref(phone, text)} target="_blank" rel="noopener noreferrer" onClick={() => log("whatsapp")}><WhatsappLogoIcon weight="fill" aria-hidden />WhatsApp</a></Button>
           <Button asChild variant="outline"><a href={mailtoHref(email, subject, text)} onClick={() => log("email")}><EnvelopeSimpleIcon aria-hidden />Email</a></Button>
           <Button type="button" variant="outline" onClick={() => copy(text, "copy_message", "Message copied")}><CopyIcon aria-hidden />Copy message</Button>
           <Button type="button" variant="outline" onClick={() => copy(link, "copy_link", "Link copied")}><LinkIcon aria-hidden />Copy link</Button>

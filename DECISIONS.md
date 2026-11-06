@@ -663,3 +663,7 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **Otherwise the Share panel opens:** an editable message, then WhatsApp (`wa.me` with the saved phone, or a chat picker), Email (`mailto:` with the saved email), Copy message and Copy link.
 - **Every use logs a `shared` event** (`actor = user`) with `channel` set to `native`, `whatsapp`, `email` or `copy`, plus the detail and the reminder id when there is one. It shows in the history ("You opened WhatsApp to share"). A reminder shared through native, WhatsApp or email is marked sent (D19); copying doesn't mark it.
 - **Removed:** `ShareButtons`, `ShareMain`, `ReminderButtons`, "Send by email" under More, and the separate reminder "mark sent" action. Claude's `save_reminder` still returns its one-tap link.
+
+## D50. Share panel: all four channels look the same
+
+The founder chose equal outline buttons for WhatsApp, Email, Copy message and Copy link, so no channel is favoured. Highlighting WhatsApp ignored the freelancer's reminder channel and which contact details the client had. Logged for later: highlight the channel that matches the reminder or the client's saved contact.
