@@ -138,3 +138,62 @@ These are estimates at November 2026 list prices, for an active freelancer sendi
 | **Total** | **₹0** | **≈ ₹8 per customer per month** |
 
 **Pricing (ROADMAP.md):** v1 is free with a cap of 50 invoices per account. Pro at ₹299 a month is planned and is a hypothesis to test; at that price, ₹8 of running cost leaves a wide margin. The marginal cost is dominated by fixed platform fees, not usage. Verification (₹1–5 per check, D17) is the only per-use cost, and it would be passed through in a paid "Verified business" badge.
+
+## Data flow
+
+1. **Claude drafts.** The freelancer asks their Claude to bill a client. Claude calls `/api/mcp` with `Authorization: Bearer <token>`. Dues hashes the token to find the user, and `create_invoice` runs through the service layer: the domain code computes the tax split and total, the client is created if new, and the draft is saved with a `draft_created` event. Claude gets Dues' figures back, plus a flag if its own expected total was more than ₹1 off.
+2. **The freelancer checks and sends.** The app reads the same draft (server actions, same service layer). Send runs `issue_invoice()` in one Postgres transaction: the next number for the financial year, locked amounts, a frozen copy of seller and buyer details, and a random public id.
+3. **The client pays.** They open `/i/<public_id>`, pay by bank transfer or UPI outside Dues, and tap "Notify as paid" with the UTR (and optionally a screenshot, stored privately in Supabase Storage). That creates a pending payment.
+4. **The freelancer confirms.** They check their bank and confirm or reject. Status (paid, partly paid, overdue) is derived in `invoice_view` from confirmed payments, TDS and dates, so it can't drift.
+5. **Dues keeps working with no chat open.** A daily job at 06:00 IST logs invoices that became overdue. The dashboard and `get_receivables_summary` list who to chase and the next reminder stage. Claude writes the reminder and saves it with `save_reminder`; the freelancer sends it from their own WhatsApp or email.
+
+## What I built vs the proposed production system
+
+| Area | Built for this take-home (live) | Proposed production system |
+|---|---|---|
+| Claude connection | MCP server, 9 tools and 3 prompts; a per-user bearer token, stored hashed, sent in a header | OAuth sign-in with consent, scopes and expiry; listing in Claude's connector directory |
+| Getting paid | Client pays outside Dues; the freelancer confirms against their bank | The freelancer's own Razorpay or Cashfree confirms payments automatically; later, bank-data matching through Account Aggregator |
+| Messages | WhatsApp and email open on the freelancer's own device | Scheduled reminders sent by Dues (email first, then WhatsApp Business), with the freelancer's approval |
+| Trust | "Not verified" labels, bank-change and new-account warnings, a report link | Bank penny-drop and GSTIN status checks behind a paid "Verified business" badge; an ops queue for reports |
+| Invoicing | GST invoices, numbering, TDS, partial payments, cancel, CSV export | Credit and debit notes, recurring invoices, foreign currency with LUT, GSTR-1 export, Tally and Zoho sync |
+| Accounts | One freelancer per account, email and password | Teammates and roles, agency workspaces |
+| Infrastructure | Vercel and Supabase free tiers, one region | Paid tiers, the app and database in the same Indian region, backups and monitoring |
+
+## Volopay vs partner responsibilities (if Volopay ran Dues)
+
+Dues never holds money. It is the record and the rules; partners move money and verify identities.
+
+| Volopay owns | Partners own |
+|---|---|
+| The product: invoices, numbering, tax and TDS rules, statuses, the chase list | **Anthropic (Claude):** the interface the freelancer talks to, paid for by the freelancer; Dues only exposes tools |
+| The MCP server and its tool contracts: what Claude can and can't do | **Payment gateways (Razorpay, Cashfree):** collecting card, UPI and netbanking payments, settlement, and the freelancer's own gateway KYC |
+| Client payment pages and what they claim | **Banks and NPCI (UPI):** moving the money |
+| Data security, privacy and per-user isolation | **Verification providers and a GST Suvidha Provider:** bank account name match, GSTIN active status |
+| Compliance wording (GST fields, MSME line), support and fraud review | **Account Aggregators:** consented bank data for automatic matching (v3) |
+| Pricing, billing and the "Verified business" badge, which can reuse Volopay's existing business verification | **Messaging and email providers:** sending reminders (v2). **Hosting (Vercel, Supabase):** infrastructure. **Lenders:** early-payment financing (v3) |
+
+## Assumptions
+
+- The freelancer has Claude with custom connectors (any plan; Free allows one). Without it, everything works by hand in the app.
+- Most business clients pay by bank transfer; UPI suits smaller amounts (QR shown up to ₹1 lakh).
+- One GST rate per invoice, Indian financial year from 1 April, one freelancer per account.
+- Clients report payments in good faith; the freelancer's confirmation is the source of truth.
+- Pricing and conversion figures (8–15 invoices a month, ₹299 Pro) are hypotheses to test, not measured.
+
+## Limitations
+
+- No automatic payment confirmation; a reported payment counts only after the freelancer confirms it.
+- No bank or GSTIN verification; GSTINs are checked for format, checksum and state only ("structurally valid").
+- The Claude token has no expiry or scopes; regenerating it is the kill switch.
+- Abuse reports are logged, not reviewed.
+- Demo data (bank details, UPI ID, GSTINs) is fictional.
+
+## Next steps
+
+1. 10 freelancer interviews, and an Upgrade button at the 50-invoice cap to test willingness to pay.
+2. Payment confirmation through the freelancer's own gateway.
+3. OAuth for the Claude connection.
+4. Scheduled reminders and recurring invoices.
+5. Verification behind the paid badge.
+
+Full plan in [ROADMAP.md](ROADMAP.md).
