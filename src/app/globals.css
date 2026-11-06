@@ -174,15 +174,8 @@
   body { background: white; }
 }
 
-/* D45: landing motion. Soft orchid glows (shades of the one accent) drift slowly behind dark panels and the hero.
-   Only transform and opacity animate (landing-page-design B7); reduced motion stops them (rule above). */
-@keyframes glow-drift-a { 0% { transform: translate3d(-10%, -6%, 0) scale(1); } 50% { transform: translate3d(14%, 8%, 0) scale(1.15); } 100% { transform: translate3d(-10%, -6%, 0) scale(1); } }
-@keyframes glow-drift-b { 0% { transform: translate3d(12%, 10%, 0) scale(1.1); } 50% { transform: translate3d(-12%, -8%, 0) scale(0.95); } 100% { transform: translate3d(12%, 10%, 0) scale(1.1); } }
-@keyframes glow-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.85; } }
-@utility glow-a { animation: glow-drift-a 18s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
-@utility glow-b { animation: glow-drift-b 22s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
-@utility glow-pulse { animation: glow-pulse 9s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
-@utility text-gradient-brand {
-  background-image: linear-gradient(90deg, #8f2479 0%, #c043ab 45%, #e766d4 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+/* D51: the landing page's own pairing. Fraunces for headings and display lines, IBM Plex Sans for
+   everything else; tabular figures on all money via the amount utility and on Plex by default. */
+.landing { font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.landing :is(h1, h2, h3, blockquote) { font-family: var(--font-display), ui-serif, Georgia, serif; letter-spacing: -0.015em; }
+

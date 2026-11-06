@@ -667,3 +667,21 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 ## D50. Share panel: all four channels look the same
 
 The founder chose equal outline buttons for WhatsApp, Email, Copy message and Copy link, so no channel is favoured. Highlighting WhatsApp ignored the freelancer's reminder channel and which contact details the client had. Logged for later: highlight the channel that matches the reminder or the client's saved contact.
+
+## D51. Landing page: static, flat and varied (replaces D45's motion)
+
+**Context:** a design review. Reveal-on-scroll left Pricing and Questions at opacity 0 for some visitors, and the tagline's words started at 30% opacity (Lighthouse flagged contrast). Gradient text and glows read as decoration, the pills and "Step 1/2/3" eyebrows repeated SaaS patterns, and every section had the same heading-paragraph-stack shape.
+
+**Decision:**
+- **No reveal or motion.** Everything is visible on first paint. The only animation left is the FAQ "+" rotating (200ms, off under reduced motion). The `Reveal`, `Glow` and `TaglineReveal` components and their CSS are deleted.
+- **Flat colour.** The hero uses the base colour with ink text. The tagline is a plain line on a flat ink block (`--sidebar`, #171717), and the final call to action is flat ink. No gradients anywhere.
+  - The brief named #FBF8F6, #17151C and #C2185B, from the D33 palette. D42 replaced those, so the current tokens are used: the neutral base and ink #171717. The beige and hot pink that D42 removed stay out.
+- **No pills.** "For Indian freelancers and small studios" is now the first sentence of the subhead. "Available now" is gone; Pro keeps "planned, not available yet" as plain text.
+- **Varied layouts:**
+  - Reddit quotes are labelled "What freelancers say on Reddit" and set as plain pull quotes between rules, with no cards, avatars or ratings.
+  - The 45-day rule is a large display number beside the text.
+  - "How it works" is one annotated sample invoice with three numbered markers and short callouts. The maths is real: 12 × ₹2,500, CGST + SGST at 9%, ₹35,400.
+  - "What Dues checks" and "what it doesn't do" are merged into one 6-row comparison table. On phones it becomes two short lists. Dropped as weakest: "Every rupee in paise" and "Duplicates". Added on the doesn't-side: no cut of payments, no GST filing.
+  - Setup is a plain numbered list beside "Works with your Claude".
+  - The FAQ sits in two columns.
+- **Typefaces, landing only:** Fraunces for headings and display lines, IBM Plex Sans for body, both via next/font. Both have the ₹ glyph (Instrument Serif and Hanken Grotesk were rejected for missing it). Plex has true tabular figures, and `.landing` sets `tabular-nums` for all money. The app keeps Geist, so this changes no app screens.
