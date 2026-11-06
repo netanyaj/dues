@@ -58,7 +58,9 @@ export default async function PublicInvoice({ params }: PageProps<"/i/[publicId]
 
   const issuedAt = inv.issued_at ?? inv.created_at;
   const accountAgeDays = s.account_created_at ? daysBetween(String(s.account_created_at).slice(0, 10), issuedAt.slice(0, 10)) : 999;
-  const bankChangedRecently = !!s.bank_details_changed_at && daysBetween(String(s.bank_details_changed_at).slice(0, 10), issuedAt.slice(0, 10)) <= 7;
+  // D17/D55: warn only when the bank details changed in the 7 days *before* this invoice was sent.
+  const bankGap = s.bank_details_changed_at ? daysBetween(String(s.bank_details_changed_at).slice(0, 10), issuedAt.slice(0, 10)) : null;
+  const bankChangedRecently = bankGap != null && bankGap >= 0 && bankGap <= 7;
   const pendingReport = found.reports.some((r) => r.status === "reported");
   // Closes the loop on a rejected report (FLOWS.md flow 6): the latest one, if nothing newer is pending.
   const lastReport = found.reports[0] as { status: string; amount_paise: number } | undefined;

@@ -139,7 +139,17 @@ export function InvoiceDocument({ d }: { d: DocData }) {
         <Row label="Total" value={d.total_paise} strong />
       </dl>
 
+      {/* D55: Rule 46 fields on a sent tax invoice. Dues targets services that aren't under reverse charge. */}
+      {!d.draft && d.gst_applicable && <p className="mt-4 body-6"><span className="text-muted-foreground">Tax payable on reverse charge:</span> No</p>}
+
       {d.notes ? <p className="mt-6 body-6 whitespace-pre-line">{d.notes}</p> : null}
+
+      {!d.draft && (
+        <div className="mt-8 ml-auto w-fit min-w-48 text-right">
+          <p className="body-5">For {d.seller.name}</p>
+          <p className="mt-8 border-t pt-2 caption-4 text-muted-foreground">Authorised signatory</p>
+        </div>
+      )}
       {d.msme_line ? <p className="mt-6 border-t pt-3 caption-5 text-muted-foreground">{d.msme_line}</p> : null}
     </article>
   );

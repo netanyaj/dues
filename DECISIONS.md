@@ -731,3 +731,18 @@ The founder chose equal outline buttons for WhatsApp, Email, Copy message and Co
   - Dues doesn't: No AI inside, doesn't send messages, can't see your bank, doesn't verify payees yet.
   - Dropped: GSTIN and PAN, the UPI limit, "doesn't take a cut" (the FAQ covers it) and "doesn't file your GST return".
 - **README screenshots** are retaken from production to match the final UI.
+
+## D55. Pre-submission fixes
+
+1. **Region:** Supabase is in ap-south-1 (Mumbai), but Vercel ran functions in iad1 (Washington), so every query crossed the world. `vercel.json` now pins `"regions": ["bom1"]`. Timings are in TESTING.md.
+2. **needs_review:** re-sending `expected_total` on its own never clears the flag, even when the number now matches, because otherwise Claude could clear its own flag by restating a figure. It clears only when the total, GST rate or client actually changes and the new total matches, or when the freelancer presses Confirm totals. Covered by `tests/db/review.test.ts`.
+3. **Client page:** "Bank details updated on …" shows only when the change falls in the 7 days before the invoice was sent (D17). A change after sending no longer counts.
+4. **Dashboard list:** paid invoices show their total and "Paid", not ₹0.
+5. **MCP:** editing a sent invoice is refused with a message ending "You can still change the notes and due date in the Dues app."
+6. **save_reminder:** `tell_the_user` ends with the link, so no full stop gets glued to the URL.
+7. **MSME line:** only on invoices to clients with a GSTIN. The MSMED Act's payment terms concern business buyers.
+8. **Sent tax invoices** now show "Tax payable on reverse charge: No" (Rule 46) and a "For {business} / Authorised signatory" block. "No" fits the services Dues is built for (design, development, consulting). The landing FAQ says so and tells anyone in a reverse-charge category to check.
+9. **Reviewer accounts:**
+   - **Rosh, Spare, Maneeshwar:** re-seeded with production URLs, then backdated (account 90 days, bank details 60 days, every event, payment, reminder and report on its real date). The demo flag is kept on.
+   - **Sandeep:** fixed in place only (account and bank dates, plus the invoices' saved copies), because it had Share activity not created by the seed or by my tests.
+   - **All four:** tokens and passwords unchanged.

@@ -246,7 +246,7 @@ export function registerDuesTools(server: McpServer, ctx: Ctx) {
         channel: r.reminder.channel,
         link: r.link,
         notes_for_you: r.warnings.length ? r.warnings : undefined,
-        tell_the_user: `Saved. Tap to send from your phone: ${r.link}. It's also on the invoice in Dues.`,
+        tell_the_user: `Saved, and it's on the invoice in Dues. Tap to send it from your phone: ${r.link}`,
       };
     }),
   );

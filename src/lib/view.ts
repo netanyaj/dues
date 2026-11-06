@@ -40,7 +40,8 @@ export function docFromInvoice(inv: InvoiceRow, items: ItemRow[], live?: { profi
     igst_paise: inv.igst_paise,
     total_paise: inv.total_paise,
     notes: inv.notes,
-    msme_line: s
+    // D55: the MSMED Act line is addressed to business buyers, so only when the client has a GSTIN.
+    msme_line: !buyer.gstin ? null : s
       ? msmeLine(s.business_name ?? "", s.udyam_number, s.msme_category)
       : msmeLine(live?.profile.business_name ?? "", live?.profile.udyam_number, live?.profile.msme_category),
     draft: inv.stage === "draft",

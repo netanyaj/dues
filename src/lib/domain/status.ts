@@ -104,7 +104,7 @@ export function allowedActions(a: {
 
 export const ACTION_REFUSAL: Record<Action, string> = {
   edit_items:
-    "This invoice has been sent, so its line items, client and amounts are locked. To change the amounts, cancel it and create a new invoice. You can still change the notes and due date.",
+    "This invoice has been sent, so its line items, client and amounts are locked. To change the amounts, cancel it and create a new invoice. You can still change the notes and due date in the Dues app.",
   edit_notes_due: "This invoice is cancelled and can't be changed.",
   confirm_totals: "There's nothing to confirm: the totals on this invoice aren't flagged.",
   send: "This invoice can't be sent.",

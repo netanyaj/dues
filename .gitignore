@@ -42,5 +42,5 @@ next-env.d.ts
 !.env.example
 
 # Seed output (demo passwords and links). Never commit.
-.demo-accounts.local.txt
+.demo-accounts*.txt
 public/_mocks/

@@ -191,8 +191,10 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">{i.client_name}</td>
                         <td className="px-4 py-3 text-right">
-                          {i.stage === "issued" ? <Amount paise={i.balance_paise} muted={i.balance_paise === 0} /> : <Amount paise={i.total_paise} muted />}
-                          {i.stage === "issued" && i.balance_paise !== i.total_paise && <span className="block whitespace-nowrap caption-5 text-muted-foreground">of <Amount paise={i.total_paise} /></span>}
+                          {/* D55: a paid invoice shows its total and "Paid", not ₹0 */}
+                          {i.status === "paid" ? <><Amount paise={i.total_paise} /><span className="block caption-5 text-paid">Paid</span></>
+                            : i.stage === "issued" ? <Amount paise={i.balance_paise} /> : <Amount paise={i.total_paise} muted />}
+                          {i.stage === "issued" && i.status !== "paid" && i.balance_paise !== i.total_paise && <span className="block whitespace-nowrap caption-5 text-muted-foreground">of <Amount paise={i.total_paise} /></span>}
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={i.status} pendingReports={i.pending_reports} />
@@ -212,7 +214,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/dashboard"
                           {i.source === "claude" && <ClaudeBadge className="mt-0.5" />}
                         </div>
                         <div className="shrink-0 text-right">
-                          <Amount paise={i.stage === "issued" ? i.balance_paise : i.total_paise} className="title-4" decimals="auto" />
+                          <Amount paise={i.stage === "issued" && i.status !== "paid" ? i.balance_paise : i.total_paise} className="title-4" decimals="auto" />
                           <div><StatusBadge status={i.status} pendingReports={i.pending_reports} className="caption-4 justify-end" /></div>
                           {i.needs_review && <p className="caption-4 text-review">Check totals</p>}
                         </div>

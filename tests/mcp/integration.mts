@@ -189,7 +189,8 @@ async function main() {
   const locked = await call(a.token, "update_draft_invoice", { id: sent.number!, notes: "change" });
   assert.equal(locked.isError, true);
   assert.match(locked.text, /locked/);
-  step("update_draft_invoice refused on a sent invoice");
+  assert.match(locked.text, /You can still change the notes and due date in the Dues app\.$/);
+  step("update_draft_invoice refused on a sent invoice, pointing to the app for notes and due date");
 
   // Isolation: user B's token sees none of A's data
   const bl = await call(b.token, "list_invoices");

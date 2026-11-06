@@ -401,6 +401,13 @@ export async function updateDraft(ctx: Ctx, ref: string, patch: DraftInput): Pro
   if (confirmedEarlier && p.review.needsReview && p.totals.total === invoice.total_paise && patch.expected_total_rupees == null) {
     p.review = { needsReview: false, reason: invoice.review_reason };
   }
+  // D55: a flagged draft is only cleared by a real change (total, GST rate or client) whose new
+  // total matches, or by the freelancer's Confirm totals. Re-sending expected_total alone, even a
+  // matching one, must not clear it: otherwise Claude could clear its own flag by restating a number.
+  const realChange = p.totals.total !== invoice.total_paise || p.gstRate !== invoice.gst_rate || p.client.id !== invoice.client_id;
+  if (invoice.needs_review && !p.review.needsReview && !realChange) {
+    p.review = { needsReview: true, reason: invoice.review_reason };
+  }
   await writeDraft(ctx, invoice.id, p, invoice.source);
   await logEvent(ctx, invoice.id, "draft_updated", { total_paise: p.totals.total, previous_total_paise: invoice.total_paise });
   if (p.review.needsReview && !invoice.needs_review) await logEvent(ctx, invoice.id, "flagged_for_review", { reason: p.review.reason });

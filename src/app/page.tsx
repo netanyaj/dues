@@ -45,7 +45,7 @@ const FAQ = [
   ["Do I need a paid Claude plan?", "Custom connectors work on every Claude plan (Free allows one). You can also use Claude Code, or make invoices by hand."],
   ["Does my client need an account?", "No. They open a link, see the invoice, pay with their own bank or UPI app, and tap “Notify as paid” with the reference number."],
   ["Does Dues take a cut of payments?", "No. Money goes straight from your client to your account. Dues never touches it."],
-  ["Is it a GST tax invoice?", "Built to the GST tax-invoice format: your GSTIN and the client's, place of supply, SAC codes per line, the CGST/SGST or IGST split, and a serial number per financial year. Reverse charge isn't handled, so check those cases with whoever files your GST."],
+  ["Is it a GST tax invoice?", "Built to the GST tax-invoice format: your GSTIN and the client's, place of supply, SAC codes per line, the CGST/SGST or IGST split, and a serial number per financial year. Each sent invoice states \u201cTax payable on reverse charge: No\u201d and has an authorised signatory line, which fits most freelance services; check with whoever files your GST if yours falls under reverse charge."],
   ["What can Claude change?", "Drafts, clients and reminders. Sending an invoice, confirming a payment, cancelling or deleting only happen when you press the button in Dues."],
   ["What if I'm not GST registered?", "Leave the GSTIN blank. Invoices say “GST not applicable” and add no tax."],
 ];
