@@ -45,8 +45,8 @@ A calm money tool: a dark sidebar, a neutral canvas, white panels, ink buttons, 
 No background gradients. Gradients are not used on text either (D51).
 
 ## Type
-- **App:** Geist, chosen for its true tabular figures, a ₹ glyph that matches, and legibility on Android.
-- **Landing page:** Fraunces (a characterful serif) for headings and display lines, IBM Plex Sans for body (D51). Both are loaded with `next/font` and both include ₹.
+- **Geist everywhere:** the app and the landing page body, nav, buttons and mock invoice. It has true tabular figures, a ₹ glyph that matches, and good legibility on Android.
+- **Fraunces** only for the landing page's h1 and h2 and its two display lines (the tagline and "45 days"), loaded with `next/font`. It includes ₹ (D51, narrowed by D54).
 - **Money:** always tabular figures (the `amount` utility; `.landing` sets `tabular-nums`), so columns of rupees line up.
 - **Named text styles** instead of loose sizes and weights: `heading-3` to `heading-6`, `title-2` to `title-4`, `body-1`, `body-3` to `body-6`, `caption-3` to `caption-5`.
 

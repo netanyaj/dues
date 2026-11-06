@@ -174,8 +174,8 @@
   body { background: white; }
 }
 
-/* D51: the landing page's own pairing. Fraunces for headings and display lines, IBM Plex Sans for
-   everything else; tabular figures on all money via the amount utility and on Plex by default. */
-.landing { font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-.landing :is(h1, h2, h3, blockquote) { font-family: var(--font-display), ui-serif, Georgia, serif; letter-spacing: -0.015em; }
+/* D54: landing body is Geist (inherited from <html>) with tabular figures; Fraunces only for h1/h2.
+   Display lines opt in with font-[family-name:var(--font-display)]. */
+.landing { font-variant-numeric: tabular-nums; }
+.landing :is(h1, h2) { font-family: var(--font-display), ui-serif, Georgia, serif; letter-spacing: -0.015em; }
 

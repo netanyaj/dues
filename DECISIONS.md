@@ -718,3 +718,16 @@ The founder chose equal outline buttons for WhatsApp, Email, Copy message and Co
   - the GSTIN and PAN row no longer claims a PAN checksum;
   - the footer adds Contact (mailto) and GitHub.
 - **Checks:** both Mermaid blocks render with mmdc. A repo-wide grep for the section sign, the old palette's names and the old URL-token phrasing returns nothing.
+
+## D54. Landing type matches the app; comparison table cut to four rows
+
+*(D53 is unused.)*
+
+**Decision:**
+- **IBM Plex Sans is dropped.** The landing body, nav, buttons and mock invoice use Geist with tabular figures, so the landing page and the app read as one product.
+- **Fraunces stays only** for the landing page's h1 and h2 and its two display lines (the tagline and "45 days"). The h3 and the Reddit pull quotes are now Geist. Only the 600 weight is loaded.
+- **The comparison table has four rows per side, the strongest of each:**
+  - Dues checks: GST split, Numbering, Claude's maths, MSME 45 days.
+  - Dues doesn't: No AI inside, doesn't send messages, can't see your bank, doesn't verify payees yet.
+  - Dropped: GSTIN and PAN, the UPI limit, "doesn't take a cut" (the FAQ covers it) and "doesn't file your GST return".
+- **README screenshots** are retaken from production to match the final UI.

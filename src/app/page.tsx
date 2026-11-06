@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import { ArrowRightIcon, CheckIcon, MinusIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
@@ -9,10 +9,9 @@ import { sessionUser } from "@/lib/auth";
 import { ClientPagePreview } from "@/components/landing/client-page-preview";
 import { InvoiceWalkthrough } from "@/components/landing/invoice-walkthrough";
 
-// D51: the landing page has its own pairing. Fraunces (a characterful serif) for headings, IBM Plex
-// Sans for body. Both include ₹, and Plex has true tabular figures for money. The app keeps Geist.
-const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
-const body = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
+// D54: Fraunces only for the landing h1/h2 and the display lines (tagline, "45 days"). Everything
+// else (body, nav, the mock invoice, buttons) is Geist with tabular figures, so it matches the app.
+const display = Fraunces({ subsets: ["latin"], weight: ["600"], variable: "--font-display", display: "swap" });
 
 const CONTACT_EMAIL = "netanyajaison@gmail.com";
 
@@ -22,13 +21,12 @@ export const metadata: Metadata = {
 };
 
 // Six rows, side by side: what Dues enforces in code, and what it deliberately doesn't do.
+// Four rows: the strongest checks beside the most important things Dues deliberately doesn't do.
 const COMPARE: [string, string, string, string][] = [
   ["GST split", "CGST and SGST for a client in your state, IGST for one outside it, worked out from both states.", "No AI inside Dues", "Your Claude does the writing. Dues itself runs plain code, so the same input always gives the same invoice."],
   ["Numbering", "INV/2026-27/0001 onwards, given only when you send, with no gaps and a fresh series each April.", "It doesn't send messages for you", "Reminders open in your own WhatsApp or email, so they come from you."],
   ["Claude's maths", "If Claude expected a different total by more than ₹1, the draft is flagged until you check it.", "It can't see your bank", "When a client says they paid, you check your bank and confirm. Claude can never confirm a payment."],
-  ["GSTIN and PAN", "GSTIN format, checksum and state code, and PAN format, are checked before anything is saved.", "It doesn't verify payees yet", "Client pages say so plainly. Bank and GSTIN verification is planned as a paid add-on."],
-  ["UPI limit", "QR and pay button only for balances up to ₹1,00,000. Larger amounts show bank details.", "It doesn't take a cut", "Money goes straight from your client to your account. Dues never touches it."],
-  ["MSME 45 days", "Registered on Udyam? Invoices state the MSMED Act terms and warn if you allow more than 45 days.", "It doesn't file your GST return", "Export CSV gives your GST split, TDS and payments for whoever files it."],
+  ["MSME 45 days", "Registered on Udyam? Invoices state the MSMED Act terms and warn if you allow more than 45 days.", "It doesn't verify payees yet", "Client pages say so plainly. Bank and GSTIN verification is planned as a paid add-on."],
 ];
 
 const QUOTES: [string, string][] = [
@@ -55,7 +53,7 @@ const FAQ = [
 export default async function Home() {
   if (await sessionUser()) redirect("/dashboard");
   return (
-    <div className={`landing ${display.variable} ${body.variable} flex flex-1 flex-col bg-background`}>
+    <div className={`landing ${display.variable} flex flex-1 flex-col bg-background`}>
       <header className="sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-2rem)] max-w-5xl items-center gap-4 rounded-xl border bg-card/90 px-4 py-2 backdrop-blur-md">
         <Link href="/" aria-label="Dues home"><Logo /></Link>
         <nav aria-label="Sections" className="ml-4 hidden gap-6 body-5 text-muted-foreground md:flex">
