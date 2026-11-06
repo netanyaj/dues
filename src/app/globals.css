@@ -67,7 +67,7 @@
 }
 
 :root {
-  /* D42 palette (after Clueso): neutral white and ink, ink buttons, one orchid accent. Contrast in DECISIONS.md. */
+  /* D42 palette: neutral canvas, ink buttons, one orchid accent. Contrast in DESIGN.md. */
   --background: #fafafa;
   --foreground: #171717;
   --card: #ffffff;

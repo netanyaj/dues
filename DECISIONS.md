@@ -292,10 +292,10 @@ It shows:
 *Updated by D28: the token now travels in the Authorization header, so the log risk below no longer applies.*
 
 **Decision**
-- Profiles store `mcp_token_hash` (SHA-256) and the last 4 characters; never the token itself. MCP looks users up by hashing the token in the URL.
+- Profiles store `mcp_token_hash` (SHA-256) and the last 4 characters; never the token itself. MCP looks users up by hashing the token it receives (since D28, from the Authorization header).
 - The full link is shown once: after onboarding and after Regenerate, with a copy button and "Copy this now — for security we can't show it again." After that, Settings shows only `…abcd` and Regenerate.
 - Demo accounts can't regenerate (D13). The seed script prints each demo link once, to the terminal only, never to a committed file.
-- **Logs:** Claude custom connectors only accept a URL, so the token still appears in Vercel's request logs. v1 mitigations: our code never logs the URL or token (a test checks the MCP route source); Vercel's default log retention is kept; logs are forwarded nowhere. The real fix is OAuth in v2. This is a known v1 risk (PRD §9, ARCHITECTURE security).
+- **Logs:** at the time, Claude custom connectors only accepted a URL, so the token was part of the address and appeared in Vercel's request logs. Mitigations then: our code never logged the URL or token (a test checks the MCP route source), and logs were forwarded nowhere. Superseded by D28 (header only), which removed the token from addresses and logs; OAuth is still the v2 fix (PRD section 9, ARCHITECTURE security).
 - **Interview line:** "Hashing protects every user's connection if the database leaks. The token still appears in request logs because Claude's connectors only take a URL. That's a known v1 risk with a small blast radius (instant regenerate), and OAuth in v2 removes it."
 
 ## D26. v2 additions from research
@@ -337,7 +337,7 @@ The founder rejected the first two mock directions as still generic. They picked
 
 ## D28. D-Q12 final: header-only MCP auth, no URL fallback
 
-**Context:** D25 kept the token in the URL because claude.ai custom connectors only took a URL. claude.ai now has a **Request headers** field under Add custom connector (Anthropic's help article for Pro and Max; an Anthropic collaborator called it a beta for some organisations on 18 Oct 2026). The founder confirmed it appears on a personal Free account, and Claude Desktop and Claude Code support headers too.
+**Context:** D25 kept the token inside the connector address because claude.ai custom connectors only took a URL. claude.ai now has a **Request headers** field under Add custom connector (Anthropic's help article for Pro and Max; an Anthropic collaborator called it a beta for some organisations on 18 Oct 2026). The founder confirmed it appears on a personal Free account, and Claude Desktop and Claude Code support headers too.
 
 **Decision**
 - One endpoint, `/api/mcp`, authenticated only by `Authorization: Bearer <token>`.
@@ -425,11 +425,11 @@ The founder rejected the first two mock directions as still generic. They picked
 - **Server icon:** `serverInfo` sends `title`, `websiteUrl` and `icons` (`/icon.png` at 512px, `/icon.svg`). There are also `favicon.ico` and `apple-icon.png`, all public.
 - **Tests:** `tests/mcp/integration.mts` now covers all of this, 23 checks in total.
 
-## D33. Hot-pink brand; calm, separate status colours (updates D31)
+## D33. Bright-pink brand; calm, separate status colours (updates D31; replaced by D42)
 
-**Context:** the indigo `#3a4fd6` read as default SaaS blue. The user asked for a deliberate hot-pink direction, with electric coral as the alternative.
+**Context:** the indigo `#3a4fd6` read as default SaaS blue. The user asked for a deliberate bright-pink direction, with electric coral as the alternative.
 
-**Decision: hot pink.**
+**Decision: bright pink.**
 
 | Token | Value | Used for |
 |---|---|---|
@@ -555,13 +555,9 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - A POST that's missing `text/event-stream` in Accept gets it added before the transport sees it.
 - Still header-only (never the URL), hash-checked, and never logged. Unit and integration tests cover each form.
 
-## D42. Palette after Clueso: neutral white, ink buttons, one orchid accent (replaces D33)
+## D42. Palette: neutral canvas, ink buttons, one orchid accent (replaces D33)
 
-**Context:** the founder found the hot pink jarring and the warm off-white beige. Clueso (clueso.io) reads cleaner:
-- background `#FFFFFF`, secondary surface `#FBFBFB`;
-- text `#171717`, body text `#5C5C5C`;
-- primary buttons ink `#171717`;
-- a pink-orchid (`#E766D4` / `#DA5CC7`) only for brand and highlights.
+**Context:** the bright pink read as jarring, and the warm off-white read as beige. We moved to a neutral canvas, ink buttons and one orchid accent used only for brand and highlights.
 
 **Decision:**
 
@@ -675,7 +671,7 @@ The founder chose equal outline buttons for WhatsApp, Email, Copy message and Co
 **Decision:**
 - **No reveal or motion.** Everything is visible on first paint. The only animation left is the FAQ "+" rotating (200ms, off under reduced motion). The `Reveal`, `Glow` and `TaglineReveal` components and their CSS are deleted.
 - **Flat colour.** The hero uses the base colour with ink text. The tagline is a plain line on a flat ink block (`--sidebar`, #171717), and the final call to action is flat ink. No gradients anywhere.
-  - The brief named #FBF8F6, #17151C and #C2185B, from the D33 palette. D42 replaced those, so the current tokens are used: the neutral base and ink #171717. The beige and hot pink that D42 removed stay out.
+  - The brief named #FBF8F6, #17151C and #C2185B, from the D33 palette. D42 replaced those, so the current tokens are used: the neutral base and ink #171717. The beige and bright pink that D42 removed stay out.
 - **No pills.** "For Indian freelancers and small studios" is now the first sentence of the subhead. "Available now" is gone; Pro keeps "planned, not available yet" as plain text.
 - **Varied layouts:**
   - Reddit quotes are labelled "What freelancers say on Reddit" and set as plain pull quotes between rules, with no cards, avatars or ratings.
@@ -685,3 +681,40 @@ The founder chose equal outline buttons for WhatsApp, Email, Copy message and Co
   - Setup is a plain numbered list beside "Works with your Claude".
   - The FAQ sits in two columns.
 - **Typefaces, landing only:** Fraunces for headings and display lines, IBM Plex Sans for body, both via next/font. Both have the ₹ glyph (Instrument Serif and Hanken Grotesk were rejected for missing it). Plex has true tabular figures, and `.landing` sets `tabular-nums` for all money. The app keeps Geist, so this changes no app screens.
+
+## D52. Docs pass before submission
+
+**Docs and landing copy only.** No app or MCP behaviour changed.
+
+- **PRD:**
+  - the dated "Updated … IST" line is gone, and MCP auth is described as header-only (D28);
+  - stories run S1–S9 in order;
+  - Evidence reads as excerpts from about 30 Reddit threads plus one read in full, with "invoices sent back by AP teams" marked as an assumption and the no-interviews gap kept;
+  - milestones keep names and scope with no times or status;
+  - UX requirements are cut to six rules, and every risk now has a "Response:" line;
+  - two risks added: connector setup friction, and Zoho and Stripe already having MCP servers;
+  - "Later" became a short "Beyond v1" section.
+- **New files:**
+  - **DESIGN.md:** D42 tokens and contrast, status colours, Geist for the app, Fraunces + IBM Plex Sans for the landing page, Phosphor, tabular figures, spacing and radius.
+  - **ROADMAP.md:** pricing, v2, v3, and a "deliberately not in v1" table with reasons.
+- **Pricing agrees everywhere:** v1 is free with a cap of 50 invoices per account; Pro at ₹299 a month is planned and is a hypothesis to test. This is in the PRD, ROADMAP, ARCHITECTURE's cost table and the landing page ("price being tested").
+- **Wording cleanups:**
+  - no section signs (links or "section 4" instead);
+  - no third-party palette references, with the D42 context reworded and every token and contrast value kept;
+  - the token is described as header-only everywhere, with the old address-based token kept only as history in D25 and D28;
+  - "I've paid" became "Notify as paid" in ARCHITECTURE, README and TESTING.
+- **README:** decisions D1–D52, one MCP check count (27, matching TESTING), DESIGN and ROADMAP added to the docs table.
+- **TESTING:** T11 now records the 401 (D28). T33 and T44 are marked superseded by T45 and D51. T1 and T31 are left unticked for the founder's live test.
+- **ARCHITECTURE:** PAN is format-checked only (it has no checksum). The diagram adds Supabase Storage (proof uploads, D40), MCP prompts and Vercel Analytics.
+- **FLOWS:**
+  - the state diagram adds Overdue → Sent when extended with nothing paid;
+  - "ready to send" is shown as a flag on Draft, and "payment reported" as a flag on an issued invoice;
+  - the status order matches the PRD and `invoice_view`: Cancelled, Draft, Paid, Overdue, Partially paid, Sent.
+- **Landing copy:**
+  - the numbering example uses a hyphen ("INV/2026-27/0001");
+  - the plans FAQ now says connectors work on every plan (Free allows one), with Claude Code or manual invoices as alternatives;
+  - the GST FAQ says "Built to the GST tax-invoice format" instead of claiming "valid", and says reverse charge isn't handled. The invoice gained no new fields, because a fixed "Reverse charge: No" would be wrong for some services;
+  - the subhead leads with "Ask your Claude to bill a client…";
+  - the GSTIN and PAN row no longer claims a PAN checksum;
+  - the footer adds Contact (mailto) and GitHub.
+- **Checks:** both Mermaid blocks render with mmdc. A repo-wide grep for the section sign, the old palette's names and the old URL-token phrasing returns nothing.

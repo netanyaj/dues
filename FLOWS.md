@@ -6,18 +6,24 @@ Parties: **F** = freelancer (Dues app), **C** = Claude (MCP tools), **K** = clie
 
 ## Invoice and payment states
 
-Invoice status is derived in SQL (`invoice_view`) from the stage plus payments. Only one status shows at a time, in this order: cancelled, draft, paid, overdue, partially paid, sent. "Payment reported" is a flag shown next to the status, not a status.
+Invoice status is derived in SQL (`invoice_view`) from the stage plus payments. Only one status shows at a time, checked in this order (the same as the PRD and the view): Cancelled, Draft, Paid, Overdue, Partially paid, Sent. Two flags sit beside a status and are not statuses: "ready to send" on a draft (Claude or the freelancer marked it), and "payment reported" on an issued invoice.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Draft: F creates in app / C create_invoice
+    state Draft {
+        [*] --> Editing
+        Editing --> ReadyToSend: C mark_ready_to_send (flag only)
+        ReadyToSend --> Editing: edited again
+    }
     Draft --> Draft: edit (F or C), Claude total flagged → F confirms totals
     Draft --> [*]: F deletes draft
     Draft --> Sent: F presses Send (number + link given here)
     Sent --> PartiallyPaid: confirmed payment < balance
     Sent --> Overdue: due date passes (derived; cron logs it once)
     PartiallyPaid --> Overdue: due date passes
-    Overdue --> PartiallyPaid: due date extended past today
+    Overdue --> Sent: due date extended, nothing paid yet
+    Overdue --> PartiallyPaid: due date extended, part paid
     Sent --> Paid: confirmed payments + TDS cover the total
     PartiallyPaid --> Paid
     Overdue --> Paid
@@ -27,8 +33,8 @@ stateDiagram-v2
     Paid --> [*]
     Cancelled --> [*]
 
-    state "Payment report" as R {
-        [*] --> Reported: K taps I've paid / C record_payment
+    state "Payment report (flag on an issued invoice)" as R {
+        [*] --> Reported: K taps Notify as paid / C record_payment
         Reported --> Confirmed: F confirms (amount and TDS editable)
         Reported --> Rejected: F rejects, or the invoice is cancelled
     }

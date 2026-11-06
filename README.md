@@ -5,7 +5,7 @@
 Dues is a receivables desk for Indian freelancers.
 - You tell your own Claude who to bill. Dues creates a GST invoice, computing every rupee, the CGST/SGST or IGST split and the invoice number in code.
 - You check it and press Send in the app.
-- Your client opens a link, pays by bank transfer or UPI, and taps "I've paid". You confirm it against your bank.
+- Your client opens a link, pays by bank transfer or UPI, and taps "Notify as paid". You confirm it against your bank.
 - The dashboard shows who still owes you and when to chase. Claude writes the reminders, and you send them from your own WhatsApp or email.
 
 The rule is **Claude drafts, code checks, a human confirms anything irreversible.** There is no AI model inside Dues. A no-AI check runs before every build.
@@ -53,7 +53,9 @@ If your claude.ai account doesn't show **Request headers** (the field is new), u
 | File | What's in it |
 |---|---|
 | [PRD.md](PRD.md) | Problem, users, scope, stories, UX rules, milestones, risks |
-| [DECISIONS.md](DECISIONS.md) | Why each decision was made (D1–D30) |
+| [DECISIONS.md](DECISIONS.md) | Why each decision was made (D1–D52) |
+| [DESIGN.md](DESIGN.md) | Colour tokens and contrast, type, spacing, icons, motion |
+| [ROADMAP.md](ROADMAP.md) | Pricing, v2, v3, and what was left out of v1 on purpose |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Diagram, shared service layer, paise and numbering, security, trust and fraud, out of scope, cost per customer |
 | [FLOWS.md](FLOWS.md) | Every user flow, end states, notifications, dead ends found and fixed |
 | [METRICS.md](METRICS.md) | Activation, % paid by the original due date, days to paid, and how each is computed |
@@ -103,7 +105,7 @@ If your claude.ai account doesn't show **Request headers** (the field is new), u
   ```bash
   npm run test:db
   ```
-- 21 MCP checks over HTTP against a running app:
+- 27 MCP checks over HTTP against a running app:
 
   ```bash
   BASE_URL=http://localhost:3000 npm run test:mcp

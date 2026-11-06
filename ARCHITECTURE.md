@@ -14,7 +14,7 @@ flowchart LR
   subgraph Vercel["Vercel · Next.js 16"]
     APP["App routes<br/>/dashboard /invoices /settings<br/>server actions"]
     PUB["Client page<br/>/i/[publicId] · noindex<br/>OG image"]
-    MCP["/api/mcp<br/>Authorization: Bearer<br/>9 tools"]
+    MCP["/api/mcp<br/>Authorization: Bearer<br/>9 tools · 3 prompts"]
     CRON["/api/cron/daily<br/>06:00 IST"]
     SVC["Service layer src/lib/service<br/>scoped by userId"]
     DOM["Domain src/lib/domain<br/>money · tax · GST · dates · status<br/>pure functions"]
@@ -22,7 +22,9 @@ flowchart LR
   subgraph Supabase
     AUTH[Auth<br/>email + password]
     DB[("Postgres<br/>RLS on every table<br/>invoice_view · issue_invoice()")]
+    STO[("Storage<br/>payment-proofs<br/>private bucket")]
   end
+  VA["Vercel Analytics<br/>+ Speed Insights<br/>/i/ ids masked"]
   F -->|session cookie| APP
   K -->|public_id link| PUB
   C -->|HTTPS + Bearer token| MCP
@@ -33,6 +35,9 @@ flowchart LR
   SVC --> DOM
   SVC -->|secret key| DB
   APP --> AUTH
+  SVC -->|proof uploads, signed links| STO
+  F -.->|page views| VA
+  K -.->|page views| VA
   F -. WhatsApp / email from their own phone .-> K
 ```
 
@@ -41,7 +46,7 @@ flowchart LR
 - **`src/lib/domain`** holds pure logic with no I/O, unit tested:
   - `money.ts`: rupees to paise parsed from text with BigInt; half-up rounding; lakh grouping.
   - `tax.ts`: CGST/SGST/IGST and the claimed-total check.
-  - `gst.ts`: GSTIN and PAN checksums, state codes, Udyam, MSME wording.
+  - `gst.ts`: GSTIN checksum and state code, PAN format (PAN has no checksum), Udyam, MSME wording.
   - `dates.ts`: IST, financial years, numbering.
   - `status.ts`: derived status, allowed actions, reminder stages.
   - `upi.ts`
@@ -104,7 +109,7 @@ Dues lets anyone create a professional-looking invoice page, so it could be used
 
 A "Report this invoice" link writes to `abuse_reports` and logs an event. Nothing happens automatically, so the link can't be used to take down a legitimate freelancer.
 
-On the payment side, a client's "I've paid" never changes whether an invoice is overdue. It only pauses chasing for 2 working days. Reused or oddly formatted transaction references are flagged to the freelancer rather than blocked, because real payers often paste the wrong ID.
+On the payment side, a client's "Notify as paid" never changes whether an invoice is overdue. It only pauses chasing for 2 working days. Reused or oddly formatted transaction references are flagged to the freelancer rather than blocked, because real payers often paste the wrong ID.
 
 Real verification (bank "penny drop" name match, GSTIN active status) is v2. It needs a provider whose live keys require business verification (days), and test-mode results would make any badge false. v1 ships the `verifications` table and "Not verified" labels, so enabling it later is a provider sign-up, not a rewrite.
 
@@ -129,6 +134,7 @@ These are estimates at November 2026 list prices, for an active freelancer sendi
 | Supabase (Postgres, Auth) | ₹0 (Free: 500 MB) | Pro $25/month; ~2 MB per customer per year fits easily → **≈ ₹2 per customer** |
 | Domain and email (v2: transactional email, ~45 per customer per month) | — | ≈ ₹2 per customer |
 | AI model cost | **₹0.** The customer's own Claude does the drafting; Dues runs no model. | ₹0 |
-| **Total** | **₹0** | **≈ ₹8 per customer per month**, against a ₹299 Pro price (D11) |
+| Supabase Storage (proof uploads, D40) | ₹0 (1 GB free) | a few MB per customer per year; inside Pro → **≈ ₹0** |
+| **Total** | **₹0** | **≈ ₹8 per customer per month** |
 
-The marginal cost is dominated by fixed platform fees, not usage. Verification (₹1–5 per check, D17) is the only per-use cost, and it would be passed through in a paid "Verified business" badge.
+**Pricing (ROADMAP.md):** v1 is free with a cap of 50 invoices per account. Pro at ₹299 a month is planned and is a hypothesis to test; at that price, ₹8 of running cost leaves a wide margin. The marginal cost is dominated by fixed platform fees, not usage. Verification (₹1–5 per check, D17) is the only per-use cost, and it would be passed through in a paid "Verified business" badge.

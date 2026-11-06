@@ -14,6 +14,8 @@ import { InvoiceWalkthrough } from "@/components/landing/invoice-walkthrough";
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
 const body = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
 
+const CONTACT_EMAIL = "netanyajaison@gmail.com";
+
 export const metadata: Metadata = {
   title: { absolute: "Dues · Get paid on time, with correct GST on every invoice" },
   description: "For Indian freelancers. Dues tracks who owes you and tells you when to chase. Make GST correct invoices by asking your Claude; your client pays by bank transfer or UPI.",
@@ -22,9 +24,9 @@ export const metadata: Metadata = {
 // Six rows, side by side: what Dues enforces in code, and what it deliberately doesn't do.
 const COMPARE: [string, string, string, string][] = [
   ["GST split", "CGST and SGST for a client in your state, IGST for one outside it, worked out from both states.", "No AI inside Dues", "Your Claude does the writing. Dues itself runs plain code, so the same input always gives the same invoice."],
-  ["Numbering", "INV/2026–27/0001 onwards, given only when you send, with no gaps and a fresh series each April.", "It doesn't send messages for you", "Reminders open in your own WhatsApp or email, so they come from you."],
+  ["Numbering", "INV/2026-27/0001 onwards, given only when you send, with no gaps and a fresh series each April.", "It doesn't send messages for you", "Reminders open in your own WhatsApp or email, so they come from you."],
   ["Claude's maths", "If Claude expected a different total by more than ₹1, the draft is flagged until you check it.", "It can't see your bank", "When a client says they paid, you check your bank and confirm. Claude can never confirm a payment."],
-  ["GSTIN and PAN", "Format, checksum and state code are checked before anything is saved.", "It doesn't verify payees yet", "Client pages say so plainly. Bank and GSTIN verification is planned as a paid add-on."],
+  ["GSTIN and PAN", "GSTIN format, checksum and state code, and PAN format, are checked before anything is saved.", "It doesn't verify payees yet", "Client pages say so plainly. Bank and GSTIN verification is planned as a paid add-on."],
   ["UPI limit", "QR and pay button only for balances up to ₹1,00,000. Larger amounts show bank details.", "It doesn't take a cut", "Money goes straight from your client to your account. Dues never touches it."],
   ["MSME 45 days", "Registered on Udyam? Invoices state the MSMED Act terms and warn if you allow more than 45 days.", "It doesn't file your GST return", "Export CSV gives your GST split, TDS and payments for whoever files it."],
 ];
@@ -42,10 +44,10 @@ const SETUP = [
 ];
 
 const FAQ = [
-  ["Do I need a paid Claude plan?", "Custom connectors work on Claude's free and paid plans. You can also use Dues without Claude: every invoice can be made by hand in the app."],
+  ["Do I need a paid Claude plan?", "Custom connectors work on every Claude plan (Free allows one). You can also use Claude Code, or make invoices by hand."],
   ["Does my client need an account?", "No. They open a link, see the invoice, pay with their own bank or UPI app, and tap “Notify as paid” with the reference number."],
   ["Does Dues take a cut of payments?", "No. Money goes straight from your client to your account. Dues never touches it."],
-  ["Is it a valid GST invoice?", "It has the fields a tax invoice needs: your GSTIN, the client's, place of supply, SAC codes, the tax split and a serial number per financial year."],
+  ["Is it a GST tax invoice?", "Built to the GST tax-invoice format: your GSTIN and the client's, place of supply, SAC codes per line, the CGST/SGST or IGST split, and a serial number per financial year. Reverse charge isn't handled, so check those cases with whoever files your GST."],
   ["What can Claude change?", "Drafts, clients and reminders. Sending an invoice, confirming a payment, cancelling or deleting only happen when you press the button in Dues."],
   ["What if I'm not GST registered?", "Leave the GSTIN blank. Invoices say “GST not applicable” and add no tax."],
 ];
@@ -76,7 +78,7 @@ export default async function Home() {
               Get paid on time.<br />Correct GST on every invoice.
             </h1>
             <p className="mt-6 max-w-[560px] body-3 text-muted-foreground">
-              For Indian freelancers and small studios. Dues tracks who owes you and tells you when to chase. Make invoices by asking your Claude: Dues works out the GST, numbers them in order and gives your client a page to pay by bank transfer or UPI.
+              Ask your Claude to bill a client. Dues gets the GST right, numbers it, and tells you who to chase. Built for Indian freelancers and small studios, with a page your client can pay from by bank transfer or UPI.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button asChild size="lg"><Link href="/signup">Create a free account<ArrowRightIcon aria-hidden /></Link></Button>
@@ -193,7 +195,7 @@ export default async function Home() {
               <Button asChild size="lg" className="mt-8"><Link href="/signup">Create a free account</Link></Button>
             </div>
             <div className="flex flex-col rounded-xl border bg-muted/40 p-6">
-              <p className="heading-6">Pro <span className="ml-1 caption-4 text-muted-foreground">planned, not available yet</span></p>
+              <p className="heading-6">Pro <span className="ml-1 caption-4 text-muted-foreground">planned, not available yet; price being tested</span></p>
               <p className="amount mt-2 heading-4">₹299<span className="body-6 text-muted-foreground"> a month</span></p>
               <ul className="mt-6 flex flex-col gap-2 body-6 text-muted-foreground">
                 {["Unlimited invoices", "Payments confirmed automatically through your own Razorpay or Cashfree", "Reminders sent on a schedule by email", "Recurring invoices and credit notes", "Verified business badge on client pages"].map((f) => (
@@ -236,6 +238,8 @@ export default async function Home() {
           <Logo size={20} />
           <Link href="/terms" className="hover:text-foreground">Terms</Link>
           <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+          <a href={`mailto:${CONTACT_EMAIL}?subject=Dues`} className="hover:text-foreground">Contact</a>
+          <a href="https://github.com/netanyaj/dues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">GitHub</a>
           <span className="ml-auto">Made in India for freelancers who&apos;d rather do the work than chase it.</span>
         </div>
       </footer>

@@ -15,4 +15,4 @@ Every metric below is computed from tables Dues already writes: `invoices` (with
 
 **Guardrails:** cancelled invoices are excluded from the paid metrics. Demo accounts (`profiles.is_demo`) are excluded from everything.
 
-**Gap:** there's no baseline yet for how freelancers get paid today. Before v2, interview 10 freelancers and record days-to-paid from their last 10 invoices (PRD §1).
+**Gap:** there's no baseline yet for how freelancers get paid today. Before v2, interview 10 freelancers and record days-to-paid from their last 10 invoices ([PRD section 1](PRD.md#1-problem-and-evidence)).
