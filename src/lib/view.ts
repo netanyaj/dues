@@ -59,6 +59,7 @@ export function describeEvent(e: EventRow): { who: string; what: string } {
     draft_updated: `edited the draft (total now ${money("total_paise")})`,
     flagged_for_review: `flagged the totals: ${p.reason ?? ""}`,
     review_cleared: "cleared the totals flag (they now match)",
+    shared: p.channel === "native" ? "shared the link from this device" : p.channel === "copy" ? `copied the ${p.detail === "copy_link" ? "link" : "message"}` : `opened ${p.channel === "whatsapp" ? "WhatsApp" : "email"} to share${p.reminder_id ? " a reminder" : ""}`,
     viewed: p.n === 1 ? "opened the invoice for the first time" : `opened the invoice (view ${p.n ?? ""})`,
     totals_confirmed: "confirmed the totals",
     sent: `sent it as ${p.number ?? ""}`,
@@ -77,4 +78,13 @@ export function describeEvent(e: EventRow): { who: string; what: string } {
     abuse_reported: "reported this invoice as suspicious",
   };
   return { who: e.type === "paid" ? "" : who, what: what[e.type] ?? e.type.replace(/_/g, " ") };
+}
+
+/** D49: the one share message, used for the native sheet, WhatsApp, email and copy. */
+export function invoiceShareMessage(p: { client: string; number: string | null; business: string | null; balance: string; due: string; link: string }): string {
+  return `Hi ${p.client}, here's invoice ${p.number ?? ""} from ${p.business ?? "us"} for ${p.balance}, due ${p.due}. You can view and pay it here: ${p.link}`;
+}
+
+export function shareSubject(number: string | null, business: string | null): string {
+  return `Invoice ${number ?? ""} from ${business ?? ""}`.replace(/\s+/g, " ").trim();
 }

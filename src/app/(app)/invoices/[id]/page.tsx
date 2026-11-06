@@ -7,20 +7,18 @@ import { DuesError } from "@/lib/service/core";
 import { getClient, listClients } from "@/lib/service/clients";
 import { getInvoiceDetail, publicUrl } from "@/lib/service/invoices";
 import { getProfile, hasBankDetails, setupGaps } from "@/lib/service/profile";
-import { reminderLink } from "@/lib/service/reminders";
 import { formatINR, qtyMilliToString, parseQtyMilli } from "@/lib/domain/money";
 import { formatDate, formatDateTime, istToday } from "@/lib/domain/dates";
 import { allowedActions, STAGE_LABEL, type ReminderStage } from "@/lib/domain/status";
-import { mailtoLink, whatsappLink } from "@/lib/domain/upi";
 import { AutoRefresh } from "@/components/bits";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { ClaudeBadge, StatusBadge } from "@/components/status-badge";
 import { ReportDecision } from "@/components/report-decision";
-import { docFromInvoice, describeEvent, viewedText } from "@/lib/view";
+import { docFromInvoice, describeEvent, invoiceShareMessage, shareSubject, viewedText } from "@/lib/view";
 import { pendingReports } from "@/lib/service/payments";
 import { Amount, Banner, Panel } from "@/components/ds";
 import { InvoiceForm } from "../invoice-form";
-import { ConfirmTotals, InvoiceMoreMenu, ReminderButtons, SendButton, ShareMain } from "../invoice-actions";
+import { ConfirmTotals, InvoiceMoreMenu, SendButton, ShareButton } from "../invoice-actions";
 
 export const metadata: Metadata = { title: "Invoice" };
 
@@ -120,7 +118,8 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   }
 
   const link = publicUrl(inv.public_id)!;
-  const shareText = `Hi ${inv.client_name}, here's invoice ${inv.number} from ${profile.business_name} for ${formatINR(inv.balance_paise)}, due ${formatDate(inv.due_date)}. You can view and pay it here: ${link}`;
+  const shareText = invoiceShareMessage({ client: inv.client_name, number: inv.number, business: profile.business_name, balance: formatINR(inv.balance_paise), due: formatDate(inv.due_date), link });
+  const subject = shareSubject(inv.number, profile.business_name);
   const reports = (await pendingReports(ctx)).filter((r) => r.invoice_id === inv.id);
   const client = await getClient(ctx, inv.client_id);
 
@@ -128,15 +127,12 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
     <div className="flex flex-col gap-6">
       <AutoRefresh seconds={15} />
       {header(
-        inv.stage === "issued" && inv.status !== "paid" && reports.length === 0 ? <ShareMain link={link} whatsapp={whatsappLink(client?.phone, shareText)} /> : null,
+        inv.stage === "issued" && inv.status !== "paid" && reports.length === 0 ? <ShareButton invoiceId={inv.id} link={link} message={shareText} title={subject} subject={subject} phone={client?.phone} email={client?.email} /> : null,
         inv.stage === "issued" ? (
           <InvoiceMoreMenu
             id={inv.id} number={inv.number} balance={formatINR(inv.balance_paise)} today={istToday()} due={inv.due_date} notes={inv.notes}
             can={{ record: actions.has("record_payment"), extend: actions.has("edit_notes_due") && inv.status !== "paid", notes: actions.has("edit_notes_due"), cancel: actions.has("cancel") }}
-            links={[
-              { label: "View as client", href: link, external: true },
-              ...(client?.email ? [{ label: "Send by email", href: mailtoLink(client.email, `Invoice ${inv.number} from ${profile.business_name}`, shareText), external: true }] : []),
-            ]}
+            links={[{ label: "View as client", href: link, external: true }]}
           />
         ) : null,
       )}
@@ -197,7 +193,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
                       {r.stage ? `${STAGE_LABEL[r.stage as ReminderStage]} · ` : ""}{r.channel === "whatsapp" ? "WhatsApp" : "Email"} · written by {r.created_by === "claude" ? "Claude" : "you"} · {formatDateTime(r.created_at)}
                       {r.sent_marked_at ? ` · opened to send ${formatDateTime(r.sent_marked_at)}` : ""}
                     </p>
-                    <div className="mt-2"><ReminderButtons invoiceId={inv.id} reminderId={r.id} link={reminderLink(inv, profile.business_name, r)} channel={r.channel} sent={!!r.sent_marked_at} /></div>
+                    <div className="mt-2"><ShareButton invoiceId={inv.id} reminderId={r.id} link={link} message={r.message} title={subject} subject={subject} phone={client?.phone} email={client?.email} label="Share reminder" size="sm" variant={r.sent_marked_at ? "outline" : "default"} /></div>
                   </li>
                 ))}
               </ul>

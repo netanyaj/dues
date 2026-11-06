@@ -144,13 +144,23 @@ v1 has no outbound messages: everything is in-app, and the freelancer sends remi
   1. Press Send. It's the one main action in the draft header; Preview and Delete are under More (D34).
   2. A dialog names the client and total: "the amounts are then locked". **First Send with no bank account:** the dialog asks for account name, number and IFSC, saves them to Settings, then sends (D35).
   3. The invoice gets a number and a link.
-  4. The header's main action becomes Copy link (icon) + WhatsApp (pre-filled text with the client's phone). Record payment, Extend, Edit notes, View as client, Send by email and Cancel are under More (⋯).
+  4. The header's one main action becomes **Share** (D49). Record payment, Extend, Edit notes, View as client and Cancel are under More (⋯).
+  5. **Share on a phone** (touch screen with the Web Share API) opens the native share sheet with the title "Invoice {number} from {business}", the message and the link.
+  6. **Share elsewhere** opens the Share panel:
+     - the message, which you can edit;
+     - **WhatsApp** (`wa.me` to the client's saved phone, or a chat picker);
+     - **Email** (`mailto:` to the client's saved email, with subject "Invoice {number} from {business}" and the message as body);
+     - **Copy message**;
+     - **Copy link**.
+  7. Every channel uses the same message template: "Hi {client}, here's invoice {number} from {business} for {balance}, due {date}. You can view and pay it here: {link}".
+  8. Each use logs a `shared` event with the channel (`native`, `whatsapp`, `email` or `copy`), which shows in the invoice history.
+  9. **Reminders** use the same Share button and panel, filled with the stage-specific message Claude wrote. Sharing one through native, WhatsApp or email marks it sent (D19).
 - **End states:** the invoice is sent and its link is live. The link preview shows "Invoice {number} from {business} · ₹X due {date}" plus a generated image. The page stays `noindex`.
 - **Errors:**
   - Setup is incomplete, so Send is disabled with the reason. The service refuses too (`setup_incomplete`, `bank_details_required`), so the UI can't be bypassed.
   - The draft is flagged, so Send is disabled until the totals are confirmed.
-- **How the loop closes:** Dues never sends anything itself in v1, so the share panel stays at the top of the invoice until it's paid.
-- **Dead ends:** no email share. **Fixed:** an Email button (mailto) appears when the client has an email address.
+- **How the loop closes:** Dues never sends anything itself in v1, so Share stays the main action until the invoice is paid or a payment is reported (then Confirm / Reject leads). The history shows when and how it was shared, and the summary bar shows whether the client opened it (D37).
+- **Dead ends:** no email share. **Fixed:** Email in the Share panel, pre-addressed when the client has an email; without one, it opens blank with a note to add it.
 
 ## 6. Client opens the link → pays → reports → freelancer decides
 

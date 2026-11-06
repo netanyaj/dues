@@ -101,3 +101,12 @@ describe("D41: token header forms claude.ai users actually type", () => {
     for (const v of ["Bearer", "Basic abc", "Bearer xyz", "", null]) expect(bearerToken(v as string | null)).toBeNull();
   });
 });
+
+import { invoiceShareMessage, shareSubject } from "@/lib/view";
+describe("D49: one share message for every channel", () => {
+  it("names the client, number, business, balance, due date and link", () => {
+    const m = invoiceShareMessage({ client: "Acme", number: "INV/2026-27/0007", business: "Ananya Design", balance: "₹35,400.00", due: "21 Nov 2026", link: "https://usedues.vercel.app/i/abc" });
+    for (const part of ["Acme", "INV/2026-27/0007", "Ananya Design", "₹35,400.00", "21 Nov 2026", "https://usedues.vercel.app/i/abc"]) expect(m).toContain(part);
+    expect(shareSubject("INV/2026-27/0007", "Ananya Design")).toBe("Invoice INV/2026-27/0007 from Ananya Design");
+  });
+});

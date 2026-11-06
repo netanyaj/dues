@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCtx } from "@/lib/auth";
-import { DuesError, toDuesError } from "@/lib/service/core";
+import { DuesError, logEvent, toDuesError } from "@/lib/service/core";
 import {
-  cancelInvoice, confirmTotals, createDraft, deleteDraft, sendInvoice, updateDraft, updateIssuedDetails, type DraftInput,
+  cancelInvoice, confirmTotals, createDraft, deleteDraft, findInvoice, sendInvoice, updateDraft, updateIssuedDetails, type DraftInput,
 } from "@/lib/service/invoices";
 import { recordPayment } from "@/lib/service/payments";
 import { markReminderSent } from "@/lib/service/reminders";
@@ -99,9 +99,19 @@ export async function updateIssuedAction(id: string, f: { notes?: string; due_da
   } catch (e) { return fail(e); }
 }
 
-export async function markReminderSentAction(invoiceId: string, reminderId: string): Promise<Result> {
+export type ShareChannel = "native" | "whatsapp" | "email" | "copy_message" | "copy_link";
+
+/** D49: log a share. A reminder opened through native, WhatsApp or email also counts as sent (D19). */
+export async function logSharedAction(invoiceId: string, channel: ShareChannel, reminderId?: string | null): Promise<Result> {
   const ctx = await requireCtx();
-  try { await markReminderSent(ctx, reminderId); refresh(invoiceId); return { ok: true }; } catch (e) { return fail(e); }
+  try {
+    await findInvoice(ctx, invoiceId);
+    const kind = channel.startsWith("copy") ? "copy" : channel;
+    await logEvent(ctx, invoiceId, "shared", { channel: kind, detail: channel, reminder_id: reminderId ?? undefined });
+    if (reminderId && kind !== "copy") await markReminderSent(ctx, reminderId);
+    refresh(invoiceId);
+    return { ok: true };
+  } catch (e) { return fail(e); }
 }
 
 export { DuesError };

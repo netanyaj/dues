@@ -651,3 +651,15 @@ Three prompts appear in Claude's "+" menu. Each one is a template that names the
 - **Colours:** the last hex greys (status dots, aging bar, row hover) became tokens `--tone-faint`, `--tone-mid` and `--tone-strong`.
 - **Copy labels:** they keep acronyms ("Copy IFSC", "Copy UPI ID").
 - **Other screens:** not audited (out of scope tonight).
+
+## D49. One Share action, one message, every channel
+
+**Context:** issued invoices had two header actions (Copy link + WhatsApp), Email lived under More, and reminders had their own buttons. Each built its text separately.
+
+**Decision:**
+- **One template,** `invoiceShareMessage` in `lib/view.ts`: "Hi {client}, here's invoice {number} from {business} for {balance}, due {date}. You can view and pay it here: {link}". The subject is "Invoice {number} from {business}". It's used by every channel. Reminders use the message Claude wrote for that stage.
+- **Share is the single main action** on an issued, unpaid invoice with no pending report (keeps D34).
+- **On a touch device with `navigator.share`,** the native sheet opens with title, text and url. The link is passed as `url` and taken out of the text so it doesn't appear twice. Desktop browsers that support Web Share still get the panel, because the panel's WhatsApp and Email shortcuts are better there.
+- **Otherwise the Share panel opens:** an editable message, then WhatsApp (`wa.me` with the saved phone, or a chat picker), Email (`mailto:` with the saved email), Copy message and Copy link.
+- **Every use logs a `shared` event** (`actor = user`) with `channel` set to `native`, `whatsapp`, `email` or `copy`, plus the detail and the reminder id when there is one. It shows in the history ("You opened WhatsApp to share"). A reminder shared through native, WhatsApp or email is marked sent (D19); copying doesn't mark it.
+- **Removed:** `ShareButtons`, `ShareMain`, `ReminderButtons`, "Send by email" under More, and the separate reminder "mark sent" action. Claude's `save_reminder` still returns its one-tap link.

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { DropdownMenu } from "radix-ui";
-import { DotsThreeIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
+import { CopyIcon, DotsThreeIcon, EnvelopeSimpleIcon, LinkIcon, ShareNetworkIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
+import { mailtoLink as mailtoHref, whatsappLink as whatsappHref } from "@/lib/domain/upi";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
@@ -14,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CopyButton } from "@/components/bits";
 import { Banner } from "@/components/ds";
-import { cancelAction, confirmTotalsAction, deleteDraftAction, markReminderSentAction, recordPaymentAction, saveBankAndSendAction, sendAction, updateIssuedAction, type Result } from "./actions";
+import { cancelAction, confirmTotalsAction, deleteDraftAction, logSharedAction, recordPaymentAction, saveBankAndSendAction, sendAction, updateIssuedAction, type Result, type ShareChannel } from "./actions";
 
 type Controlled = { open?: boolean; onOpenChange?: (open: boolean) => void };
 
@@ -133,21 +133,6 @@ export function DeleteDraft({ id, open: openProp, onOpenChange }: { id: string }
   );
 }
 
-export function ShareButtons({ link, whatsapp, email }: { link: string; whatsapp: string; email?: string | null }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/40 py-1 pr-1 pl-3">
-        <span className="min-w-0 flex-1 truncate caption-2 text-muted-foreground">{link.replace(/^https?:\/\//, "")}</span>
-        <CopyButton value={link} label="Copy client link" variant="default" />
-      </div>
-      <div className="flex flex-wrap gap-2">
-      <Button asChild variant="outline"><a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a></Button>
-      {email && <Button asChild variant="outline"><a href={email}>Email</a></Button>}
-      <Button asChild variant="ghost"><a href={link} target="_blank" rel="noopener noreferrer">View as client</a></Button>
-      </div>
-    </div>
-  );
-}
 
 export function RecordPayment({ id, balance, today, open: openProp, onOpenChange }: { id: string; balance: string; today: string } & Controlled) {
   const { pending, run } = useRun();
@@ -264,19 +249,6 @@ export function CancelInvoice({ id, number, open: openProp, onOpenChange }: { id
   );
 }
 
-export function ReminderButtons({ invoiceId, reminderId, link, channel, sent }: { invoiceId: string; reminderId: string; link: string; channel: string; sent: boolean }) {
-  const { run } = useRun();
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Button asChild size="sm" variant={sent ? "outline" : "default"}>
-        <a href={link} target="_blank" rel="noopener noreferrer" onClick={() => { if (!sent) run(() => markReminderSentAction(invoiceId, reminderId)); }}>
-          {channel === "whatsapp" ? "Open in WhatsApp" : "Open in email"}
-        </a>
-      </Button>
-      <CopyButton value={decodeURIComponent((link.split(/[?&](?:text|body)=/)[1] ?? "").split("&")[0])} label="Copy message" />
-    </div>
-  );
-}
 
 export function PreviewLink({ id }: { id: string }) {
   return <Button asChild variant="outline"><Link href={`/invoices/${id}/preview`}>Preview</Link></Button>;
@@ -323,12 +295,56 @@ export function InvoiceMoreMenu(p: {
   );
 }
 
-/** Issued and unpaid: the main action is getting the link to the client. */
-export function ShareMain({ link, whatsapp }: { link: string; whatsapp: string }) {
+
+/**
+ * D49: one Share action for the invoice link and for reminders. On touch devices with the Web Share
+ * API it opens the native sheet; otherwise a panel with an editable message and WhatsApp, Email,
+ * Copy message and Copy link. Every channel uses the same message, and each use logs a `shared` event.
+ */
+export function ShareButton({ invoiceId, link, message, title, phone, email, subject, reminderId, label = "Share", size = "default", variant = "default" }: {
+  invoiceId: string; link: string; message: string; title: string; phone?: string | null; email?: string | null; subject: string;
+  reminderId?: string | null; label?: string; size?: "default" | "sm"; variant?: "default" | "outline";
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(message);
+  const log = (channel: ShareChannel) => { void logSharedAction(invoiceId, channel, reminderId ?? null); };
+  const share = async () => {
+    const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+    if (touch && typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      // The link travels as `url`, so take it out of the text to avoid it appearing twice.
+      const body = message.includes(link) ? message.replace(link, "").replace(/[\s:]+$/, "").trim() : message;
+      try { await navigator.share({ title, text: body, url: link }); log("native"); return; }
+      catch (e) { if ((e as Error)?.name === "AbortError") return; }
+    }
+    setText(message);
+    setOpen(true);
+  };
+  const copy = async (value: string, channel: ShareChannel, ok: string) => {
+    try { await navigator.clipboard.writeText(value); } catch { /* the toast still tells them what happened */ }
+    toast.success(ok);
+    log(channel);
+  };
   return (
-    <div className="flex items-center gap-2">
-      <CopyButton value={link} label="Copy client link" variant="outline" size="icon" />
-      <Button asChild><a href={whatsapp} target="_blank" rel="noopener noreferrer"><WhatsappLogoIcon weight="fill" aria-hidden />WhatsApp</a></Button>
-    </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button type="button" size={size} variant={variant} onClick={share}><ShareNetworkIcon weight="bold" aria-hidden />{label}</Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{reminderId ? "Share reminder" : "Share invoice"}</DialogTitle>
+          <DialogDescription>Edit the message if you like, then pick how to send it. It goes from your own WhatsApp or email.</DialogDescription>
+        </DialogHeader>
+        <Label htmlFor={`share-${reminderId ?? invoiceId}`} className="sr-only">Message</Label>
+        <Textarea id={`share-${reminderId ?? invoiceId}`} value={text} onChange={(e) => setText(e.target.value)} rows={5} maxLength={2000} className="[overflow-wrap:anywhere]" />
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild><a href={whatsappHref(phone, text)} target="_blank" rel="noopener noreferrer" onClick={() => log("whatsapp")}><WhatsappLogoIcon weight="fill" aria-hidden />WhatsApp</a></Button>
+          <Button asChild variant="outline"><a href={mailtoHref(email, subject, text)} onClick={() => log("email")}><EnvelopeSimpleIcon aria-hidden />Email</a></Button>
+          <Button type="button" variant="outline" onClick={() => copy(text, "copy_message", "Message copied")}><CopyIcon aria-hidden />Copy message</Button>
+          <Button type="button" variant="outline" onClick={() => copy(link, "copy_link", "Link copied")}><LinkIcon aria-hidden />Copy link</Button>
+        </div>
+        <p className="caption-5 text-muted-foreground">
+          {phone ? "WhatsApp opens a chat with the client's saved number." : "No phone saved for this client, so WhatsApp lets you pick the chat."}
+          {" "}{email ? "Email is addressed to their saved email." : "No email saved; add one on the client's page."}
+        </p>
+      </DialogContent>
+    </Dialog>
   );
 }
